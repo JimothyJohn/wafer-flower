@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wafer Halo — Traveler Rev B · Calculator + Frame Method</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#23272B;--steel:#5C6670;--line:#D5DBE1;--paper:#FAFBFC;--card:#FFF;
+  --teal:#147D74;--warn:#C0392B;--warn-bg:#FDF0EE;
+  --oxide:linear-gradient(90deg,#C9A227 0%,#C2497B 32%,#4457C4 66%,#1E9E8E 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.page{max-width:940px;margin:0 auto;padding:36px 24px 80px}
+header.traveler{border:1px solid var(--line);background:var(--card);border-radius:4px;overflow:hidden;margin-bottom:28px}
+.oxide-rule{height:5px;background:var(--oxide)}
+.head-main{padding:18px 24px 14px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--steel);text-transform:uppercase}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:30px;letter-spacing:-.01em;margin:2px 0 6px}
+.head-meta{display:flex;flex-wrap:wrap;gap:6px 20px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--steel)}
+.head-meta b{color:var(--ink)}
+section.op{margin:30px 0}
+.op-head{display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:7px;margin-bottom:14px}
+.op-chip{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;background:var(--ink);color:#fff;padding:3px 10px;border-radius:3px;position:relative;top:-1px}
+.op-chip::after{content:"";display:block;height:2px;background:var(--oxide);position:absolute;left:0;right:0;bottom:-2px}
+.op-head h2{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700}
+.op p{margin:9px 0;max-width:74ch}
+table{width:100%;border-collapse:collapse;margin:12px 0;background:var(--card);font-size:13.5px}
+th{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel);text-align:left;padding:7px 10px;border-bottom:2px solid var(--ink)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+td.num{font-family:'IBM Plex Mono',monospace;text-align:right;white-space:nowrap}
+.dim{color:var(--steel)}
+ol.steps{counter-reset:s;list-style:none;margin:12px 0}
+ol.steps li{counter-increment:s;position:relative;padding:9px 12px 9px 50px;border:1px solid var(--line);border-bottom:none;background:var(--card)}
+ol.steps li:first-child{border-radius:4px 4px 0 0}
+ol.steps li:last-child{border-bottom:1px solid var(--line);border-radius:0 0 4px 4px}
+ol.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;left:13px;top:10px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;color:var(--teal)}
+.note{border:1px solid var(--line);border-left:4px solid var(--teal);background:var(--card);border-radius:4px;padding:11px 15px;margin:14px 0;font-size:13.5px}
+.note .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--teal);font-weight:600;text-transform:uppercase}
+.flag{border:1px solid var(--warn);border-left-width:4px;background:var(--warn-bg);border-radius:4px;padding:11px 15px;margin:14px 0;font-size:13.5px}
+.flag .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--warn);font-weight:600;text-transform:uppercase}
+
+/* calculator */
+.calc{border:1px solid var(--line);border-radius:4px;background:var(--card);overflow:hidden}
+#viz{width:100%;height:440px;display:block;background:#EEF1F4;cursor:grab;touch-action:none}
+.calc-ui{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line)}
+.ctrls{padding:16px 20px;border-right:1px solid var(--line)}
+.ctrl{margin-bottom:10px}
+.ctrl label{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--steel);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.ctrl label output{color:var(--ink);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--teal)}
+.reads{padding:16px 20px}
+.read{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.read:last-child{border-bottom:none}
+.read .k{color:var(--steel)}
+.read .v{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.read .v.bad{color:var(--warn)}
+.read .v.ok{color:var(--teal)}
+#alert{padding:9px 20px;font-family:'IBM Plex Mono',monospace;font-size:12px;display:none;background:var(--warn-bg);color:var(--warn);border-top:1px solid var(--warn)}
+footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media(max-width:700px){.calc-ui{grid-template-columns:1fr}.ctrls{border-right:none;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="traveler">
+  <div class="oxide-rule"></div>
+  <div class="head-main">
+    <div class="eyebrow">Build traveler · Rev B — frame method iteration</div>
+    <h1>Wafer Halo</h1>
+    <div class="head-meta">
+      <span>CONST <b>Ø300 × 0.775 wafer</b></span>
+      <span>VARS <b>R pitch · tilt θ · band Ri/width</b></span>
+      <span>SCOPE <b>frame + bond only — mounting deferred</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ CALCULATOR ============ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">CALC</span><h2>Parametric calculator &amp; 3D check</h2></div>
+  <p>Drag to orbit, scroll to zoom. Frame segments render with the plane-cut taper <em>and</em> the neighbor-clearance cut — the trimmed corner at each leading joint is the fix for the riser/neighbor collision. Red readouts mean a constraint is violated.</p>
+  <div class="calc">
+    <canvas id="viz"></canvas>
+    <div id="alert"></div>
+    <div class="calc-ui">
+      <div class="ctrls">
+        <div class="ctrl"><label>Tilt θ <output id="o_tilt">10°</output></label><input type="range" id="i_tilt" min="3" max="22" step="0.5" value="10"></div>
+        <div class="ctrl"><label>Pitch radius R <output id="o_R">350</output></label><input type="range" id="i_R" min="320" max="400" step="5" value="350"></div>
+        <div class="ctrl"><label>Band inner Ri <output id="o_Ri">248</output></label><input type="range" id="i_Ri" min="235" max="360" step="1" value="248"></div>
+        <div class="ctrl"><label>Band width <output id="o_bw">55</output></label><input type="range" id="i_bw" min="30" max="90" step="5" value="55"></div>
+        <div class="ctrl"><label>Min base thickness <output id="o_tmin">6</output></label><input type="range" id="i_tmin" min="4" max="12" step="0.5" value="6"></div>
+        <div class="ctrl"><label>Bond line <output id="o_bond">1.1</output></label><input type="range" id="i_bond" min="0.4" max="1.3" step="0.1" value="1.1"></div>
+      </div>
+      <div class="reads">
+        <div class="read"><span class="k">Halo OD</span><span class="v" id="r_od">—</span></div>
+        <div class="read"><span class="k">Wafer envelope depth (2r·sinθ + t)</span><span class="v" id="r_depth">—</span></div>
+        <div class="read"><span class="k">Edge swing off ring plane</span><span class="v" id="r_swing">—</span></div>
+        <div class="read"><span class="k">Hide window (radial)</span><span class="v" id="r_hide">—</span></div>
+        <div class="read"><span class="k">Band vs hide window</span><span class="v" id="r_bandok">—</span></div>
+        <div class="read"><span class="k">Neighbor overlap (projected)</span><span class="v" id="r_ovl">—</span></div>
+        <div class="read"><span class="k">Min z-gap between neighbors</span><span class="v" id="r_gap">—</span></div>
+        <div class="read"><span class="k">Segment max thickness (taper)</span><span class="v" id="r_tmax">—</span></div>
+        <div class="read"><span class="k">Bondable land arc (of 40°)</span><span class="v" id="r_land">—</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OP 010: CAD ============ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">OP 010</span><h2>CAD — one segment, 6 features</h2></div>
+  <ol class="steps">
+    <li><b>Variables</b>: <span class="mono">#R, #theta, #Ri, #bw, #tmin, #bond</span> from the calculator above once it looks right.</li>
+    <li><b>Own wafer plane</b>: through the radial line at (<span class="mono">#R</span>, 0), angled <span class="mono">#theta</span> from Top. Offset a copy by <span class="mono">−(0.3875 + #bond)</span> → the <b>land plane</b>.</li>
+    <li><b>Neighbor plane</b>: the own wafer plane, revolved −40° about center (model it directly: radial line at 40°, same angle construction). Offset a copy by <b>−3 mm</b> → the <b>clearance plane</b>.</li>
+    <li><b>Blank</b>: sector 40° × Ri→Ri+bw, extruded tall (60). Flat bottom at <span class="mono">z = −(y_max·tanθ + #bond + #tmin)</span> where y_max = (Ri+bw)·sin20° — this produces the taper with your minimum thickness at the trailing side.</li>
+    <li><b>Two cuts</b>: remove everything above the land plane, then everything above the clearance plane. Cut order doesn't matter; the surviving top is bondable only where the land plane governs.</li>
+    <li><b>Dovetails</b> on the radial end faces (12/16 × 8, female +0.25) and you're done. No other features this iteration.</li>
+  </ol>
+  <div class="flag"><span class="tag">Design change vs Rev A</span><br>
+  The neighbor clearance cut (step 3/5) is new and mandatory. Without it, each segment's land near its leading joint rises ~2·ρ·sin20°·tanθ above the adjacent wafer's plane and collides with it (34 mm of interference at θ=10°, ρ=280). The cut costs a ~6° corner of land; ~34° of bondable arc remains.</div>
+</section>
+
+<!-- ============ KEY TEST POINTS ============ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">TEST</span><h2>Key test points — pass all before printing 9</h2></div>
+  <table>
+    <thead><tr><th>#</th><th>Test</th><th>Method</th><th>Pass criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">T1</td><td><b>Neighbor clearance</b></td><td>Print 2 adjacent segments, join, lay a wafer (or 300 mm printed disk) on each land</td><td>≥3 mm air between each riser and the neighboring disk, verified with a feeler or by eye against a 3 mm shim</td></tr>
+      <tr><td class="mono">T2</td><td>Dovetail fit</td><td>20 mm joint coupons at 0.15 / 0.25 / 0.35 clearance</td><td>Hand-press with a click, zero rattle, survives 20 cycles</td></tr>
+      <tr><td class="mono">T3</td><td><b>Bond shear + thermal cycle</b></td><td>Bond a wafer shard or glass slide to a printed coupon with the chosen adhesive; hang 500 g from it in shear; cycle 10↔30 °C ×5 (garage day/night does this for free)</td><td>Zero creep marks at a witness line; no edge lifting or crazing after cycling</td></tr>
+      <tr><td class="mono">T4</td><td>Land flatness</td><td>Straightedge across a printed land, feeler gauge</td><td>≤0.15 mm stair-stepping; one block-sand pass allowed</td></tr>
+      <tr><td class="mono">T5</td><td>Taper minimum</td><td>Caliper the trailing edge of a printed segment</td><td>≥ #tmin; no see-through walls in the slicer preview at the thin end</td></tr>
+      <tr><td class="mono">T6</td><td>Centering repeatability</td><td>Jig a dry wafer 3× on one segment, pencil-witness the edge each time</td><td>All witness marks within 0.5 mm band</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><span class="tag">Why T3 is the gate</span><br>
+  Gravity shear on the bond is ~0.6 kPa against a ~500 kPa capability — the load case that matters is the 10–30 °C swing driving ~80 µm of differential CTE slip at the bond ends. A compliant bond (foam tape or SMP) absorbs that as a few % shear strain; a rigid bond puts it into the silicon. T3 with real thermal cycles is the only test that proves your specific adhesive + your specific print surface. Full-surface adhesive coverage adds nothing: area was never the limit, and longer bonds see <em>more</em> end slip.</div>
+</section>
+
+<!-- ============ BOND ============ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">OP 020</span><h2>Bond — bench, one station at a time</h2></div>
+  <ol class="steps">
+    <li>IPA-wipe land and wafer contact zone; let flash.</li>
+    <li><b>Tape path</b>: two 20–25 mm strips arced on the land, ≥5 mm inside its boundary, roller-pressed. Liners off only with wafer in hand. <b>Liquid path (SMP)</b>: serpentine bead, 5 mm inside the land edge; Ø4 × #bond printed nubs (3×) set the bondline.</li>
+    <li>Rest wafer edge on the jig's downhill fence first, lower like closing a book. Confirm both fences touch <em>before</em> full contact — tape gives one attempt.</li>
+    <li>Press over the land through a foam pad (tape: 15 s firm; SMP: clamp to nub contact + ¼ turn, 24 h in jig).</li>
+    <li>Repeat ×9, then join the ring.</li>
+  </ol>
+</section>
+
+<!-- ============ SHOPPING LIST ============ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">SHOP</span><h2>Home Depot list</h2></div>
+  <table>
+    <thead><tr><th>Item</th><th>Where / note</th><th>Path</th></tr></thead>
+    <tbody>
+      <tr><td><b>Scotch-Mount Extreme double-sided tape, 1 in.</b> (3M 414, ~1.1 mm)</td><td>Paint dept, tape aisle — shelf staple; grab 2–3 packs (~0.6 m/station)</td><td class="mono">TAPE (primary)</td></tr>
+      <tr><td>3M VHB 4910, ¾ in. × 15 yd (1.0 mm, clear)</td><td>HD carries it but often online/ship-to-store — check app before driving; Scotch-Mount Extreme is the same acrylic-foam family and is on the shelf</td><td class="mono">TAPE (alt)</td></tr>
+      <tr><td><b>Loctite PL Premium Max, 9 oz</b> (SMP chemistry)</td><td>Construction adhesive aisle — this is the shelf-available MS-polymer; 20 min reposition, 24 h cure</td><td class="mono">LIQUID</td></tr>
+      <tr><td>Mineral spirits</td><td>Paint dept — PL Premium Max cleanup</td><td class="mono">LIQUID</td></tr>
+      <tr><td>91%+ isopropyl alcohol + lint-free rags</td><td>Paint / cleaning</td><td class="mono">BOTH</td></tr>
+      <tr><td>Nitrile gloves, painter's tape, small foam sheet (press pad)</td><td>Paint dept</td><td class="mono">BOTH</td></tr>
+      <tr><td>500 g-ish weight for T3 (any small clamp/weight)</td><td>You likely own this</td><td class="mono">TEST</td></tr>
+    </tbody>
+  </table>
+  <p class="dim">Not at HD: filament (you have it), wafers, feeler gauges (Harbor Freight/auto parts if you don't own a set).</p>
+</section>
+
+<footer>
+  <span>HALO-001 · REV B · frame-method iteration</span>
+  <span>datum plane cut + neighbor clearance cut + compliant bond</span>
+</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const WR=150, WT=0.775, N=9, SEG=2*Math.PI/N, HALF=SEG/2, CLR=3;
+const canvas=document.getElementById('viz');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0xEEF1F4);
+const camera=new THREE.PerspectiveCamera(40,2,1,6000);
+scene.add(new THREE.AmbientLight(0xffffff,0.55));
+const key=new THREE.DirectionalLight(0xffffff,0.7); key.position.set(400,600,800); scene.add(key);
+const fill=new THREE.DirectionalLight(0xffffff,0.3); fill.position.set(-500,-200,400); scene.add(fill);
+
+let az=0.6, pol=1.05, dist=1500, group=new THREE.Group(); scene.add(group);
+function placeCam(){
+  camera.position.set(dist*Math.sin(pol)*Math.cos(az), dist*Math.sin(pol)*Math.sin(az), dist*Math.cos(pol));
+  camera.up.set(0,0,1); camera.lookAt(0,0,0);
+}
+let drag=false,px=0,py=0;
+canvas.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-px)*0.008;pol=Math.min(2.6,Math.max(0.3,pol-(e.clientY-py)*0.008));px=e.clientX;py=e.clientY;placeCam();});
+canvas.addEventListener('pointerup',()=>drag=false);
+canvas.addEventListener('wheel',e=>{e.preventDefault();dist=Math.min(3500,Math.max(600,dist*(1+e.deltaY*0.001)));placeCam();},{passive:false});
+
+const P={tilt:10,R:350,Ri:248,bw:55,tmin:6,bond:1.1};
+
+// z of wafer k's plane at global (x,y): plane through (R cos(ka), R sin(ka)) tilted th about its radial axis.
+// local tangential coord = (-sin(ka), cos(ka))·(p - c); z = t_local * tan(th) (leading edge +)
+function planeZ(x,y,k,th){
+  const a=k*SEG, tl=-Math.sin(a)*(x-P.R*Math.cos(a))+Math.cos(a)*(y-P.R*Math.sin(a));
+  return tl*Math.tan(th);
+}
+function inFootprint(x,y,k,th){ // inside wafer k's projected ellipse
+  const a=k*SEG, c=Math.cos(a), s=Math.sin(a);
+  const xr=c*x+s*y-P.R, yt=(-s*x+c*y)/Math.cos(th); // undo tangential compression
+  return (xr*xr+yt*yt)<=WR*WR;
+}
+function hideWindow(th){ // radial coverage range at joint meridian (bisection)
+  const m=HALF, b=WR*Math.cos(th);
+  const f=p=>Math.pow((p*Math.cos(m)-P.R)/WR,2)+Math.pow(p*Math.sin(m)/b,2)-1;
+  function bis(lo,hi){for(let i=0;i<50;i++){const md=(lo+hi)/2;(f(lo)*f(md)<=0)?hi=md:lo=md;}return (lo+hi)/2;}
+  return [bis(P.R*0.55,P.R), bis(P.R,P.R*1.35)];
+}
+
+function buildScene(){
+  while(group.children.length) group.remove(group.children[0]);
+  const th=P.tilt*Math.PI/180, Ro=P.Ri+P.bw;
+  const yMax=Ro*Math.sin(HALF);
+  const zBot=-(yMax*Math.tan(th)+P.bond+P.tmin);
+  // ---- segments ----
+  const NR=10, NA=40;
+  const segMat=new THREE.MeshPhongMaterial({color:0x33383D,shininess:12,side:THREE.DoubleSide});
+  const topZ=(x,y)=>{
+    // top = min(ownLand, neighborClearance) if inside own footprint, else bottom+tmin ledge (kept simple: bottom)
+    if(!inFootprint(x,y,0,th)) return zBot+2;
+    let z=planeZ(x,y,0,th)-P.bond;
+    if(inFootprint(x,y,1,th)) z=Math.min(z, planeZ(x,y,1,th)-CLR);
+    if(inFootprint(x,y,-1+N,th)&&false) z=z; // trailing neighbor is above; no cut needed
+    return Math.max(z,zBot+1);
+  };
+  const pos=[],idx=[];
+  for(let i=0;i<=NR;i++)for(let j=0;j<=NA;j++){
+    const rho=P.Ri+P.bw*i/NR, a=-HALF+SEG*j/NA;
+    const x=rho*Math.cos(a), y=rho*Math.sin(a);
+    pos.push(x,y,topZ(x,y));
+  }
+  const base=pos.length/3;
+  for(let i=0;i<=NR;i++)for(let j=0;j<=NA;j++){
+    const rho=P.Ri+P.bw*i/NR, a=-HALF+SEG*j/NA;
+    pos.push(rho*Math.cos(a),rho*Math.sin(a),zBot);
+  }
+  function quad(a,b,c,d){idx.push(a,b,c,a,c,d);}
+  for(let i=0;i<NR;i++)for(let j=0;j<NA;j++){
+    const A=i*(NA+1)+j;
+    quad(A,A+1,A+NA+2,A+NA+1);                       // top
+    const B=base+A; quad(B+NA+1,B+NA+2,B+1,B);       // bottom
+  }
+  for(let j=0;j<NA;j++){ // inner & outer walls
+    const A=j,B=base+j; quad(B,B+1,A+1,A);
+    const C=NR*(NA+1)+j,D=base+NR*(NA+1)+j; quad(C,C+1,D+1,D);
+  }
+  for(let i=0;i<NR;i++){ // end walls
+    const A=i*(NA+1),B=base+i*(NA+1); quad(A,A+NA+1,B+NA+1,B);
+    const C=i*(NA+1)+NA,D=base+i*(NA+1)+NA; quad(D,D+NA+1,C+NA+1,C);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setIndex(idx); g.computeVertexNormals();
+  for(let k=0;k<N;k++){
+    const m=new THREE.Mesh(g,segMat); m.rotation.z=k*SEG; group.add(m);
+  }
+  // ---- wafers ----
+  const wg=new THREE.CylinderGeometry(WR,WR,WT,72);
+  const wm=new THREE.MeshPhongMaterial({color:0xA8B2BB,shininess:95,specular:0x8899AA});
+  for(let k=0;k<N;k++){
+    const w=new THREE.Mesh(wg,wm);
+    w.rotation.x=Math.PI/2;                 // disc into XY plane
+    const p=new THREE.Group(); p.add(w);
+    p.position.set(P.R,0,0); p.rotation.x=th;   // tilt about local radial (X) axis
+    const q=new THREE.Group(); q.add(p); q.rotation.z=k*SEG;
+    group.add(q);
+  }
+  // ---- readouts ----
+  const [hi,ho]=hideWindow(th);
+  const chord=2*P.R*Math.sin(Math.PI/N);
+  const swing=WR*Math.sin(th);
+  const bandOK=(P.Ri>=hi-0.5)&&(Ro<=ho+0.5);
+  // bondable arc: leading land ends where neighbor footprint begins at band radii (numeric)
+  let lead=HALF;
+  for(let a=0;a<=HALF;a+=0.002){
+    const rho=(P.Ri+Ro)/2, x=rho*Math.cos(a), y=rho*Math.sin(a);
+    if(inFootprint(x,y,1,th)){lead=a;break;}
+  }
+  const landArc=(HALF+lead)*180/Math.PI;
+  const set=(id,v,cls)=>{const e=document.getElementById(id);e.textContent=v;e.className='v'+(cls?' '+cls:'');};
+  set('r_od',(2*(P.R+WR*Math.cos(th))).toFixed(0)+' mm');
+  set('r_depth',(2*WR*Math.sin(th)+WT).toFixed(1)+' mm');
+  set('r_swing','±'+swing.toFixed(1)+' mm');
+  set('r_hide',hi.toFixed(0)+' – '+ho.toFixed(0)+' mm');
+  set('r_bandok',bandOK?'HIDDEN ✓':'FRAME VISIBLE ✗',bandOK?'ok':'bad');
+  set('r_ovl',(2*WR*Math.cos(th)-chord).toFixed(1)+' mm');
+  set('r_gap',(2*hi*Math.sin(HALF)*Math.tan(th)).toFixed(1)+' mm');
+  set('r_tmax',(P.tmin+2*yMax*Math.tan(th)+P.bond).toFixed(1)+' mm');
+  set('r_land',landArc.toFixed(0)+'°');
+  const al=document.getElementById('alert');
+  if(!bandOK){al.style.display='block';al.textContent='⚠ Band ['+P.Ri+'–'+Ro.toFixed(0)+'] exits hide window ['+hi.toFixed(0)+'–'+ho.toFixed(0)+'] — frame will show at joints.';}
+  else al.style.display='none';
+}
+
+function bind(id,key,out,fmt){
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{P[key]=parseFloat(el.value);document.getElementById(out).textContent=fmt(P[key]);buildScene();});
+}
+bind('i_tilt','tilt','o_tilt',v=>v+'°');
+bind('i_R','R','o_R',v=>v);
+bind('i_Ri','Ri','o_Ri',v=>v);
+bind('i_bw','bw','o_bw',v=>v);
+bind('i_tmin','tmin','o_tmin',v=>v);
+bind('i_bond','bond','o_bond',v=>v.toFixed(1));
+
+function resize(){
+  const w=canvas.clientWidth,h=canvas.clientHeight;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize',()=>{resize();});
+resize(); placeCam(); buildScene();
+(function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);})();
+})();
+</script>
+</body>
+</html>
