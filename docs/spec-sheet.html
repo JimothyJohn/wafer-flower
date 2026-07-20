@@ -1,0 +1,366 @@
+<title>Wafer Halo WH-B — Structural Capability & Handling Specification</title>
+<style>
+:root{
+  --ground:#F7F8F9; --surface:#FFFFFF; --sunk:#F1F3F5;
+  --ink:#1B1F23; --muted:#5C6670; --faint:#8A939B;
+  --line:#DCE1E6; --line-strong:#B9C2CA;
+  --accent:#147D74; --accent-soft:#E4F0EE;
+  --crit:#B4362A; --crit-soft:#FBEDEB;
+  --caut:#8A5D00; --caut-soft:#FBF3E2;
+  --pass:#1B6E54; --pass-soft:#E6F3ED;
+  --oxide:linear-gradient(90deg,#C9A227 0%,#C2497B 32%,#4457C4 66%,#1E9E8E 100%);
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0E1113; --surface:#171B1E; --sunk:#121619;
+    --ink:#E4E9ED; --muted:#8A949D; --faint:#6B757D;
+    --line:#252B30; --line-strong:#39434A;
+    --accent:#3FB0A4; --accent-soft:#122A29;
+    --crit:#E8695C; --crit-soft:#2B1614;
+    --caut:#D6A02E; --caut-soft:#2A2113;
+    --pass:#4CBF95; --pass-soft:#12261F;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1113; --surface:#171B1E; --sunk:#121619;
+  --ink:#E4E9ED; --muted:#8A949D; --faint:#6B757D;
+  --line:#252B30; --line-strong:#39434A;
+  --accent:#3FB0A4; --accent-soft:#122A29;
+  --crit:#E8695C; --crit-soft:#2B1614;
+  --caut:#D6A02E; --caut-soft:#2A2113;
+  --pass:#4CBF95; --pass-soft:#12261F;
+}
+:root[data-theme="light"]{
+  --ground:#F7F8F9; --surface:#FFFFFF; --sunk:#F1F3F5;
+  --ink:#1B1F23; --muted:#5C6670; --faint:#8A939B;
+  --line:#DCE1E6; --line-strong:#B9C2CA;
+  --accent:#147D74; --accent-soft:#E4F0EE;
+  --crit:#B4362A; --crit-soft:#FBEDEB;
+  --caut:#8A5D00; --caut-soft:#FBF3E2;
+  --pass:#1B6E54; --pass-soft:#E6F3ED;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:15px; line-height:1.6;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums;
+}
+.sheet{max-width:1000px;margin:0 auto;padding:0 20px 96px}
+
+/* ---------- masthead ---------- */
+.oxide{height:4px;background:var(--oxide)}
+header{
+  border:1px solid var(--line); border-top:none; background:var(--surface);
+  padding:22px 26px 20px; display:flex; flex-wrap:wrap; gap:20px 40px;
+  justify-content:space-between; align-items:flex-end;
+}
+.pn{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-family:var(--mono);font-size:27px;font-weight:700;letter-spacing:-.02em;margin:6px 0 4px;text-wrap:balance}
+.sub{color:var(--muted);font-size:14px;max-width:52ch}
+.rev{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:right;line-height:1.85;white-space:nowrap}
+.rev b{color:var(--ink);font-weight:600}
+
+/* ---------- key figures ---------- */
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:1px solid var(--line);border-top:none;background:var(--surface)}
+.key{padding:13px 18px;border-right:1px solid var(--line)}
+.key:last-child{border-right:none}
+.key .kv{font-family:var(--mono);font-size:21px;font-weight:700;letter-spacing:-.02em}
+.key .kl{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin-top:3px}
+
+/* ---------- sections ---------- */
+section{margin-top:40px}
+.sh{display:flex;align-items:baseline;gap:13px;border-bottom:1px solid var(--line-strong);padding-bottom:8px;margin-bottom:6px}
+.sn{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--accent);letter-spacing:.1em;white-space:nowrap}
+.sh h2{font-family:var(--mono);font-size:17px;font-weight:700;letter-spacing:-.01em;margin:0;text-wrap:balance}
+section > p{max-width:68ch;color:var(--muted);margin:12px 0}
+section > p strong{color:var(--ink);font-weight:600}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:2px;background:var(--surface);margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+caption{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);padding:11px 15px 0}
+th{
+  font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:10px 15px;border-bottom:1px solid var(--line-strong);font-weight:600;white-space:nowrap;
+}
+td{padding:9px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+td.sym,td.n{font-family:var(--mono);white-space:nowrap}
+td.n{text-align:right;font-size:12.5px}
+td.sym{color:var(--accent);font-size:12px}
+td.cond{color:var(--muted);font-size:12.5px}
+.rowhead td{background:var(--sunk);font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600}
+
+/* ---------- pills ---------- */
+.p{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:2px 7px;border-radius:2px;white-space:nowrap}
+.p.crit{background:var(--crit-soft);color:var(--crit)}
+.p.caut{background:var(--caut-soft);color:var(--caut)}
+.p.pass{background:var(--pass-soft);color:var(--pass)}
+
+/* ---------- callouts ---------- */
+.box{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--surface);border-radius:2px;padding:14px 17px;margin:16px 0;font-size:13.5px}
+.box.crit{border-left-color:var(--crit);background:var(--crit-soft)}
+.box.caut{border-left-color:var(--caut);background:var(--caut-soft)}
+.box .bt{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--accent);display:block;margin-bottom:5px}
+.box.crit .bt{color:var(--crit)} .box.caut .bt{color:var(--caut)}
+.box p{margin:0;max-width:70ch}
+.box p + p{margin-top:9px}
+
+/* ---------- rules list ---------- */
+ul.rules{list-style:none;margin:14px 0;padding:0;display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+ul.rules li{background:var(--surface);padding:11px 16px;display:flex;gap:14px;align-items:baseline;font-size:13.5px}
+ul.rules li .tag{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;flex:0 0 62px;padding-top:2px}
+.tag.no{color:var(--crit)} .tag.ok{color:var(--pass)} .tag.care{color:var(--caut)}
+ul.rules li span:last-child{max-width:66ch}
+ul.rules li b{font-weight:600}
+
+footer{margin-top:52px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+sup{font-family:var(--mono);font-size:9.5px;color:var(--accent);font-weight:700}
+.notes{font-size:12.5px;color:var(--muted);max-width:74ch}
+.notes p{margin:7px 0}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:640px){
+  header{padding:18px}
+  .rev{text-align:left}
+  h1{font-size:22px}
+}
+</style>
+
+<div class="oxide"></div>
+<div class="sheet">
+
+<header>
+  <div>
+    <div class="pn">WH-B Series · Silicon Wafer Halo</div>
+    <h1>Structural Capability &amp; Handling Specification</h1>
+    <div class="sub">Nine overlapping Ø300 mm silicon wafers on a printed segmented ring, joined by dovetails and bonded with compliant adhesive. This sheet states what the assembly withstands and what it must not be asked to do.</div>
+  </div>
+  <div class="rev">
+    REV <b>B</b><br>
+    STATUS <b>Pre-production</b><br>
+    CONFIG <b>WH-300-09-10</b><br>
+    BASIS <b>Analysis, not yet test-verified</b>
+  </div>
+</header>
+
+<div class="keys">
+  <div class="key"><div class="kv">995 mm</div><div class="kl">Outside dia.</div></div>
+  <div class="key"><div class="kv">2.29 kg</div><div class="kl">Assembly mass</div></div>
+  <div class="key"><div class="kv">52.9 mm</div><div class="kl">Wall standoff</div></div>
+  <div class="key"><div class="kv">1.5 N</div><div class="kl">Max wafer touch</div></div>
+  <div class="key"><div class="kv">2.0×</div><div class="kl">Lowest margin</div></div>
+</div>
+
+<div class="box crit">
+  <span class="bt">Read this first</span>
+  <p><strong>The silicon is not the fragile part of this design — the joint is, and the exposed wafer face is.</strong> Every adhesive and gravity load in this assembly runs at 47× to 4000× margin. Two things do not: the printed dovetail at the ring joints (2.0× on a single-point hang), and the unsupported wafer area, where a <strong>1.5 N push — about 150 g, a firm fingertip — reaches the fracture allowable.</strong></p>
+  <p>Handle it by the frame. Hang it from two points. Do not hang anything from it.</p>
+</div>
+
+<!-- ================= 1 ================= -->
+<section>
+  <div class="sh"><span class="sn">§ 1</span><h2>Configuration range</h2></div>
+  <p>The design is parametric. Ratings in §2–§5 are stated for the standard configuration <strong>WH-300-09-10</strong> and scale with the parameters below. Wafer diameter drives nearly everything: mass rises with D²t, and joint stress rises with it.</p>
+  <div class="tw">
+  <table>
+    <caption>Table 1 — Configuration envelope and resulting characteristics</caption>
+    <thead><tr><th>Wafer</th><th>Segments</th><th>Tilt</th><th class="n">Outside dia.</th><th class="n">Standoff</th><th class="n">Mass</th><th class="n">Wafer 1st mode<sup>4</sup></th><th>Joint margin</th></tr></thead>
+    <tbody>
+      <tr><td class="sym">Ø150 × 0.675</td><td class="n">9</td><td class="n">10°</td><td class="n">498 mm</td><td class="n">26.7 mm</td><td class="n">0.45 kg</td><td class="n">85 Hz</td><td><span class="p pass">20.7×</span></td></tr>
+      <tr><td class="sym">Ø200 × 0.725</td><td class="n">9</td><td class="n">10°</td><td class="n">667 mm</td><td class="n">35.5 mm</td><td class="n">0.85 kg</td><td class="n">51 Hz</td><td><span class="p pass">8.2×</span></td></tr>
+      <tr><td class="sym">Ø300 × 0.775</td><td class="n">9</td><td class="n">10°</td><td class="n">995 mm</td><td class="n">52.9 mm</td><td class="n">2.29 kg</td><td class="n">24 Hz</td><td><span class="p caut">2.0×</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="tw">
+  <table>
+    <caption>Table 2 — Adjustable parameters</caption>
+    <thead><tr><th>Symbol</th><th>Parameter</th><th class="n">Min</th><th class="n">Typ</th><th class="n">Max</th><th>Unit</th><th>Effect on ratings</th></tr></thead>
+    <tbody>
+      <tr><td class="sym">N</td><td>Segment count</td><td class="n">6</td><td class="n">9</td><td class="n">14</td><td>—</td><td class="cond">More segments = more joints; each is a potential weak point</td></tr>
+      <tr><td class="sym">θ</td><td>Wafer tilt</td><td class="n">3</td><td class="n">10</td><td class="n">22</td><td>deg</td><td class="cond">Aesthetic only. Costs ~6.5 % mass and ~8 % joint margin per degree</td></tr>
+      <tr><td class="sym">R</td><td>Pitch radius</td><td class="n">0.6·r</td><td class="n">350</td><td class="n">2.2·r</td><td>mm</td><td class="cond">Must satisfy R &lt; r·cosθ / sin(180/N) or the wafers do not overlap</td></tr>
+      <tr><td class="sym">t<sub>b</sub></td><td>Bondline thickness</td><td class="n">0.4</td><td class="n">1.1</td><td class="n">1.3</td><td>mm</td><td class="cond">Sets the temperature range in §3. Thicker is strictly better</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section>
+  <div class="sh"><span class="sn">§ 2</span><h2>Absolute maximum ratings</h2></div>
+  <p>Stresses beyond these values cause permanent damage. These are limit values, not operating conditions — exposure at these levels for extended periods will degrade the assembly even if nothing breaks immediately.</p>
+  <div class="tw">
+  <table>
+    <caption>Table 3 — Absolute maximum ratings, WH-300-09-10</caption>
+    <thead><tr><th>Symbol</th><th>Parameter</th><th class="n">Rating</th><th>Unit</th><th>Conditions / failure mode</th></tr></thead>
+    <tbody>
+      <tr class="rowhead"><td colspan="5">Mechanical</td></tr>
+      <tr><td class="sym">F<sub>pt</sub></td><td>Point force on unsupported wafer</td><td class="n">1.5</td><td>N</td><td class="cond">At the free outer edge. Reaches the 30 MPa edge-flaw allowable — silicon fractures without warning<sup>1</sup></td></tr>
+      <tr><td class="sym">F<sub>pt,land</sub></td><td>Point force over the bond land</td><td class="n">50</td><td>N</td><td class="cond">Wafer fully backed by the frame. This is the only place it is safe to press</td></tr>
+      <tr><td class="sym">m<sub>add</sub></td><td>Added suspended mass</td><td class="n">0</td><td>kg</td><td class="cond"><span class="p crit">Zero</span> The joint is already at its 2× design factor carrying its own weight<sup>2</sup></td></tr>
+      <tr><td class="sym">M<sub>j</sub></td><td>Ring joint bending moment</td><td class="n">5.1</td><td>N·m</td><td class="cond">Dovetail root yield. Single-point hang already applies 2.5 N·m</td></tr>
+      <tr><td class="sym">a<sub>shock</sub></td><td>Mechanical shock</td><td class="n">Any impact</td><td>—</td><td class="cond"><span class="p crit">None</span> Silicon is brittle and does not deform before failing. A drop is a total loss</td></tr>
+      <tr class="rowhead"><td colspan="5">Thermal</td></tr>
+      <tr><td class="sym">T<sub>max</sub></td><td>Ambient temperature, upper</td><td class="n">60</td><td>°C</td><td class="cond">PETG glass transition ≈ 80 °C; the frame creeps and the taper sags before that</td></tr>
+      <tr><td class="sym">T<sub>min</sub></td><td>Ambient temperature, lower</td><td class="n">−20</td><td>°C</td><td class="cond">Acrylic foam adhesive stiffens sharply; it stops absorbing the CTE mismatch</td></tr>
+      <tr><td class="sym">ΔT<sub>inst</sub></td><td>Excursion from install temperature</td><td class="n">±50</td><td>K</td><td class="cond">25 % bond shear strain at t<sub>b</sub> = 1.1 mm. Halve this for a 0.5 mm bondline<sup>3</sup></td></tr>
+      <tr class="rowhead"><td colspan="5">Environmental</td></tr>
+      <tr><td class="sym">E<sub>sun</sub></td><td>Direct sunlight</td><td class="n">Not rated</td><td>—</td><td class="cond">Mirror-finish silicon absorbs and re-radiates heat; PETG yellows and embrittles under UV</td></tr>
+      <tr><td class="sym">RH</td><td>Relative humidity</td><td class="n">85</td><td>%</td><td class="cond">Non-condensing. Condensation on the land wicks into the bondline</td></tr>
+      <tr><td class="sym">f<sub>vib</sub></td><td>Sustained structural vibration</td><td class="n">Not rated</td><td>—</td><td class="cond">The wafer overhang resonates at 24 Hz — inside the range of laundry machines, garage doors and subwoofers<sup>4</sup></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section>
+  <div class="sh"><span class="sn">§ 3</span><h2>Recommended operating conditions</h2></div>
+  <p>Keep the assembly inside this envelope and every margin in §5 holds for the life of the piece.</p>
+  <div class="tw">
+  <table>
+    <caption>Table 4 — Recommended operating conditions</caption>
+    <thead><tr><th>Symbol</th><th>Parameter</th><th class="n">Min</th><th class="n">Typ</th><th class="n">Max</th><th>Unit</th></tr></thead>
+    <tbody>
+      <tr><td class="sym">T<sub>a</sub></td><td>Ambient temperature</td><td class="n">10</td><td class="n">21</td><td class="n">40</td><td>°C</td></tr>
+      <tr><td class="sym">T<sub>inst</sub></td><td>Temperature at time of bonding</td><td class="n">15</td><td class="n">21</td><td class="n">25</td><td>°C</td></tr>
+      <tr><td class="sym">ΔT<sub>inst</sub></td><td>Excursion from install temperature</td><td class="n">−20</td><td class="n">±10</td><td class="n">+20</td><td>K</td></tr>
+      <tr><td class="sym">RH</td><td>Relative humidity</td><td class="n">20</td><td class="n">45</td><td class="n">70</td><td>%</td></tr>
+      <tr><td class="sym">F<sub>anchor</sub></td><td>Wall anchor rating, each, 2 used</td><td class="n">90</td><td class="n">150</td><td class="n">—</td><td>N</td></tr>
+      <tr><td class="sym">d<sub>wall</sub></td><td>Clearance in front of the wall</td><td class="n">60</td><td class="n">80</td><td class="n">—</td><td>mm</td></tr>
+      <tr><td class="sym">α<sub>level</sub></td><td>Mounting level tolerance</td><td class="n">−2</td><td class="n">0</td><td class="n">+2</td><td>deg</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section>
+  <div class="sh"><span class="sn">§ 4</span><h2>Load capability, per bonded station</h2></div>
+  <p>Each wafer is held by roughly 96 cm² of compliant adhesive. Its raw capacity is enormous; the useful number is the sustained-load allowable, which is creep-limited rather than strength-limited.</p>
+  <div class="tw">
+  <table>
+    <caption>Table 5 — Adhesive capability, Ø300 station, 96 cm² land</caption>
+    <thead><tr><th>Loading</th><th class="n">Allowable stress</th><th class="n">Force capacity</th><th class="n">Equivalent</th><th>Basis</th></tr></thead>
+    <tbody>
+      <tr><td>Short-term shear</td><td class="n">500 kPa</td><td class="n">4800 N</td><td class="n">489 kg</td><td class="cond">Acrylic foam ultimate — never approach this</td></tr>
+      <tr><td>Sustained shear</td><td class="n">15 kPa</td><td class="n">144 N</td><td class="n">14.7 kg</td><td class="cond">Creep-limited design value</td></tr>
+      <tr><td>Sustained tensile / peel</td><td class="n">10 kPa</td><td class="n">96 N</td><td class="n">9.8 kg</td><td class="cond">Creep-limited design value</td></tr>
+      <tr><td><b>Actual applied</b></td><td class="n">0.13 kPa</td><td class="n">1.25 N</td><td class="n">0.128 kg</td><td class="cond"><span class="p pass">115× on the sustained allowable</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="box">
+    <span class="bt">Why the bond is not the concern</span>
+    <p>The adhesive could hold roughly a hundred times the wafer's weight indefinitely. Gravity was never the design load — differential thermal expansion is. See §5.</p>
+  </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section>
+  <div class="sh"><span class="sn">§ 5</span><h2>Where the load actually goes</h2></div>
+  <p>Ranked by margin. Anything below 5× deserves attention; anything below 2× is a defect.</p>
+  <div class="tw">
+  <table>
+    <caption>Table 6 — Margin summary, WH-300-09-10</caption>
+    <thead><tr><th>Load path</th><th class="n">Applied</th><th class="n">Allowable</th><th class="n">Margin</th><th>Governing mechanism</th></tr></thead>
+    <tbody>
+      <tr><td><b>Dovetail joint</b>, single-point hang</td><td class="n">9.7 MPa</td><td class="n">20 MPa</td><td class="n"><span class="p caut">2.0×</span></td><td class="cond">One dovetail spans only 16 mm of the 55 mm band depth</td></tr>
+      <tr><td>Wafer bending, flat during assembly</td><td class="n">3.4 MPa</td><td class="n">30 MPa</td><td class="n"><span class="p pass">8.8×</span></td><td class="cond">197 mm unsupported overhang under its own weight</td></tr>
+      <tr><td>Bond, thermal shear at ΔT = 20 K</td><td class="n">6.0 kPa</td><td class="n">15 kPa</td><td class="n"><span class="p pass">2.5×</span></td><td class="cond">110 µm of CTE slip across a 1.1 mm bondline</td></tr>
+      <tr><td>Wafer bending, mounted</td><td class="n">0.60 MPa</td><td class="n">30 MPa</td><td class="n"><span class="p pass">50×</span></td><td class="cond">Only the plane-normal component of gravity bends it</td></tr>
+      <tr><td>Bond, peel from CG offset</td><td class="n">0.27 kPa</td><td class="n">10 kPa</td><td class="n"><span class="p pass">37×</span></td><td class="cond">Wafer centroid sits 79 mm outboard of the land centroid</td></tr>
+      <tr><td>Bond, gravity shear</td><td class="n">0.13 kPa</td><td class="n">500 kPa</td><td class="n"><span class="p pass">3800×</span></td><td class="cond">Not a design consideration</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="box caut">
+    <span class="bt">Known limitation — ring joint</span>
+    <p>In the single-dovetail configuration hung from one point, the joint runs at <strong>2.0×</strong> against a printed-PETG allowable, in the print's weak direction, under permanent load. PETG creeps. Every other improvement to this design — a larger wafer, more tilt, moving the bond band outboard — makes this number <em>worse</em>.</p>
+    <p>Mitigate by any one of: <strong>two dovetails per joint face</strong> (restores most of the band depth, ~10× the section modulus); <strong>two hang points at ±50° from top</strong> (drops the moment ~4×); or <strong>resting the ring on a ledge</strong> rather than hanging it, which puts the ring in compression and drives the moment to near zero.</p>
+  </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section>
+  <div class="sh"><span class="sn">§ 6</span><h2>Handling</h2></div>
+  <ul class="rules">
+    <li><span class="tag ok">Do</span><span>Carry the assembly <b>by the printed frame only</b>, supported from below at two or more segments.</span></li>
+    <li><span class="tag ok">Do</span><span>Handle loose wafers <b>by the edge</b>, fingers at the rim, wafer vertical.</span></li>
+    <li><span class="tag ok">Do</span><span>Press only <b>over the bond land</b> — the region where the frame backs the wafer. Everywhere else the wafer is a 0.775 mm unsupported plate.</span></li>
+    <li><span class="tag no">Never</span><span>Touch, lean on, or rest anything against the <b>exposed wafer face</b>. A 150 g fingertip push at the outer edge reaches fracture.</span></li>
+    <li><span class="tag no">Never</span><span><b>Flex a wafer.</b> Silicon gives no warning — no yield, no bend, no crack. It goes from intact to shattered.</span></li>
+    <li><span class="tag no">Never</span><span>Hang, clip, drape or rest <b>anything</b> on the halo. Rated mass is its own, with zero headroom.</span></li>
+    <li><span class="tag no">Never</span><span>Transport assembled. <b>Separate at the dovetails</b> and pack segments individually, wafer-side up, interleaved with foam.</span></li>
+    <li><span class="tag care">Care</span><span>Wafer shards are <b>razor-sharp and near-invisible</b>. If one breaks, treat it as broken glass: gloves, stiff card to sweep, tape to lift fines, then vacuum.</span></li>
+  </ul>
+</section>
+
+<!-- ================= 7 ================= -->
+<section>
+  <div class="sh"><span class="sn">§ 7</span><h2>Mounting</h2></div>
+  <ul class="rules">
+    <li><span class="tag ok">Do</span><span>Use <b>two anchors at ±50° from top</b>, each rated ≥ 90 N (4× the 22.5 N assembly weight). This is the single cheapest structural improvement available.</span></li>
+    <li><span class="tag ok">Do</span><span>Anchor into a <b>stud</b> where possible, or a rated hollow-wall anchor. Adhesive wall hooks are not acceptable.</span></li>
+    <li><span class="tag ok">Do</span><span>Allow <b>60 mm minimum clearance</b> in front of the wall; the wafers swing ±26 mm off the ring plane at θ = 10°.</span></li>
+    <li><span class="tag care">Care</span><span>The assembly centre of mass sits <b>6.5 mm off the wall plane</b>, producing a 0.14 N·m tip-off moment. Anchors must resist pull-out, not just shear.</span></li>
+    <li><span class="tag no">Avoid</span><span>Walls shared with <b>laundry appliances, garage door motors, or speakers</b>. The wafer overhang resonates at 24 Hz, squarely inside that excitation band.</span></li>
+    <li><span class="tag no">Avoid</span><span><b>Direct sunlight</b>, exterior walls prone to condensation, bathrooms, and unconditioned garages or lofts.</span></li>
+    <li><span class="tag no">Avoid</span><span>Mounting <b>above seating, beds, or walkways</b>. This is a brittle assembly at 2.29 kg.</span></li>
+  </ul>
+</section>
+
+<!-- ================= 8 ================= -->
+<section>
+  <div class="sh"><span class="sn">§ 8</span><h2>Cleaning &amp; maintenance</h2></div>
+  <ul class="rules">
+    <li><span class="tag ok">Do</span><span>Dust with <b>dry compressed air</b> at low pressure, held at an angle, from the frame side outward. This is the only no-contact method and should be the default.</span></li>
+    <li><span class="tag ok">Do</span><span>For fingerprints, dampen a microfibre with <b>91 % IPA</b> and wipe <b>only over the supported land area</b>, with the segment removed and lying flat.</span></li>
+    <li><span class="tag no">Never</span><span><b>Spray any liquid</b> at the assembly. It wicks along the wafer underside into the bondline and lifts the adhesive.</span></li>
+    <li><span class="tag no">Never</span><span>Let <b>acetone</b> touch the printed frame — it crazes PETG and softens PLA. It is harmless on silicon, which is exactly how accidents happen.</span></li>
+    <li><span class="tag no">Never</span><span>Use paper towel, abrasive cloth, or glass cleaner on the <b>polished wafer face</b>. The mirror finish scratches permanently and the ammonia attacks the print.</span></li>
+    <li><span class="tag care">Annual</span><span>Inspect per §9. Check anchor torque and dovetail seating; both are quick and both are load-bearing.</span></li>
+  </ul>
+</section>
+
+<!-- ================= 9 ================= -->
+<section>
+  <div class="sh"><span class="sn">§ 9</span><h2>Failure modes &amp; inspection</h2></div>
+  <p>Every mechanism below is slow and visible before it is dangerous, provided someone looks once a year.</p>
+  <div class="tw">
+  <table>
+    <caption>Table 7 — What to look for</caption>
+    <thead><tr><th>Mode</th><th>Early indicator</th><th>Cause</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><b>Joint creep</b></td><td class="cond">Ring visibly out of round; a gap opening at a dovetail; whitening at the dovetail root</td><td class="cond">Sustained bending on a printed joint, §5</td><td class="cond"><span class="p crit">Take down</span> Rebuild with two dovetails or two hang points</td></tr>
+      <tr><td><b>Bond edge lift</b></td><td class="cond">A dark crescent at the land edge; wafer rocks under light finger pressure at the land</td><td class="cond">Thermal cycling beyond ΔT ±50 K, or a contaminated land at assembly</td><td class="cond">Re-bond that station. Do not attempt to press it back down</td></tr>
+      <tr><td><b>Adhesive creep</b></td><td class="cond">A wafer has visibly rotated or slid relative to its witness mark</td><td class="cond">Excess temperature, or a bondline too thin for the land size</td><td class="cond">Re-bond with a thicker bondline</td></tr>
+      <tr><td><b>Frame sag</b></td><td class="cond">Tilt angle no longer uniform between segments; taper thinned at the trailing edge</td><td class="cond">Sustained ambient above 50 °C</td><td class="cond">Relocate the piece; reprint affected segments</td></tr>
+      <tr><td><b>Wafer fracture</b></td><td class="cond">None — silicon fails without precursor</td><td class="cond">Point contact on the unsupported area, impact, or flexing</td><td class="cond"><span class="p crit">Clear as glass</span> Replace the wafer on that segment</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================= notes ================= -->
+<section>
+  <div class="sh"><span class="sn">Notes</span><h2>Basis of ratings</h2></div>
+  <div class="notes">
+    <p><sup>1</sup> Silicon has no single fracture strength; it is flaw-limited and scatters widely. 30 MPa is a conservative design allowable for a handled wafer with a bevelled but unpolished edge. Point-load stress is computed as σ = 6PL/(b<sub>eff</sub>t²) with an effective width of 0.5–1.0 L, giving 1.5–3.0 N at the free edge; the lower bound is quoted.</p>
+    <p><sup>2</sup> At a 2× design factor on printed PETG, the allowable assembly mass through a single centred dovetail is 2.34 kg against an actual 2.29 kg. Headroom is 2 %, which is not headroom.</p>
+    <p><sup>3</sup> Bond shear strain γ = Δα·ΔT·L<sub>max</sub>/t<sub>b</sub>, with Δα ≈ 57 ppm/K and L<sub>max</sub> = 96 mm from the land centroid. Because L<sub>max</sub> and not area sets the stress, <em>a larger bond patch is a worse bond patch</em> — adhesive is applied as two short arcs near the land centroid, never full coverage.</p>
+    <p><sup>4</sup> First bending mode of the unsupported outboard wafer, modelled as a uniform cantilever of length L with E = 130 GPa.</p>
+    <p>All values are derived from a parametric solver, cross-checked against an independent implementation with all outputs matching. <strong>They are analysis, not measurement.</strong> Test gates T1–T7 — neighbour clearance, dovetail fit, adhesive shear with 10–30 °C cycling, land flatness, taper minimum, centring repeatability and the dovetail hang test — must pass before any of this is treated as verified.</p>
+  </div>
+</section>
+
+<footer>
+  <span>WH-B · Structural capability &amp; handling</span>
+  <span>Thermal governs · the joint is the margin · never touch the glass</span>
+</footer>
+
+</div>

@@ -1,0 +1,392 @@
+<title>Wafer Halo — OnShape Variable Studio</title>
+<style>
+:root{
+  --chrome:#EDEFF1; --panel:#FFFFFF; --sunk:#F7F8F9; --rail:#F2F4F6;
+  --line:#D6DBE0; --line-soft:#E6EAEE;
+  --ink:#2A2F34; --muted:#6B747C; --faint:#98A1A9;
+  --blue:#0091DA; --blue-ink:#0071AA; --blue-soft:#E5F4FC;
+  --var:#B2456E; --num:#1B7F5A; --unit:#8A5D00;
+  --ok:#1B7F5A; --ok-soft:#E6F3ED; --warn:#B4362A; --warn-soft:#FBEDEB;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --chrome:#1A1E22; --panel:#22272C; --sunk:#1D2226; --rail:#1E2328;
+  --line:#343B42; --line-soft:#2B3137;
+  --ink:#E2E7EB; --muted:#98A2AA; --faint:#6E787F;
+  --blue:#3EB4EC; --blue-ink:#6FCBF5; --blue-soft:#12303E;
+  --var:#E88AAC; --num:#5FC79B; --unit:#D6A02E;
+  --ok:#5FC79B; --ok-soft:#12291F; --warn:#E8695C; --warn-soft:#2B1614;
+}}
+:root[data-theme="dark"]{
+  --chrome:#1A1E22; --panel:#22272C; --sunk:#1D2226; --rail:#1E2328;
+  --line:#343B42; --line-soft:#2B3137;
+  --ink:#E2E7EB; --muted:#98A2AA; --faint:#6E787F;
+  --blue:#3EB4EC; --blue-ink:#6FCBF5; --blue-soft:#12303E;
+  --var:#E88AAC; --num:#5FC79B; --unit:#D6A02E;
+  --ok:#5FC79B; --ok-soft:#12291F; --warn:#E8695C; --warn-soft:#2B1614;
+}
+:root[data-theme="light"]{
+  --chrome:#EDEFF1; --panel:#FFFFFF; --sunk:#F7F8F9; --rail:#F2F4F6;
+  --line:#D6DBE0; --line-soft:#E6EAEE;
+  --ink:#2A2F34; --muted:#6B747C; --faint:#98A1A9;
+  --blue:#0091DA; --blue-ink:#0071AA; --blue-soft:#E5F4FC;
+  --var:#B2456E; --num:#1B7F5A; --unit:#8A5D00;
+  --ok:#1B7F5A; --ok-soft:#E6F3ED; --warn:#B4362A; --warn-soft:#FBEDEB;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--chrome);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.app{max-width:1180px;margin:0 auto;padding:0 14px 70px}
+
+/* ---- OnShape-ish toolbar ---- */
+.topbar{background:var(--panel);border:1px solid var(--line);border-top:none;
+  display:flex;align-items:center;gap:14px;padding:9px 14px;flex-wrap:wrap}
+.brandmark{width:19px;height:19px;border-radius:3px;background:var(--blue);flex:0 0 auto;
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:11px;font-family:var(--mono)}
+.docname{font-weight:600;font-size:14.5px}
+.docmeta{color:var(--faint);font-size:12px;font-family:var(--mono)}
+.spacer{flex:1}
+.hint{font-size:12px;color:var(--muted)}
+.accentline{height:3px;background:var(--blue)}
+
+.wrap{display:grid;grid-template-columns:216px 1fr;gap:0;border:1px solid var(--line);border-top:none;background:var(--panel)}
+/* ---- left feature tree ---- */
+.tree{background:var(--rail);border-right:1px solid var(--line);padding:12px 0;font-size:13px}
+.tree h4{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);
+  margin:0 0 6px;padding:0 14px;font-weight:700}
+.tree a{display:block;padding:5px 14px 5px 26px;color:var(--ink);text-decoration:none;position:relative}
+.tree a::before{content:"◇";position:absolute;left:12px;color:var(--blue);font-size:10px;top:6px}
+.tree a:hover{background:var(--blue-soft);color:var(--blue-ink)}
+.tree .cnt{color:var(--faint);font-family:var(--mono);font-size:11px;float:right}
+.main{padding:16px 20px 26px;min-width:0}
+
+h1{font-size:19px;font-weight:700;margin:0 0 3px;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:70ch;margin:0 0 16px}
+h2{font-size:15px;font-weight:700;margin:26px 0 3px;scroll-margin-top:12px}
+h2 .gn{font-family:var(--mono);color:var(--blue);font-size:12px;margin-right:7px}
+.gdesc{color:var(--muted);font-size:13px;margin:0 0 10px;max-width:74ch}
+
+/* ---- inputs panel ---- */
+.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px;
+  background:var(--sunk);border:1px solid var(--line-soft);border-radius:3px;padding:12px;margin:12px 0 4px}
+.inp label{display:block;font-family:var(--mono);font-size:11px;color:var(--var);font-weight:600;margin-bottom:3px}
+.inp input{width:100%;font-family:var(--mono);font-size:13px;padding:5px 7px;border:1px solid var(--line);
+  border-radius:2px;background:var(--panel);color:var(--ink)}
+.inp input:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:var(--blue)}
+.inp .u{font-size:10.5px;color:var(--faint);font-family:var(--mono);margin-top:2px;display:block}
+
+/* ---- variable table ---- */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:3px;margin:10px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:820px;background:var(--panel)}
+th{background:var(--sunk);text-align:left;padding:8px 11px;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 11px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--sunk)}
+td.nm{font-family:var(--mono);font-size:12.5px;color:var(--var);font-weight:600;white-space:nowrap}
+td.ex{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+td.val{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--num);white-space:nowrap;font-weight:600}
+td.why{color:var(--muted);font-size:12.5px;min-width:240px}
+td.why b{color:var(--ink);font-weight:600}
+td.cp{width:34px;text-align:right}
+button.copy{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:2px;
+  cursor:pointer;font-size:11px;padding:3px 7px;font-family:var(--mono)}
+button.copy:hover{border-color:var(--blue);color:var(--blue-ink);background:var(--blue-soft)}
+button.copy.done{border-color:var(--ok);color:var(--ok);background:var(--ok-soft)}
+button.copy:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+
+.chk{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:2px}
+.chk.ok{background:var(--ok-soft);color:var(--ok)}
+.chk.bad{background:var(--warn-soft);color:var(--warn)}
+
+.note{border:1px solid var(--line);border-left:3px solid var(--blue);background:var(--sunk);
+  border-radius:2px;padding:11px 14px;margin:14px 0;font-size:13px}
+.note.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.note .t{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--blue);
+  display:block;margin-bottom:4px;font-family:var(--mono)}
+.note.warn .t{color:var(--warn)}
+.note p{margin:0;max-width:74ch} .note p+p{margin-top:8px}
+code{font-family:var(--mono);font-size:12.5px;background:var(--sunk);border:1px solid var(--line-soft);
+  border-radius:2px;padding:1px 4px}
+.eqbox{font-family:var(--mono);font-size:12.5px;background:var(--sunk);border:1px solid var(--line-soft);
+  border-radius:3px;padding:11px 13px;margin:10px 0;overflow-x:auto;white-space:pre;line-height:1.7}
+
+/* ---- arc calculator ---- */
+.arcgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:3px;overflow:hidden;margin:10px 0}
+.arccell{background:var(--panel);padding:11px 13px}
+.arccell .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-family:var(--mono)}
+.arccell .v{font-family:var(--mono);font-size:19px;font-weight:700;margin-top:2px;letter-spacing:-.02em}
+
+/* ---- bottom tab strip ---- */
+.tabs{background:var(--chrome);border:1px solid var(--line);border-top:none;display:flex;gap:2px;
+  padding:5px 8px;overflow-x:auto}
+.tab{font-size:12px;padding:5px 13px;border-radius:3px 3px 0 0;color:var(--muted);white-space:nowrap;
+  border:1px solid transparent}
+.tab.on{background:var(--panel);color:var(--ink);border-color:var(--line);border-bottom-color:var(--panel);font-weight:600}
+footer{padding:14px 2px;color:var(--faint);font-size:11.5px;font-family:var(--mono);display:flex;
+  justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media(max-width:760px){.wrap{grid-template-columns:1fr}.tree{border-right:none;border-bottom:1px solid var(--line)}}
+</style>
+
+<div class="accentline"></div>
+<div class="app">
+
+<div class="topbar">
+  <span class="brandmark">W</span>
+  <span class="docname">Wafer Halo — WH-B</span>
+  <span class="docmeta">Variable Studio 1</span>
+  <span class="spacer"></span>
+  <span class="hint">Edit the inputs — every derived value recomputes. <b>Copy</b> puts the OnShape expression on your clipboard, not the number.</span>
+</div>
+
+<div class="wrap">
+  <nav class="tree">
+    <h4>Variables</h4>
+    <a href="#g1">Inputs <span class="cnt">12</span></a>
+    <a href="#g2">Sector &amp; radii <span class="cnt">4</span></a>
+    <a href="#g3">Arc &amp; chord <span class="cnt">6</span></a>
+    <a href="#g4">Planes &amp; taper <span class="cnt">5</span></a>
+    <a href="#g5">Envelope <span class="cnt">4</span></a>
+    <a href="#g6">Hide window <span class="cnt">7</span></a>
+    <a href="#g7">Ring gear <span class="cnt">6</span></a>
+    <a href="#g8">Features <span class="cnt">2</span></a>
+  </nav>
+
+  <div class="main">
+    <h1>Segment layout, driven by one number: distance from centre</h1>
+    <p class="lede">Everything about a segment's size is a function of its radius ρ and the segment count N. Set those two and the sector angle, arc length, chord, taper, hide window and gear tooth count all fall out. These are the expressions to paste into a Variable Studio so you never type a dimension into a sketch again.</p>
+
+    <h2><span class="gn">Q</span>The one you asked for — arc length at a radius</h2>
+    <p class="gdesc">A segment spans <code>360°/N</code> of arc. At distance ρ from the centre of the flower, its two ends are that angle apart, so:</p>
+    <div class="eqbox">sector angle   φ = 360° / N                     = <span id="e_sector">40°</span>
+arc length     L(ρ) = ρ · φ(in radians)         <span class="dim">← curved length along the band</span>
+chord length   C(ρ) = 2 · ρ · sin(φ/2)          <span class="dim">← straight line end to end</span>
+half-chord     y(ρ) = ρ · sin(φ/2)              <span class="dim">← drives the taper, see #yMax</span></div>
+    <p class="gdesc">Arc is what you need for surface finish, tape runs and gear pitch. Chord is what you need for stock size and print-bed fit. They differ by ~2 % at 40°, which is enough to matter when you are checking whether a segment fits a 256 mm bed.</p>
+    <div class="arcgrid">
+      <div class="arccell"><div class="k">ρ, your input</div><div class="v"><input id="rho_in" value="303" style="width:100%;font:inherit;font-family:var(--mono);border:1px solid var(--line);border-radius:2px;padding:2px 5px;background:var(--panel);color:var(--ink)"></div></div>
+      <div class="arccell"><div class="k">Arc L(ρ)</div><div class="v" id="a_arc">—</div></div>
+      <div class="arccell"><div class="k">Chord C(ρ)</div><div class="v" id="a_chord">—</div></div>
+      <div class="arccell"><div class="k">Half-chord y(ρ)</div><div class="v" id="a_half">—</div></div>
+      <div class="arccell"><div class="k">Sector φ</div><div class="v" id="a_sec">—</div></div>
+    </div>
+    <div class="note"><span class="t">Why the "/ 1 rad" appears in the expression</span>
+      <p>OnShape carries units through every expression, and an angle is a real unit there. <code>#Ri * #sector</code> would give you mm·degrees, which is not a length and OnShape will reject it. Dividing by <code>1 rad</code> converts the angle to a plain number, so the result comes out in mm. This is also why you never need <code>PI</code> anywhere below.</p></div>
+
+    <h2 id="g1"><span class="gn">1</span>Inputs — the twelve you actually turn</h2>
+    <p class="gdesc">Define these first, in this order. OnShape resolves variables top-down, so a variable can only reference ones defined <em>above</em> it. Everything after this group is derived and should never be edited by hand.</p>
+    <div class="inputs" id="inputs"></div>
+    <div class="tw"><table id="t1"></table></div>
+
+    <h2 id="g2"><span class="gn">2</span>Sector &amp; radii</h2>
+    <p class="gdesc">The four values that nearly every later expression depends on.</p>
+    <div class="tw"><table id="t2"></table></div>
+
+    <h2 id="g3"><span class="gn">3</span>Arc &amp; chord</h2>
+    <p class="gdesc">Length of the segment at each radius that matters.</p>
+    <div class="tw"><table id="t3"></table></div>
+
+    <h2 id="g4"><span class="gn">4</span>Planes &amp; taper</h2>
+    <p class="gdesc">The offsets that build the land plane, the clearance plane and the flat bottom. <code>#rise</code> is the number to watch — it is the sole reason the segment is a wedge.</p>
+    <div class="tw"><table id="t4"></table></div>
+
+    <h2 id="g5"><span class="gn">5</span>Envelope &amp; overlap guard</h2>
+    <p class="gdesc">Outside dimensions, plus the guard rail that stops you building a ring whose wafers do not overlap.</p>
+    <div class="tw"><table id="t5"></table></div>
+
+    <h2 id="g6"><span class="gn">6</span>Hide window — closed form</h2>
+    <p class="gdesc">The radial band over which the frame is invisible behind the wafers, measured at the joint meridian where coverage is thinnest. Substituting the wafer's projected ellipse into the joint ray gives a quadratic in ρ, so this solves exactly — no iteration.</p>
+    <div class="eqbox">((ρ·cos(φ/2) − R) / r)²  +  (ρ·sin(φ/2) / (r·cosθ))²  =  1
+
+normalise u = ρ/r, k = R/r  →   A·u² + B·u + C = 0
+  A = cos²(φ/2) + sin²(φ/2)/cos²θ      B = −2·cos(φ/2)·k      C = k² − 1
+  ρ = r · (−B ± √(B² − 4AC)) / (2A)</div>
+    <div class="tw"><table id="t6"></table></div>
+    <div class="note"><span class="t">Why normalise by r first</span>
+      <p>Written directly in millimetres, <code>A</code> comes out in 1/mm² and OnShape has to take a square root of a squared reciprocal length. It can do it, but the expressions get fragile and hard to read. Dividing through by the wafer radius makes A, B, C plain numbers, and you multiply by <code>#r</code> once at the very end. Same answer, far less unit wrangling.</p></div>
+
+    <h2 id="g7"><span class="gn">7</span>Ring gear on the flat-bottom flange</h2>
+    <p class="gdesc">The gear cannot go on either rim — both follow the tilted land and swing out of the ring plane. It lives on the planar flange instead. The critical expression is <code>#teethSeg</code>: <b>the tooth count must be a whole number per segment</b> or the pitch breaks at every joint, and <code>round()</code> is what enforces it.</p>
+    <div class="tw"><table id="t7"></table></div>
+
+    <h2 id="g8"><span class="gn">8</span>Feature placement</h2>
+    <div class="tw"><table id="t8"></table></div>
+
+    <div class="note warn"><span class="t">Paste order matters</span>
+      <p>OnShape evaluates a Variable Studio top to bottom. If <code>#Ro</code> is defined above <code>#Ri</code>, you get an "unresolved variable" error rather than a wrong number — which is at least loud. Paste the groups in the order they appear here (1 → 8) and every reference resolves.</p>
+      <p>Two more gotchas that cost real time: an angle input must carry its unit (<code>10 deg</code>, never <code>10</code>), and a count like <code>#N</code> must be unitless (<code>9</code>, never <code>9 mm</code>). If a trig expression returns an error, one of those two is almost always why.</p></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <span class="tab">Part Studio 1</span>
+  <span class="tab on">Variable Studio 1</span>
+  <span class="tab">Assembly 1</span>
+  <span class="tab">Segment</span>
+  <span class="tab">Bonding jig</span>
+</div>
+
+<footer>
+  <span>WH-B · 46 variables · verified against the Rev B solver</span>
+  <span>ρ = distance from the middle of the flower</span>
+</footer>
+</div>
+
+<script>
+(function(){
+const D2R=Math.PI/180;
+const IN=[
+ ['N','9','',           'Segment count. Unitless.','Drives sector angle, arc length, hide window <em>and</em> gear tooth count at once. Change this one number and the whole ring reflows — the single highest-leverage variable in the document.'],
+ ['waferD','300','mm',  'Wafer diameter.','Sets #r, which scales the envelope, the hide window and the overhang. Swap 300 → 200 and every downstream value follows without touching a sketch.'],
+ ['waferT','0.775','mm','Wafer thickness.','Only appears in the two plane offsets, but it appears in <b>both</b>. Hard-coding 0.3875 twice is how the land and clearance planes drift apart.'],
+ ['theta','10','deg',   'Wafer tilt about its radial axis.','Aesthetic choice, but it multiplies into the taper, the envelope depth and the hide window. Must carry <code>deg</code> or every trig call fails.'],
+ ['R','350','mm',       'Pitch radius — wafer centres sit here.','The datum for the land plane. Compare against #Rmax before committing.'],
+ ['Ri','255','mm',      'Band inner radius.','Sets where the frame sits relative to the hide window and how many gear teeth fit. 255 buys the clean 252-tooth gear.'],
+ ['bw','55','mm',       'Band width.','With #Ri, defines the whole sector footprint. Widening it raises bond area and thermal stress together.'],
+ ['tmin','6','mm',      'Minimum base thickness at the trailing edge.','The thin end of the taper and the dovetail section height. Your joint strength is a direct function of this.'],
+ ['bond','1.1','mm',    'Bondline thickness.','Adhesive gap. Thicker is structurally better — it is the denominator of the thermal shear strain.'],
+ ['clr','3','mm',       'Neighbour clearance.','Air gap to the adjacent wafer. Never reduce below 3.'],
+ ['gearM','2','mm',     'Gear module.','Tooth size. Sets pitch, tip and root circles together.'],
+ ['holeD','5','mm',     'Jig bore diameter.','M4 plastic screw clearance.'],
+];
+const P={}; IN.forEach(r=>P[r[0]]=parseFloat(r[1]));
+
+function calc(){
+  const v={};
+  v.r=P.waferD/2; v.sector=360/P.N; v.half=v.sector/2; v.Ro=P.Ri+P.bw;
+  const hs=Math.sin(v.half*D2R), hc=Math.cos(v.half*D2R);
+  const st=Math.sin(P.theta*D2R), ct=Math.cos(P.theta*D2R), tt=Math.tan(P.theta*D2R);
+  v.arcRi=P.Ri*v.sector*D2R; v.arcRo=v.Ro*v.sector*D2R;
+  v.arcMid=(P.Ri+P.bw/2)*v.sector*D2R;
+  v.chordRi=2*P.Ri*hs; v.chordRo=2*v.Ro*hs; v.yMax=v.Ro*hs;
+  v.landOff=P.waferT/2+P.bond; v.clrOff=P.waferT/2+P.clr;
+  v.clrOff=P.waferT/2+P.clr;
+  v.rise=v.yMax*tt; v.zBot=-(v.rise+P.bond+P.tmin); v.tmax=P.tmin+2*v.rise+P.bond;
+  v.swing=v.r*st; v.depth=2*v.swing+P.waferT; v.OD=2*(P.R+v.r*ct);
+  v.Rmax=v.r*ct/hs;
+  v.kk=P.R/v.r;
+  v.hwA=hc*hc+hs*hs/(ct*ct); v.hwB=-2*hc*v.kk; v.hwC=v.kk*v.kk-1;
+  const disc=v.hwB*v.hwB-4*v.hwA*v.hwC;
+  v.hwD=disc>0?Math.sqrt(disc):NaN;
+  v.hideIn=(-v.hwB-v.hwD)/(2*v.hwA)*v.r; v.hideOut=(-v.hwB+v.hwD)/(2*v.hwA)*v.r;
+  v.teethSeg=Math.round(2*(P.Ri-5)/P.gearM/P.N); v.teeth=v.teethSeg*P.N;
+  v.gearPitchR=v.teeth*P.gearM/2; v.gearTipR=v.gearPitchR-P.gearM;
+  v.gearRootR=v.gearPitchR+1.25*P.gearM;
+  v.toothPitch=v.gearPitchR*(360/v.teeth)*D2R;
+  v.holeR=P.Ri+P.bw/2;
+  return v;
+}
+const f=(x,d)=>isNaN(x)?'—':x.toFixed(d===undefined?2:d);
+
+// name, expression, unit-suffix, key, decimals, why
+const G={
+ t2:[['r','#waferD / 2','mm','r',2,'Wafer radius. Written once so the 150 never gets mistyped as 15 in a sketch three features deep.'],
+     ['sector','360 deg / #N','°','sector',3,'<b>The angular dimension you drive the sector sketch with.</b> Never type 40° — type <code>#sector</code> and the sketch survives a change of N.'],
+     ['half','#sector / 2','°','half',3,'Appears in every chord and hide-window expression. Defining it once is the cheapest possible defence against the classic 20°-vs-40° error.'],
+     ['Ro','#Ri + #bw','mm','Ro',2,'Band outer radius. Deriving it means you resize the band by editing width, not by keeping two radii in sync by hand.']],
+ t3:[['arcRi','#Ri * (#sector / 1 rad)','mm','arcRi',2,'Arc length along the inner edge. This is the gear-flange run and the length your teeth have to divide evenly.'],
+     ['arcRo','#Ro * (#sector / 1 rad)','mm','arcRo',2,'Arc along the outer edge — the longest dimension of the part, and the one that decides print-bed fit.'],
+     ['arcMid','(#Ri + #bw / 2) * (#sector / 1 rad)','mm','arcMid',2,'Arc at mid-band. Use it to lay out tape pads and to place the jig bore along the centreline.'],
+     ['chordRi','2 * #Ri * sin(#half)','mm','chordRi',2,'Straight-line span at the inner edge — the dimension a caliper actually measures.'],
+     ['chordRo','2 * #Ro * sin(#half)','mm','chordRo',2,'Outer chord. <b>Check this against your bed size</b>, not the arc — a curved part sits on its chord.'],
+     ['yMax','#Ro * sin(#half)','mm','yMax',2,'Half-chord at the outer radius. The single number that sets the taper: the top plane rises <code>#yMax·tan(θ)</code> above and below mid-arc.']],
+ t4:[['landOff','#waferT / 2 + #bond','mm','landOff',4,'Offset from the wafer mid-plane down to the bond land. Both terms belong here — dropping the half-thickness is a silent 0.39 mm error in the bondline.'],
+     ['clrOff','#waferT / 2 + #clr','mm','clrOff',4,'Offset to the neighbour-clearance plane. Same construction, different constant, so the two planes can never drift.'],
+     ['rise','#yMax * tan(#theta)','mm','rise',2,'How far the land climbs from mid-arc to the joint. <b>This is why the segment is a wedge.</b> If the part looks absurdly thick, read this number first.'],
+     ['zBot','-(#rise + #bond + #tmin)','mm','zBot',2,'Height of the flat bottom. Also the plane the gear flange sits on — the only planar face the part has.'],
+     ['tmax','#tmin + 2 * #rise + #bond','mm','tmax',2,'Thickness at the thick end. Compare with #tmin to see the taper ratio at a glance; it is 7:1 at the Rev B numbers.']],
+ t5:[['swing','#r * sin(#theta)','mm','swing',2,'How far a wafer edge lifts off the ring plane. Sets your minimum wall clearance.'],
+     ['depth','2 * #swing + #waferT','mm','depth',2,'Total front-to-back envelope — how far the piece stands off the wall.'],
+     ['OD','2 * (#R + #r * cos(#theta))','mm','OD',1,'Outside diameter of the finished halo. The number you check against the actual wall.'],
+     ['Rmax','#r * cos(#theta) / sin(#half)','mm','Rmax',1,'<b>Guard rail.</b> Wafers only overlap while #R &lt; #Rmax. Put this next to #R and a non-overlapping ring becomes impossible to design by accident.']],
+ t6:[['kk','#R / #r','','kk',4,'Normalised pitch radius. Unitless, which is what keeps the quadratic clean.'],
+     ['hwA','cos(#half)^2 + sin(#half)^2 / cos(#theta)^2','','hwA',6,'Quadratic coefficient A. Encodes the tangential squash of the wafer ellipse by cos θ.'],
+     ['hwB','-2 * cos(#half) * #kk','','hwB',6,'Coefficient B.'],
+     ['hwC','#kk^2 - 1','','hwC',6,'Coefficient C.'],
+     ['hwD','sqrt(#hwB^2 - 4 * #hwA * #hwC)','','hwD',6,'Discriminant root. If this errors, your wafers do not reach the joint meridian at all — check #R against #Rmax.'],
+     ['hideIn','(-#hwB - #hwD) / (2 * #hwA) * #r','mm','hideIn',1,'<b>Inner edge of the hide window.</b> Keep #Ri above this or the frame shows at the joints.'],
+     ['hideOut','(-#hwB + #hwD) / (2 * #hwA) * #r','mm','hideOut',1,'Outer edge. Keep #Ro below it. Together these two turn "will the frame show?" from a rendering question into a dimension.']],
+ t7:[['teethSeg','round(2 * (#Ri - 5 mm) / #gearM / #N)','','teethSeg',0,'<b>Teeth per segment, forced to a whole number.</b> Without <code>round()</code> the pitch breaks at every one of the N joints and the pinion jams once per revolution.'],
+     ['teeth','#teethSeg * #N','','teeth',0,'Total tooth count. Divisible by N by construction, which is the entire point.'],
+     ['gearPitchR','#teeth * #gearM / 2','mm','gearPitchR',1,'Pitch radius. Note it is derived from the <em>rounded</em> tooth count, so the gear is exact and #Ri is the thing that gives.'],
+     ['gearTipR','#gearPitchR - #gearM','mm','gearTipR',1,'Tip circle — teeth point inward on an internal gear. <b>Must stay above #hideIn</b> or the flange shows through the middle.'],
+     ['gearRootR','#gearPitchR + 1.25 * #gearM','mm','gearRootR',1,'Root circle. Must stay below #Ri so the flange tucks under the band.'],
+     ['toothPitch','#gearPitchR * (360 deg / #teeth) / 1 rad','mm','toothPitch',3,'Circular pitch. Sanity-check it against your nozzle: below about 4 mm, module-2 teeth stop printing cleanly.']],
+ t8:[['holeR','#Ri + #bw / 2','mm','holeR',1,'Radial position of the jig bore. Mid-band is the neutral axis for in-plane ring bending, so a hole here costs 0.075 % of I — put it anywhere else and it is no longer free.'],
+     ['holeR_ang','0 deg','°',null,0,'Angular position: on the segment centreline. Keeps the bore out of both dovetails and both tape pads.']]
+};
+
+function copyText(t,btn){
+  const done=()=>{const o=btn.textContent;btn.textContent='✓';btn.classList.add('done');
+    setTimeout(()=>{btn.textContent=o;btn.classList.remove('done')},1100)};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done,()=>fallback(t,done));
+  } else fallback(t,done);
+}
+function fallback(t,done){
+  const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');done();}catch(e){}
+  document.body.removeChild(ta);
+}
+
+function head(){return '<thead><tr><th>Variable</th><th>Expression</th><th style="text-align:right">Value</th><th></th><th>Why it earns its place</th></tr></thead>';}
+
+function renderInputs(){
+  const box=document.getElementById('inputs');
+  box.innerHTML=IN.map(([n,d,u])=>
+    `<div class="inp"><label for="i_${n}">#${n}</label>
+     <input id="i_${n}" value="${d}" inputmode="decimal"><span class="u">${u||'unitless'}</span></div>`).join('');
+  IN.forEach(([n])=>{
+    document.getElementById('i_'+n).addEventListener('input',e=>{
+      const x=parseFloat(e.target.value); if(!isNaN(x)){P[n]=x;render();}
+    });
+  });
+}
+
+function render(){
+  const v=calc();
+  // input table
+  document.getElementById('t1').innerHTML=head()+'<tbody>'+IN.map(([n,d,u,desc,why])=>{
+    const expr=u?`${P[n]} ${u}`:`${P[n]}`;
+    return `<tr><td class="nm">#${n}</td><td class="ex">${expr}</td>
+      <td class="val">${u?P[n]+' '+u:P[n]}</td>
+      <td class="cp"><button class="copy" data-c="${expr}">⧉</button></td>
+      <td class="why"><b>${desc}</b> ${why}</td></tr>`;}).join('')+'</tbody>';
+  // derived tables
+  Object.keys(G).forEach(tid=>{
+    document.getElementById(tid).innerHTML=head()+'<tbody>'+G[tid].map(([n,ex,u,key,dec,why])=>{
+      let val = key===null ? '0 °' : f(v[key],dec)+(u?' '+u:'');
+      let extra='';
+      const badge=(good,yes,no)=>' <span class="chk '+(good?'ok':'bad')+'">'+(good?yes:no)+'</span>';
+      const noWin=isNaN(v.hideIn);   // discriminant < 0 => wafers never reach the joint meridian
+      if(noWin && (n==='hideIn'||n==='hideOut'||n==='gearTipR'||n==='hwD'))
+        extra=' <span class="chk bad">no overlap — fix #R</span>';
+      else if(n==='gearTipR') extra=badge(v.gearTipR>=v.hideIn,'clear +'+f(v.gearTipR-v.hideIn,0),'SHOWS '+f(v.gearTipR-v.hideIn,0));
+      else if(n==='hideIn')  extra=badge(P.Ri>=v.hideIn,'#Ri inside','#Ri EXPOSED');
+      else if(n==='hideOut') extra=badge(v.Ro<=v.hideOut,'#Ro inside','#Ro EXPOSED');
+      if(n==='gearRootR') extra=badge(v.gearRootR<=P.Ri,'under band','OVERLAPS');
+      if(n==='Rmax')      extra=badge(P.R<v.Rmax,'#R ok','NO OVERLAP');
+      return `<tr><td class="nm">#${n}</td><td class="ex">${ex}</td>
+        <td class="val">${val}${extra}</td>
+        <td class="cp"><button class="copy" data-c="${ex.replace(/"/g,'&quot;')}">⧉</button></td>
+        <td class="why">${why}</td></tr>`;}).join('')+'</tbody>';
+  });
+  document.querySelectorAll('button.copy').forEach(b=>{
+    b.onclick=()=>copyText(b.dataset.c,b);
+  });
+  // arc widget + inline sector
+  document.getElementById('e_sector').textContent=f(v.sector,2)+'°';
+  const rho=parseFloat(document.getElementById('rho_in').value);
+  const hs=Math.sin(v.half*D2R);
+  document.getElementById('a_arc').textContent  = isNaN(rho)?'—':f(rho*v.sector*D2R,2)+' mm';
+  document.getElementById('a_chord').textContent= isNaN(rho)?'—':f(2*rho*hs,2)+' mm';
+  document.getElementById('a_half').textContent = isNaN(rho)?'—':f(rho*hs,2)+' mm';
+  document.getElementById('a_sec').textContent  = f(v.sector,2)+'°';
+}
+document.getElementById('rho_in').addEventListener('input',render);
+renderInputs(); render();
+})();
+</script>

@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wafer Halo — Traveler Rev B · Calculator + Frame Method</title>
+<title>Wafer Halo — Traveler Rev B · Calculator + Statics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink:#23272B;--steel:#5C6670;--line:#D5DBE1;--paper:#FAFBFC;--card:#FFF;
-  --teal:#147D74;--warn:#C0392B;--warn-bg:#FDF0EE;
+  --teal:#147D74;--warn:#C0392B;--warn-bg:#FDF0EE;--amber:#9A6B00;
   --oxide:linear-gradient(90deg,#C9A227 0%,#C2497B 32%,#4457C4 66%,#1E9E8E 100%);
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -43,26 +43,45 @@ ol.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;le
 .note .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--teal);font-weight:600;text-transform:uppercase}
 .flag{border:1px solid var(--warn);border-left-width:4px;background:var(--warn-bg);border-radius:4px;padding:11px 15px;margin:14px 0;font-size:13.5px}
 .flag .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--warn);font-weight:600;text-transform:uppercase}
+.eq{font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#F2F5F7;border:1px solid var(--line);border-radius:3px;padding:8px 11px;margin:8px 0;overflow-x:auto;white-space:pre}
+tr.grp td{background:#EEF2F4;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--steel);font-weight:600;padding:7px 10px}
+td.ref{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--teal);white-space:nowrap}
+.tscroll{overflow-x:auto}
+.tscroll table{min-width:720px}
 
 /* calculator */
 .calc{border:1px solid var(--line);border-radius:4px;background:var(--card);overflow:hidden}
 #viz{width:100%;height:440px;display:block;background:#EEF1F4;cursor:grab;touch-action:none}
-.calc-ui{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line)}
-.ctrls{padding:16px 20px;border-right:1px solid var(--line)}
-.ctrl{margin-bottom:10px}
-.ctrl label{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--steel);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.presets{display:flex;flex-wrap:wrap;gap:7px;padding:11px 20px;border-top:1px solid var(--line);align-items:center}
+.viewbar{border-top:none;border-bottom:1px solid var(--line);justify-content:space-between}
+.viewbar .grp{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+#viewnote{font-size:12px;color:var(--steel);flex:1 1 100%;margin-top:2px}
+#viewnote b{color:var(--ink);font-weight:600}
+.swatch{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:-1px;margin-right:3px;border:1px solid rgba(0,0,0,.15)}
+.presets span.lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--steel);text-transform:uppercase;margin-right:3px}
+button.pz{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:3px;padding:4px 10px;cursor:pointer}
+button.pz:hover{border-color:var(--teal);color:var(--teal)}
+button.pz.act{background:var(--ink);color:#fff;border-color:var(--ink)}
+.calc-ui{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid var(--line)}
+.ctrls{padding:14px 18px;border-right:1px solid var(--line)}
+.ctrl{margin-bottom:9px}
+.ctrl label{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
 .ctrl label output{color:var(--ink);font-weight:600}
 input[type=range]{width:100%;accent-color:var(--teal)}
-.reads{padding:16px 20px}
-.read{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.reads{padding:14px 18px;border-right:1px solid var(--line)}
+.reads:last-child{border-right:none}
+.reads h4{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--steel);text-transform:uppercase;font-weight:600;margin-bottom:6px}
+.read{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid var(--line);font-size:12.5px}
 .read:last-child{border-bottom:none}
-.read .k{color:var(--steel)}
-.read .v{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.read .k{color:var(--steel);line-height:1.35}
+.read .v{font-family:'IBM Plex Mono',monospace;font-weight:600;white-space:nowrap}
 .read .v.bad{color:var(--warn)}
 .read .v.ok{color:var(--teal)}
+.read .v.warn{color:var(--amber)}
 #alert{padding:9px 20px;font-family:'IBM Plex Mono',monospace;font-size:12px;display:none;background:var(--warn-bg);color:var(--warn);border-top:1px solid var(--warn)}
+#alert div{margin:2px 0}
 footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
-@media(max-width:700px){.calc-ui{grid-template-columns:1fr}.ctrls{border-right:none;border-bottom:1px solid var(--line)}}
+@media(max-width:820px){.calc-ui{grid-template-columns:1fr}.ctrls,.reads{border-right:none;border-bottom:1px solid var(--line)}}
 </style>
 </head>
 <body>
@@ -71,42 +90,85 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);font-fa
 <header class="traveler">
   <div class="oxide-rule"></div>
   <div class="head-main">
-    <div class="eyebrow">Build traveler · Rev B — frame method iteration</div>
+    <div class="eyebrow">Build traveler · Rev B — frame method + statics</div>
     <h1>Wafer Halo</h1>
     <div class="head-meta">
-      <span>CONST <b>Ø300 × 0.775 wafer</b></span>
-      <span>VARS <b>R pitch · tilt θ · band Ri/width</b></span>
-      <span>SCOPE <b>frame + bond only — mounting deferred</b></span>
+      <span>VARS <b>wafer Ø/t · N · tilt θ · R pitch · band · bond</b></span>
+      <span>OUT <b>geometry + load path</b></span>
+      <span>SCOPE <b>frame + bond — mounting teased, not specified</b></span>
     </div>
   </div>
 </header>
 
 <!-- ============ CALCULATOR ============ -->
 <section class="op">
-  <div class="op-head"><span class="op-chip">CALC</span><h2>Parametric calculator &amp; 3D check</h2></div>
-  <p>Drag to orbit, scroll to zoom. Frame segments render with the plane-cut taper <em>and</em> the neighbor-clearance cut — the trimmed corner at each leading joint is the fix for the riser/neighbor collision. Red readouts mean a constraint is violated.</p>
+  <div class="op-head"><span class="op-chip">CALC</span><h2>Parametric calculator — geometry &amp; statics</h2></div>
+  <p>Drag to orbit, scroll to zoom. Segments render with the plane-cut taper <em>and</em> the neighbor-clearance cut. The right column solves the load path numerically off the same land patch the mesh uses, so if the clearance cut eats your bond area, the stresses move. Red = constraint violated; amber = thin margin.</p>
   <div class="calc">
+    <div class="presets viewbar">
+      <div class="grp">
+        <span class="lbl">View</span>
+        <button class="pz act" data-view="assembly">Full halo</button>
+        <button class="pz" data-view="station">One station</button>
+        <button class="pz" data-view="frame">Frame only</button>
+      </div>
+      <div id="viewnote"></div>
+    </div>
     <canvas id="viz"></canvas>
     <div id="alert"></div>
+    <div class="presets">
+      <span class="lbl">Wafer</span>
+      <button class="pz" data-d="150" data-t="0.675">Ø150 × 0.675</button>
+      <button class="pz" data-d="200" data-t="0.725">Ø200 × 0.725</button>
+      <button class="pz act" data-d="300" data-t="0.775">Ø300 × 0.775</button>
+      <span class="lbl" style="margin-left:10px">Band</span>
+      <button class="pz" id="b_hide">Fit hide window</button>
+      <button class="pz" id="b_bal">Center under wafer CG</button>
+    </div>
     <div class="calc-ui">
       <div class="ctrls">
+        <div class="ctrl"><label>Segments N <output id="o_N">9</output></label><input type="range" id="i_N" min="6" max="14" step="1" value="9"></div>
         <div class="ctrl"><label>Tilt θ <output id="o_tilt">10°</output></label><input type="range" id="i_tilt" min="3" max="22" step="0.5" value="10"></div>
-        <div class="ctrl"><label>Pitch radius R <output id="o_R">350</output></label><input type="range" id="i_R" min="320" max="400" step="5" value="350"></div>
-        <div class="ctrl"><label>Band inner Ri <output id="o_Ri">248</output></label><input type="range" id="i_Ri" min="235" max="360" step="1" value="248"></div>
-        <div class="ctrl"><label>Band width <output id="o_bw">55</output></label><input type="range" id="i_bw" min="30" max="90" step="5" value="55"></div>
-        <div class="ctrl"><label>Min base thickness <output id="o_tmin">6</output></label><input type="range" id="i_tmin" min="4" max="12" step="0.5" value="6"></div>
+        <div class="ctrl"><label>Pitch radius R <output id="o_R">350</output></label><input type="range" id="i_R" min="200" max="460" step="5" value="350"></div>
+        <div class="ctrl"><label>Band inner Ri <output id="o_Ri">248</output></label><input type="range" id="i_Ri" min="120" max="420" step="1" value="248"></div>
+        <div class="ctrl"><label>Band width <output id="o_bw">55</output></label><input type="range" id="i_bw" min="25" max="140" step="5" value="55"></div>
+        <div class="ctrl"><label>Min base thickness <output id="o_tmin">6</output></label><input type="range" id="i_tmin" min="4" max="14" step="0.5" value="6"></div>
         <div class="ctrl"><label>Bond line <output id="o_bond">1.1</output></label><input type="range" id="i_bond" min="0.4" max="1.3" step="0.1" value="1.1"></div>
+        <div class="ctrl"><label>Bond shear mod G <output id="o_G">0.06</output></label><input type="range" id="i_G" min="0.02" max="2" step="0.02" value="0.06"></div>
+        <div class="ctrl"><label>Temp swing ΔT <output id="o_dT">20 K</output></label><input type="range" id="i_dT" min="5" max="50" step="1" value="20"></div>
+        <div class="ctrl"><label>Print density <output id="o_dens">45%</output></label><input type="range" id="i_dens" min="20" max="100" step="5" value="45"></div>
       </div>
       <div class="reads">
+        <h4>Geometry</h4>
         <div class="read"><span class="k">Halo OD</span><span class="v" id="r_od">—</span></div>
-        <div class="read"><span class="k">Wafer envelope depth (2r·sinθ + t)</span><span class="v" id="r_depth">—</span></div>
+        <div class="read"><span class="k">Envelope depth (2r·sinθ + t)</span><span class="v" id="r_depth">—</span></div>
         <div class="read"><span class="k">Edge swing off ring plane</span><span class="v" id="r_swing">—</span></div>
         <div class="read"><span class="k">Hide window (radial)</span><span class="v" id="r_hide">—</span></div>
         <div class="read"><span class="k">Band vs hide window</span><span class="v" id="r_bandok">—</span></div>
         <div class="read"><span class="k">Neighbor overlap (projected)</span><span class="v" id="r_ovl">—</span></div>
         <div class="read"><span class="k">Min z-gap between neighbors</span><span class="v" id="r_gap">—</span></div>
         <div class="read"><span class="k">Segment max thickness (taper)</span><span class="v" id="r_tmax">—</span></div>
-        <div class="read"><span class="k">Bondable land arc (of 40°)</span><span class="v" id="r_land">—</span></div>
+        <div class="read"><span class="k">Bondable land arc</span><span class="v" id="r_land">—</span></div>
+        <div class="read"><span class="k">Bond land area</span><span class="v" id="r_area">—</span></div>
+        <div class="read"><span class="k">Ring gear (internal, m=2)</span><span class="v" id="r_gear">—</span></div>
+        <div class="read"><span class="k">Gear tips vs hide window</span><span class="v" id="r_gearok">—</span></div>
+      </div>
+      <div class="reads">
+        <h4>Statics</h4>
+        <div class="read"><span class="k">Wafer mass / weight</span><span class="v" id="s_wm">—</span></div>
+        <div class="read"><span class="k">Segment mass (printed)</span><span class="v" id="s_fm">—</span></div>
+        <div class="read"><span class="k">Assembly mass / hang load</span><span class="v" id="s_tot">—</span></div>
+        <div class="read"><span class="k">CG offset: land → wafer</span><span class="v" id="s_off">—</span></div>
+        <div class="read"><span class="k">Bond shear, gravity</span><span class="v" id="s_tau">—</span></div>
+        <div class="read"><span class="k">Bond peel at land edge</span><span class="v" id="s_peel">—</span></div>
+        <div class="read"><span class="k">Bond shear, thermal ΔT</span><span class="v" id="s_th">—</span></div>
+        <div class="read"><span class="k">Thermal shear strain</span><span class="v" id="s_gam">—</span></div>
+        <div class="read"><span class="k">Wafer overhang (outboard)</span><span class="v" id="s_ovh">—</span></div>
+        <div class="read"><span class="k">Tip droop (hung / flat)</span><span class="v" id="s_droop">—</span></div>
+        <div class="read"><span class="k">Wafer bending stress</span><span class="v" id="s_sig">—</span></div>
+        <div class="read"><span class="k">Joint moment, 1-pt hang</span><span class="v" id="s_mj">—</span></div>
+        <div class="read"><span class="k">Dovetail stress / margin</span><span class="v" id="s_dt">—</span></div>
+        <div class="read"><span class="k">Out-of-plane CG (tip-off)</span><span class="v" id="s_zcg">—</span></div>
       </div>
     </div>
   </div>
@@ -116,15 +178,108 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);font-fa
 <section class="op">
   <div class="op-head"><span class="op-chip">OP 010</span><h2>CAD — one segment, 6 features</h2></div>
   <ol class="steps">
-    <li><b>Variables</b>: <span class="mono">#R, #theta, #Ri, #bw, #tmin, #bond</span> from the calculator above once it looks right.</li>
-    <li><b>Own wafer plane</b>: through the radial line at (<span class="mono">#R</span>, 0), angled <span class="mono">#theta</span> from Top. Offset a copy by <span class="mono">−(0.3875 + #bond)</span> → the <b>land plane</b>.</li>
-    <li><b>Neighbor plane</b>: the own wafer plane, revolved −40° about center (model it directly: radial line at 40°, same angle construction). Offset a copy by <b>−3 mm</b> → the <b>clearance plane</b>.</li>
-    <li><b>Blank</b>: sector 40° × Ri→Ri+bw, extruded tall (60). Flat bottom at <span class="mono">z = −(y_max·tanθ + #bond + #tmin)</span> where y_max = (Ri+bw)·sin20° — this produces the taper with your minimum thickness at the trailing side.</li>
-    <li><b>Two cuts</b>: remove everything above the land plane, then everything above the clearance plane. Cut order doesn't matter; the surviving top is bondable only where the land plane governs.</li>
-    <li><b>Dovetails</b> on the radial end faces (12/16 × 8, female +0.25) and you're done. No other features this iteration.</li>
+    <li><b>Variables</b>: <span class="mono">#R, #theta, #Ri, #bw, #tmin, #bond</span> from the calculator above once it looks right. Sector angle is <span class="mono">360/#N</span> (40° at N=9).</li>
+    <li><b>Own wafer plane</b>: through the radial line at (<span class="mono">#R</span>, 0), angled <span class="mono">#theta</span> from Top. Offset a copy by <span class="mono">−(t_wafer/2 + #bond)</span> → the <b>land plane</b>.</li>
+    <li><b>Neighbor plane</b>: the own wafer plane revolved −360/#N about center (model it directly: radial line at that angle, same construction). Offset by <b>−(t_wafer/2 + 3)</b> → the <b>clearance plane</b>.</li>
+    <li><b>Blank</b>: sector 360/#N × Ri→Ri+bw, extruded tall (60). Flat bottom at <span class="mono">z = −(y_max·tanθ + t_wafer/2 + #bond + #tmin)</span> where y_max = (Ri+bw)·sin(180/#N) — gives the taper with your minimum thickness at the trailing edge. <b>The t_wafer/2 term is not optional</b>: the land plane is offset by t/2 + bond, so dropping it leaves the base slab protruding 0.39 mm above the land at the trailing outer corner, pressing into the bondline.</li>
+    <li><b>Two cuts</b>: remove everything above the land plane, then everything above the clearance plane. The surviving top is bondable only where the land plane governs.</li>
+    <li><b>Dovetails</b> on the radial end faces (12/16 × 8, female +0.25). See OP 015 — if you plan to hang from one point, use <b>two</b> dovetails per face.</li>
+    <li><b>Jig bore</b>: Ø5 through-hole at mid-band on the segment centreline (<span class="mono">ρ = Ri + bw/2, a = 0</span>), normal to the flat bottom so it prints as a clean vertical hole. Clearance for an M4 plastic screw. Structurally free — mid-band <em>is</em> the neutral axis for in-plane ring bending, so it removes 0.075 % of I. Keep the tape pads clear of it.</li>
+    <li><b>Gear flange</b>: a planar annular sector, 6 mm thick, sitting on the flat bottom and extending inward from <span class="mono">Ri</span> to the gear root circle. Cut an <b>internal</b> gear into its inner edge. The flat bottom is the only planar face this part has, which is exactly why the flange goes there — see the note below.</li>
   </ol>
+  <div class="note"><span class="tag">This is now a solid model</span><br>
+  <span class="mono">scripts/segment_stl.py</span> (needs <span class="mono">pip install manifold3d</span>) builds the segment by CSG and writes watertight STLs — <span class="mono">segment.stl</span>, <span class="mono">segment_pair.stl</span> (gate T1), <span class="mono">halo_frame.stl</span>, <span class="mono">halo_assembly.stl</span>. Every parameter above is a command-line flag: <span class="mono">--theta 5 --Ri 270</span>. Measured off the generated solid: <b>T1 clearance exactly 3.000 mm</b>, dovetail/socket interference <b>0 mm³</b>, segment <b>217.0 cm³ → 124 g at 45 % infill</b>, frame 1.12 kg + 1.15 kg of silicon = <b>2.27 kg</b>.
+  <br><br>Two things the solid corrected. <b>The part is 37.2 mm tall, not the 44.5 mm</b> the taper formula predicts — that formula is the un-cut wedge and ignores the clearance cut, which removes the top corner. And the clearance disc must be cut <b>2 mm wider than the wafer</b>: at exactly Ø300 the cut wall lands tangent to the neighbour's rim, leaving zero lateral clearance against T6's ±0.5 mm centring and the wafer's own ±0.2 mm diameter tolerance.</div>
+  <div class="flag"><span class="tag">Why the gear cannot go on the rim</span><br>
+  Both the inner and outer edges of the segment follow the tilted land, so they swing <b>±15 mm out of the ring plane</b> across one sector — 30 mm peak to peak. A fixed pinion cannot mesh with teeth that wander 30 mm axially. The flat bottom is the segment's only planar surface, so the ring gear has to live on a flange there. <b>Tooth count must divide by N</b> or the pitch breaks across every joint: at module 2 with N=9 that means <b>28 teeth per segment = 252 total</b> (pitch Ø504, tips at r=250), which needs <span class="mono">Ri ≈ 255</span>. At Ri=248 the only fit is 243T and the tips clear the hide window by just 1 mm — inside print tolerance. The calculator flags this live.</div>
   <div class="flag"><span class="tag">Design change vs Rev A</span><br>
-  The neighbor clearance cut (step 3/5) is new and mandatory. Without it, each segment's land near its leading joint rises ~2·ρ·sin20°·tanθ above the adjacent wafer's plane and collides with it (34 mm of interference at θ=10°, ρ=280). The cut costs a ~6° corner of land; ~34° of bondable arc remains.</div>
+  The neighbor clearance cut (step 3/5) is mandatory. Without it, each segment's land near its leading joint rises ~2·ρ·sin(180/N)·tanθ above the adjacent wafer's plane and collides with it (34 mm of interference at θ=10°, N=9, ρ=280). The cut costs a ~6° corner of land; ~34° of bondable arc remains.</div>
+</section>
+
+<!-- ============ OP 015: STATICS ============ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">OP 015</span><h2>Statics — what actually carries the load</h2></div>
+  <p>Everything below is computed live in the calculator's right column. This section says what each number <em>means</em> and which ones you're allowed to ignore. Short version: <b>gravity is a rounding error, thermal mismatch is 40× gravity, and the printed dovetail is the tightest margin in the build.</b></p>
+
+  <h3 style="font-family:'Space Grotesk';font-size:15px;margin:18px 0 4px">1 · Load decomposition at one station</h3>
+  <p>The ring hangs in a vertical plane, so gravity lies <em>in</em> the ring plane. Each wafer's plane is tilted θ about its radial axis, so its unit normal is <span class="mono">n = (sinθ·sinα, −sinθ·cosα, cosθ)</span> for a station at ring angle α. Resolving weight <span class="mono">W</span> onto that plane:</p>
+  <div class="eq">normal (peel/compression)  W_n = W·sinθ·|cos α|     → max at 12 and 6 o'clock
+in-plane (shear)           W_s = W·√(1 − sin²θ·cos²α)  → 0.985·W … W</div>
+  <p>At θ=10° the bond sees essentially <b>pure shear at 98.5–100 % of W</b>, with at most 17 % of W trying to pull it off. Both are small: a Ø300 wafer is 1.25 N spread over ~96 cm² of land, i.e. <b>0.13 kPa shear</b> against a capability near 500 kPa. Gravity is ~4000× under-stressed. Stop worrying about it.</p>
+
+  <h3 style="font-family:'Space Grotesk';font-size:15px;margin:18px 0 4px">2 · The moment nobody draws: land centroid vs wafer CG</h3>
+  <p>The wafer's centroid sits at pitch radius <span class="mono">R</span>. The bond land sits between <span class="mono">Ri</span> and <span class="mono">Ri+bw</span>, and the clearance cut chews an asymmetric corner off its leading end — so the land centroid is both <b>inboard</b> of the wafer CG and <b>rotated trailing</b> of it. At the current Rev B numbers the land centroid lands at ρ=271 and the offset is <b>79 mm</b>. The normal load component acting on that arm is a peel couple:</p>
+  <div class="eq">M_peel = W·sinθ·|cos α| · d        d = |centroid_land − centroid_wafer|, measured in the wafer plane
+σ_peel = M_peel / S               S = I/c of the land patch about the axis ⊥ to d</div>
+  <p>The good news is that <span class="mono">S</span> for the 96 cm² patch is ~64 000 mm³, so σ_peel lands at <b>0.27 kPa</b> — still nothing. The bad news is that the offset is not free: it puts 197 mm of wafer outboard of any support (§3), and once the thing <em>rotates</em>, that peel term reverses sign every revolution (§6). Use the <b>Center under wafer CG</b> button to see the alternative — the hide window at θ=10° runs to 416 mm, so a band at ~322–377 is legal and pulls the offset from 79 mm to 14 mm. <b>It is not free.</b> The band moves to a larger radius, so the segment gets bigger and heavier: mass goes 2.27 → 2.79 kg (+23 %), the land grows 96 → 120 cm² which raises thermal shear 6.0 → 7.8 kPa (§4: stress tracks land size), and the extra mass drags the dovetail margin 2.1× → 1.7× (§5). Centering buys you droop and kills the reversing peel term (§6) — take it <em>if</em> you're fixing the dovetail anyway, which you should be.</p>
+
+  <h3 style="font-family:'Space Grotesk';font-size:15px;margin:18px 0 4px">3 · The wafer as a cantilever</h3>
+  <p>Outboard of the land's outer edge, the wafer is an unsupported plate of thickness t carrying its own weight. Treated as a unit-width cantilever with only the plane-normal gravity component:</p>
+  <div class="eq">q = ρ_Si·t·g·sinθ        σ = 3·ρ_Si·g·sinθ·L²/t        δ_tip = 1.5·ρ_Si·g·sinθ·L⁴/(E·t²)</div>
+  <table>
+    <thead><tr><th>Case (Ø300, L=197 mm)</th><th>σ max</th><th>Tip droop</th></tr></thead>
+    <tbody>
+      <tr><td>Hung on the wall, θ=10° (only sinθ of g bends it)</td><td class="num">0.60 MPa</td><td class="num">0.11 mm</td></tr>
+      <tr><td>Flat on the bench during bonding (full g)</td><td class="num">3.4 MPa</td><td class="num">0.61 mm</td></tr>
+      <tr><td>Design allowable, edge-flaw-limited Si</td><td class="num">~30 MPa</td><td class="num">—</td></tr>
+    </tbody>
+  </table>
+  <p>Stress margin is 9–50×; silicon is not going to break under its own weight. Mounted droop of 0.11 mm against a 3 mm gap is <b>not</b> a live constraint at the Rev B design point — but it scales as <span class="mono">L⁴/t²</span>, so it turns into one fast if you push the band inboard or widen it (at Ri=248, bw=90 the overhang reaches 0.50 mm mounted and <b>2.9 mm flat</b>, which is the whole clearance budget on the bench). Watch the readout rather than the rule of thumb.</p>
+  <div class="flag"><span class="tag">Handling, not statics</span><br>
+  Self-weight is 0.60 MPa. A point load at the free edge is a different story: spreading the moment over an effective width of ~0.5–1.0 L gives <span class="mono">σ ≈ 6PL/(b_eff·t²)</span> ≈ 4–13 MPa per newton, so <b>a 2–3 N push (a 250 g finger) at the free edge reaches the 30 MPa allowable</b>. This is why OP 020 says <b>press over the land centroid only</b> — the analysis says the wafer survives gravity, not you.</div>
+
+  <h3 style="font-family:'Space Grotesk';font-size:15px;margin:18px 0 4px">4 · Thermal — the governing load, quantified</h3>
+  <div class="eq">Δα ≈ 60 − 2.6 ≈ 57 ppm/K (PETG vs Si)
+slip at the land's far corner   s = Δα·ΔT·L_max          L_max = centroid→farthest bond point
+shear strain                    γ = s / bondline
+shear stress                    τ_th = G_bond · γ</div>
+  <p>At ΔT=20 K and L_max = 96 mm: s = 110 µm, γ = 10 % on a 1.1 mm foam bondline, τ = <b>6.0 kPa with G=0.06 MPa</b>. That is ~47× the gravity shear — <b>thermal is the design load, gravity is noise.</b> Drag the <span class="mono">G</span> slider to see the fork:</p>
+  <table>
+    <thead><tr><th>Bond</th><th>Bondline</th><th>G (quasi-static)</th><th>γ @ ΔT=20 K</th><th>τ_th</th></tr></thead>
+    <tbody>
+      <tr><td>Acrylic foam tape (Scotch-Mount Extreme)</td><td class="num">1.1 mm</td><td class="num">~0.06 MPa</td><td class="num">10 %</td><td class="num">6 kPa</td></tr>
+      <tr><td>SMP / MS-polymer bead + nubs</td><td class="num">0.5 mm</td><td class="num">~1.5 MPa</td><td class="num">22 %</td><td class="num">~330 kPa</td></tr>
+      <tr><td>Rigid epoxy <span class="dim">(banned)</span></td><td class="num">0.15 mm</td><td class="num">~1200 MPa</td><td class="num">73 %</td><td class="num">→ Si fracture</td></tr>
+    </tbody>
+  </table>
+  <p>Note what the formula says about geometry: <b>τ_th scales with L_max, not with area.</b> A bigger bond patch is a <em>worse</em> bond patch. Two 25 mm arcs near the land centroid beat full coverage — that's not a materials-saving heuristic, it's the actual physics. It also means <b>wafer size doesn't drive the thermal load; land size does.</b></p>
+
+  <h3 style="font-family:'Space Grotesk';font-size:15px;margin:18px 0 4px">5 · The ring as a structure — and the real weak link</h3>
+  <p>Nine stations at 128 g of silicon plus 127 g of PETG each (including the gear flange, at 45 % print density) is <b>2.29 kg / 22.5 N</b>. Hung from a single point at 12 o'clock, treat each half-ring as a curved cantilever (conservative — a closed ring is stiffer and runs ~0.3× this):</p>
+  <div class="eq">M_max ≈ W_total·R/π          ≈ 22.5 N × 0.35 m / π ≈ 2.5 N·m at the anchor joints</div>
+  <p>Through the full band section (55 mm deep × 6 mm) that's 0.8 MPa — irrelevant. But <b>the joint doesn't have the full band section.</b> A single centered dovetail connects only 16 mm of the band's 55 mm radial depth, so the section modulus collapses:</p>
+  <div class="eq">S_joint = t·w²/6 = 6 × 16²/6 = 256 mm³      σ = 2480 N·mm / 256 = 9.7 MPa
+allowable, printed PETG loaded across layers ≈ 20 MPa   →  margin 2.1×</div>
+  <div class="flag"><span class="tag">Tightest margin in the build</span><br>
+  2.1× on a printed dovetail root — a stress concentration, in the print's weak direction, under sustained load with PETG creep. Everything else in this analysis has 47–4000× margin; this has 2. Three fixes, cheapest first: <b>(a)</b> hang from two points at ±50° from top (drops M ~4×), <b>(b)</b> two dovetails per face, one near each band edge (restores most of the 55 mm depth, ~10× S), <b>(c)</b> rest the ring on a ledge instead of hanging it (compression arch, M → near zero). Option (b) is also what the motor drive wants — see below.</div>
+  <p>Out-of-plane, the frame's centroid sits well behind the wafer plane, so the assembly CG is <b>6.5 mm</b> off the wall plane → a <b>0.14 N·m</b> tip-off moment. Trivial for a wall hanger; it's the number the motor bearing will care about.</p>
+
+  <h3 style="font-family:'Space Grotesk';font-size:15px;margin:18px 0 4px">6 · How to use this to pick wafer size, R, and band</h3>
+  <table>
+    <thead><tr><th>Knob</th><th>What it drives</th><th>Read it here</th></tr></thead>
+    <tbody>
+      <tr><td><b>Wafer Ø</b></td><td>mass ∝ D²t (27.8 / 53.0 / 127.6 g), halo OD ∝ D (498 / 667 / 995 mm at N=9, θ=10°), droop ∝ D⁴/t². Does <em>not</em> drive bond stress.</td><td>Wafer mass, Halo OD, Tip droop</td></tr>
+      <tr><td><b>N</b></td><td>overlap and hide window. More segments = more overlap at the same R, smaller sector, more joints (more dovetails to fail).</td><td>Neighbor overlap, Joint moment</td></tr>
+      <tr><td><b>θ</b></td><td>depth of the piece, the neighbor z-gap, and the whole peel term. Low θ = flatter, less clearance to work with; high θ = deep taper, thick segments, more mass.</td><td>Envelope depth, Min z-gap, Peel</td></tr>
+      <tr><td><b>R</b></td><td>overlap (must satisfy R &lt; r·cosθ/sin(180/N) for the wafers to overlap at all) and total mass moment.</td><td>Neighbor overlap, Joint moment</td></tr>
+      <tr><td><b>Band Ri / width</b></td><td>staying inside the hide window keeps the frame invisible; moving outboard toward the wafer CG trades <em>mass, thermal stress and joint margin</em> for droop and peel arm. A real trade, not a free lunch — see §2.</td><td>CG offset, Tip droop, Land area, Dovetail</td></tr>
+      <tr><td><b>Bondline / G</b></td><td>the actual design load. Thick + compliant wins; every bit of stiffness you add multiplies straight into τ_th.</td><td>Thermal shear, strain</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="font-family:'Space Grotesk';font-size:15px;margin:18px 0 4px">7 · Settling θ = 5 vs 10</h3>
+  <p>This was the open question, and the statics answer it cleanly: <b>θ is an aesthetic choice, and every structural metric prefers the smaller one.</b> Ø300, N=9, band centered under the wafer CG:</p>
+  <table>
+    <thead><tr><th>θ</th><th>Envelope depth</th><th>Neighbor z-gap</th><th>Droop (hung)</th><th>Assembly mass</th><th>Dovetail margin</th></tr></thead>
+    <tbody>
+      <tr><td class="num">5°</td><td class="num">26.9 mm</td><td class="num">14.3 mm</td><td class="num">0.01 mm</td><td class="num">2.14 kg</td><td class="num">2.2×</td></tr>
+      <tr><td class="num">7.5°</td><td class="num">39.9 mm</td><td class="num">21.5 mm</td><td class="num">0.01 mm</td><td class="num">2.46 kg</td><td class="num">1.9×</td></tr>
+      <tr><td class="num">10°</td><td class="num">52.9 mm</td><td class="num">28.9 mm</td><td class="num">0.02 mm</td><td class="num">2.79 kg</td><td class="num">1.7×</td></tr>
+      <tr><td class="num">15°</td><td class="num">78.4 mm</td><td class="num">44.2 mm</td><td class="num">0.02 mm</td><td class="num">3.51 kg</td><td class="num">1.3×</td></tr>
+    </tbody>
+  </table>
+  <p>The z-gap argument for a larger θ evaporates: even θ=5 gives 14.3 mm of neighbor gap against a 3 mm requirement, and droop is ~0.01 mm either way. What θ actually buys is <b>depth</b> — how far the piece stands off the wall and how much the swirl reads as three-dimensional — at a cost of ~6.5 % assembly mass and ~8 % joint margin per degree. Land arc is 36° of 40° at every θ in this range, so bond area isn't in the trade either.</p>
+  <p><b>Recommendation from the numbers:</b> keep Ø300 — mass is a non-issue (2–3 kg) and it's the look you want. <b>Pick θ purely on how deep you want the piece to sit</b>; θ=10 is a fine choice and costs ~23 % more mass than θ=5, but nothing structural forces it. Move the band outboard toward the wafer CG only in the same revision that fixes the joint. And <b>fix the dovetail first</b> — it is the only number in this document under 40×, and every other improvement makes it worse.</p>
 </section>
 
 <!-- ============ KEY TEST POINTS ============ -->
@@ -133,16 +288,17 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);font-fa
   <table>
     <thead><tr><th>#</th><th>Test</th><th>Method</th><th>Pass criteria</th></tr></thead>
     <tbody>
-      <tr><td class="mono">T1</td><td><b>Neighbor clearance</b></td><td>Print 2 adjacent segments, join, lay a wafer (or 300 mm printed disk) on each land</td><td>≥3 mm air between each riser and the neighboring disk, verified with a feeler or by eye against a 3 mm shim</td></tr>
+      <tr><td class="mono">T1</td><td><b>Neighbor clearance</b></td><td>Print 2 adjacent segments, join, lay a wafer (or 300 mm printed disk) on each land</td><td>≥3 mm air between each riser and the neighboring disk, verified with a feeler or against a 3 mm shim. Include the calculated droop in the budget.</td></tr>
       <tr><td class="mono">T2</td><td>Dovetail fit</td><td>20 mm joint coupons at 0.15 / 0.25 / 0.35 clearance</td><td>Hand-press with a click, zero rattle, survives 20 cycles</td></tr>
       <tr><td class="mono">T3</td><td><b>Bond shear + thermal cycle</b></td><td>Bond a wafer shard or glass slide to a printed coupon with the chosen adhesive; hang 500 g from it in shear; cycle 10↔30 °C ×5 (garage day/night does this for free)</td><td>Zero creep marks at a witness line; no edge lifting or crazing after cycling</td></tr>
       <tr><td class="mono">T4</td><td>Land flatness</td><td>Straightedge across a printed land, feeler gauge</td><td>≤0.15 mm stair-stepping; one block-sand pass allowed</td></tr>
       <tr><td class="mono">T5</td><td>Taper minimum</td><td>Caliper the trailing edge of a printed segment</td><td>≥ #tmin; no see-through walls in the slicer preview at the thin end</td></tr>
       <tr><td class="mono">T6</td><td>Centering repeatability</td><td>Jig a dry wafer 3× on one segment, pencil-witness the edge each time</td><td>All witness marks within 0.5 mm band</td></tr>
+      <tr><td class="mono">T7</td><td><b>Dovetail hang</b> <span class="dim">(new — OP 015 §5)</span></td><td>Two joined segments, one dovetail; hang 5 kg from the lower segment's far end so the joint sees ≥2× the calculated 2.5 N·m</td><td>No root whitening, no permanent set after 24 h under load. Fails → go to two dovetails before printing 9.</td></tr>
     </tbody>
   </table>
   <div class="note"><span class="tag">Why T3 is the gate</span><br>
-  Gravity shear on the bond is ~0.6 kPa against a ~500 kPa capability — the load case that matters is the 10–30 °C swing driving ~80 µm of differential CTE slip at the bond ends. A compliant bond (foam tape or SMP) absorbs that as a few % shear strain; a rigid bond puts it into the silicon. T3 with real thermal cycles is the only test that proves your specific adhesive + your specific print surface. Full-surface adhesive coverage adds nothing: area was never the limit, and longer bonds see <em>more</em> end slip.</div>
+  Gravity shear on the bond is 0.13 kPa against a ~500 kPa capability — a ~4000× margin. The load case that matters is the 10–30 °C swing driving 110 µm of differential CTE slip at the land's far corner, ~47× the gravity stress and rising linearly with land size. A compliant bond absorbs it as ~10 % shear strain; a rigid bond puts it into the silicon. T3 with real thermal cycles is the only test that proves your specific adhesive on your specific print surface. Full-surface coverage is actively harmful: area was never the limit, and longer bonds see <em>more</em> end slip.</div>
 </section>
 
 <!-- ============ BOND ============ -->
@@ -150,50 +306,167 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);font-fa
   <div class="op-head"><span class="op-chip">OP 020</span><h2>Bond — bench, one station at a time</h2></div>
   <ol class="steps">
     <li>IPA-wipe land and wafer contact zone; let flash.</li>
-    <li><b>Tape path</b>: two 20–25 mm strips arced on the land, ≥5 mm inside its boundary, roller-pressed. Liners off only with wafer in hand. <b>Liquid path (SMP)</b>: serpentine bead, 5 mm inside the land edge; Ø4 × #bond printed nubs (3×) set the bondline.</li>
+    <li><b>Tape path</b>: two 20–25 mm strips arced on the land, ≥5 mm inside its boundary, <em>as close to the land centroid as the geometry allows</em> (§4: stress scales with distance from centroid, not with area). Roller-press. Liners off only with wafer in hand. <b>Liquid path (SMP)</b>: serpentine bead, 5 mm inside the land edge; Ø4 × #bond printed nubs (3×) set the bondline.</li>
     <li>Rest wafer edge on the jig's downhill fence first, lower like closing a book. Confirm both fences touch <em>before</em> full contact — tape gives one attempt.</li>
-    <li>Press over the land through a foam pad (tape: 15 s firm; SMP: clamp to nub contact + ¼ turn, 24 h in jig).</li>
-    <li>Repeat ×9, then join the ring.</li>
+    <li>Press over the land centroid through a foam pad (tape: 15 s firm; SMP: clamp to nub contact + ¼ turn, 24 h in jig). <b>Never press the overhang</b> — 20 N at the free edge is ~35 MPa in the silicon, at the fracture allowable.</li>
+    <li>Repeat ×N, then join the ring.</li>
   </ol>
 </section>
 
-<!-- ============ SHOPPING LIST ============ -->
+<!-- ============ MOTION ============ -->
 <section class="op">
-  <div class="op-head"><span class="op-chip">SHOP</span><h2>Home Depot list</h2></div>
+  <div class="op-head"><span class="op-chip">NEXT</span><h2>Motion — the halo as its own ring gear</h2></div>
+  <p>The segment's flat bottom carries a planar flange, and an <b>internal</b> ring gear is cut into its inner edge at pitch Ø504. Tips land at r=250, still inside the hide window, so the whole drive is invisible from the front. A 28-tooth pinion sits <em>inside</em> the ring with its axis at r=224 — well within the Ø500 central hole — so the motor, the rollers and the wall anchor all live behind the halo on one hub plate. That is the version where <b>the motor really can be the anchor</b>.</p>
   <table>
-    <thead><tr><th>Item</th><th>Where / note</th><th>Path</th></tr></thead>
+    <thead><tr><th>Quantity</th><th>Value</th><th>Note</th></tr></thead>
     <tbody>
-      <tr><td><b>Scotch-Mount Extreme double-sided tape, 1 in.</b> (3M 414, ~1.1 mm)</td><td>Paint dept, tape aisle — shelf staple; grab 2–3 packs (~0.6 m/station)</td><td class="mono">TAPE (primary)</td></tr>
-      <tr><td>3M VHB 4910, ¾ in. × 15 yd (1.0 mm, clear)</td><td>HD carries it but often online/ship-to-store — check app before driving; Scotch-Mount Extreme is the same acrylic-foam family and is on the shelf</td><td class="mono">TAPE (alt)</td></tr>
-      <tr><td><b>Loctite PL Premium Max, 9 oz</b> (SMP chemistry)</td><td>Construction adhesive aisle — this is the shelf-available MS-polymer; 20 min reposition, 24 h cure</td><td class="mono">LIQUID</td></tr>
-      <tr><td>Mineral spirits</td><td>Paint dept — PL Premium Max cleanup</td><td class="mono">LIQUID</td></tr>
-      <tr><td>91%+ isopropyl alcohol + lint-free rags</td><td>Paint / cleaning</td><td class="mono">BOTH</td></tr>
-      <tr><td>Nitrile gloves, painter's tape, small foam sheet (press pad)</td><td>Paint dept</td><td class="mono">BOTH</td></tr>
-      <tr><td>500 g-ish weight for T3 (any small clamp/weight)</td><td>You likely own this</td><td class="mono">TEST</td></tr>
+      <tr><td>Internal ring gear, module 2, Ri=255</td><td class="num">252 teeth</td><td>28 per segment × 9 — must divide by N or the pitch breaks at every joint</td></tr>
+      <tr><td>Pinion 28 T → ratio</td><td class="num">9.0 : 1</td><td>Ø56 mm. One pinion revolution advances the ring exactly one segment</td></tr>
+      <tr><td>Rotational inertia J</td><td class="num">~0.24 kg·m²</td><td>Σ m(R² + r²/2); wafers dominate</td></tr>
+      <tr><td>Spin-up torque, 0.3 rpm in 5 s</td><td class="num">1.5 mN·m</td><td>at the ring — nothing</td></tr>
+      <tr><td>Rolling friction, 3 V-groove rollers</td><td class="num">~34 mN·m</td><td>μ≈0.005 × 22.6 N × 0.303 m on the outer rim — this is the whole load</td></tr>
+      <tr><td>Mass-imbalance ripple, ±2 g/station</td><td class="num">~7 mN·m</td><td>±, once per rev</td></tr>
+      <tr><td><b>Required torque at the pinion</b></td><td class="num"><b>~3.3 mN·m</b></td><td>A 28BYJ-48 has 10× that. A NEMA 14 is overkill by 100×.</td></tr>
+      <tr><td>Rim speed at 0.3 rpm</td><td class="num">9.5 mm/s</td><td>one revolution every 3.3 min — right for wall art</td></tr>
     </tbody>
   </table>
-  <p class="dim">Not at HD: filament (you have it), wafers, feeler gauges (Harbor Freight/auto parts if you don't own a set).</p>
+  <p><b>Torque is not the problem — the load path is.</b> A pinion mesh cannot be the hanging anchor: 22.5 N through a tooth flank with backlash means the ring drops, rocks, and clicks once per tooth. Split the two jobs:</p>
+  <ol class="steps">
+    <li><b>Three V-groove bearings</b> ride the frame's rim as a rail — two below at ±120° carrying the weight in compression (arch action, which also collapses the §5 joint moment toward zero), one above as a keeper against tip-off.</li>
+    <li><b>The pinion only supplies torque</b>, spring-loaded into mesh so backlash never unloads. All four contact points live behind the wafer overhang.</li>
+    <li><b>The bearing plate is the wall anchor.</b> It sees 22.5 N shear plus the 0.14 N·m out-of-plane tip-off moment computed above — a two-screw plate into a stud, not a slewing ring.</li>
+  </ol>
+  <div class="flag"><span class="tag">Rotation changes the analysis</span><br>
+  Everything in OP 015 is a <em>static</em> case at a fixed ring angle α. Spin the halo and α sweeps continuously, so the peel term <span class="mono">W·sinθ·cos α·d</span> <b>fully reverses every revolution</b> — each bond goes from compression to tension and back. At 0.3 rpm that is ~158 000 cycles/year. The amplitude is tiny (±0.27 kPa), and silicon does not fatigue, but a viscoelastic adhesive under fully-reversed load ratchets and creeps in a way a static hang never reveals. If motion is on the table, <b>T3 becomes a cyclic test</b>: same coupon, load reversed ~10⁴ times, then check the witness line. And it makes the case for centering the band under the wafer CG much stronger — kill the arm <span class="mono">d</span> and the reversing term goes with it.</div>
+  <p class="dim">Also: a rotating ring makes the single-point-hang joint case obsolete (rollers put the ring in compression), which retires the 2.2× dovetail margin — the tightest number in the build. Motion is arguably a <em>structural simplification</em>, not just a feature.</p>
+</section>
+
+<!-- ============ BILL OF MATERIALS ============ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">BOM</span><h2>Bill of materials</h2></div>
+  <p>Quantities are for the standard build — <b>WH-300-09-10</b>: nine Ø300 × 0.775 mm wafers, N=9, θ=10°, band 248–303, 1.1 mm bondline. Filament mass is integrated from the segment solid model, so it moves with your parameters; re-read it off the calculator if you change them. Groups C1 and C2 are <b>alternatives — pick one adhesive path, not both</b>.</p>
+  <div class="tscroll">
+  <table>
+    <thead><tr><th>Ref</th><th>Item &amp; specification</th><th>Qty</th><th>Source</th><th>Why this part</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="5">A — Wafers</td></tr>
+      <tr><td class="ref">A1</td><td><b>Ø300 mm silicon wafer</b>, 775 ± 25 µm, single-side or double-side polished. <b>Dummy / test / reclaim grade</b> — device-grade is a waste of money.</td><td class="mono">9<br><span class="dim">+2 spare</span></td><td>Surplus semiconductor dealers, eBay, UniversityWafer, SVM. Reclaim stock is the cheap route.</td><td>Order spares. There is no repair path for a cracked wafer, and the fracture margin during handling is the tightest in the build.</td></tr>
+      <tr><td class="ref">A2</td><td>Wafer shipping/storage cassette or coin-stack case, 300 mm</td><td class="mono">1</td><td>Usually included with A1 — confirm before ordering</td><td>Loose wafers in a box arrive chipped. Edge chips are fracture initiators.</td></tr>
+
+      <tr class="grp"><td colspan="5">B — Printed parts</td></tr>
+      <tr><td class="ref">B1</td><td><b>PETG filament</b>, 1.75 mm. PLA works but has a lower service temperature (see spec sheet §2); ASA if the piece will see sun.</td><td class="mono">2 kg</td><td>Any filament vendor</td><td><b>1143 g</b> of segments at 45 % density (127 g × 9, gear flange included), plus jig, coupons and failed prints. 2 spools is the honest number.</td></tr>
+      <tr><td class="ref">B2</td><td>Frame segment — 40° sector with integral gear flange and Ø5 jig bore, printed flat-bottom-down, 45 % infill, 4 perimeters, no supports</td><td class="mono">9</td><td>Print from the OP 010 model</td><td>127 g and roughly 6–8 h each. Perimeters matter more than infill: the dovetail is the weak link (§5).</td></tr>
+      <tr><td class="ref">B3</td><td>Bonding jig body + 3 locating pegs + offset bar</td><td class="mono">1 set</td><td>Print</td><td>Reusable across all nine stations. Pegs at ±30–40° from the push axis; ±60° doubles the centring error.</td></tr>
+      <tr><td class="ref">B4</td><td>Dovetail test coupons, 20 mm, at 0.15 / 0.25 / 0.35 mm clearance</td><td class="mono">3</td><td>Print</td><td>Gate T2. Printers vary; do not guess the clearance.</td></tr>
+
+      <tr class="grp"><td colspan="5">C1 — Adhesive, tape path <span class="dim">(recommended)</span></td></tr>
+      <tr><td class="ref">C1.1</td><td><b>3M Scotch-Mount Extreme</b> double-sided acrylic foam tape, 1 in × 1.5 m, ~1.1 mm — or <b>3M VHB 4910</b>, ¾ in, 1.0 mm</td><td class="mono">2 rolls</td><td>Home Depot paint dept (Scotch-Mount); VHB usually ship-to-store</td><td>Two <b>13 × 13 mm</b> pads per station, separated ~20 mm radially = <b>~235 mm total</b>. That is 4× design factor on both shear and peel, and only ~3 % of the land — see the glue-area note. Buy 2 rolls anyway; the tape gives one attempt per wafer.</td></tr>
+      <tr><td class="ref">C1.2</td><td>Hard rubber seam roller or J-roller</td><td class="mono">1</td><td>Paint / wallpaper aisle</td><td>Acrylic foam needs ~100 kPa application pressure to wet out. The wafer's own weight supplies 0.13 kPa — a thousand times short.</td></tr>
+
+      <tr class="grp"><td colspan="5">C2 — Adhesive, liquid path <span class="dim">(alternative)</span></td></tr>
+      <tr><td class="ref">C2.1</td><td><b>Loctite PL Premium Max</b>, 9 oz (SMP / MS-polymer)</td><td class="mono">1 tube</td><td>Home Depot, construction adhesive aisle</td><td>20 min repositioning, 24 h cure. The only path where the jig's adjustable peg earns its keep.</td></tr>
+      <tr><td class="ref">C2.2</td><td>Caulking gun, 10 oz</td><td class="mono">1</td><td>Same aisle</td><td>—</td></tr>
+      <tr><td class="ref">C2.3</td><td>Mineral spirits, 1 qt</td><td class="mono">1</td><td>Paint dept</td><td>SMP cleanup. Uncured SMP is unpleasant to remove any other way.</td></tr>
+      <tr><td class="ref">C2.4</td><td>Printed bondline nubs, Ø4 × 1.1 mm</td><td class="mono">27</td><td>Print (3 per station)</td><td>Sets the bondline. A 0.5 mm SMP line carries ~60× the thermal stress of 1.1 mm foam (§4) — do not let it self-thin.</td></tr>
+
+      <tr class="grp"><td colspan="5">D — Bonding jig hardware</td></tr>
+      <tr><td class="ref">D1</td><td><b>Nylon machine screw</b> — <span class="mono">McMaster 98882A118</span><br><span class="dim">Thread/length per the McMaster listing — see note below the table.</span></td><td class="mono">1</td><td><a href="https://www.mcmaster.com/98882A118/">mcmaster.com/98882A118</a></td><td>Drives the adjustable jig peg. Nylon, not steel — never put metal near a wafer edge.</td></tr>
+      <tr><td class="ref">D1b</td><td><b>Nylon square nut</b>, thread to match D1. DIN 562 (thin) or DIN 557 (normal) pattern.<br><span class="dim">M4 reference: 7 mm across flats; 2.2 mm thick DIN 562, 3.2 mm DIN 557.</span></td><td class="mono">2</td><td>McMaster <span class="mono">Plastic Nuts → nut type: square</span>; also RS, Accu, Essentra</td><td>Captured in a printed trap. Square is the right call for a printed pocket — see the note below.</td></tr>
+      <tr><td class="ref">D2</td><td>Compression spring, ~1 N/mm, 10 mm free length <span class="dim">(optional)</span></td><td class="mono">1</td><td>Hardware assortment pack</td><td>Turns the screw from a displacement source into a force source. Not required for a first prototype — light finger contact and normal thread backlash are sufficient.</td></tr>
+      <tr><td class="ref">D3</td><td>Silicone or TPU peg tips, ~5 mm</td><td class="mono">3</td><td>Print in TPU, or cut from tubing</td><td>Spreads the edge contact. Bare printed PETG on a wafer edge is a point contact on a fracture initiator.</td></tr>
+
+      <tr class="grp"><td colspan="5">E — Mounting</td></tr>
+      <tr><td class="ref">E1</td><td>Wall anchor rated ≥ 90 N (≈10 kg), stud screw or rated hollow-wall toggle</td><td class="mono">2</td><td>Hardware aisle</td><td>4× the 22.5 N assembly weight. <b>Two anchors at ±50° from top</b> drops the joint moment ~4× — the cheapest structural fix available (§5).</td></tr>
+      <tr><td class="ref">E2</td><td>D-ring or keyhole hangers, printed or steel</td><td class="mono">2</td><td>Print or picture-framing aisle</td><td>Must resist pull-out as well as shear: the assembly CG sits 6.5 mm off the wall plane.</td></tr>
+      <tr><td class="ref">E3</td><td>Bubble or digital level</td><td class="mono">1</td><td>—</td><td>±2° or the swirl visibly reads crooked.</td></tr>
+
+      <tr class="grp"><td colspan="5">F — Consumables</td></tr>
+      <tr><td class="ref">F1</td><td>Isopropyl alcohol, 91 %+, or denatured alcohol</td><td class="mono">500 ml</td><td>Paint / pharmacy</td><td>Land and wafer prep. <b>Never acetone</b> — harmless on silicon, crazes PETG.</td></tr>
+      <tr><td class="ref">F2</td><td>Lint-free wipes / microfibre cloths</td><td class="mono">1 pack</td><td>—</td><td>Paper towel sheds fibres into the bondline.</td></tr>
+      <tr><td class="ref">F3</td><td>Nitrile gloves</td><td class="mono">1 box</td><td>—</td><td>Skin oils on the land are a bond contaminant; wafer shards are a laceration hazard.</td></tr>
+      <tr><td class="ref">F4</td><td>Closed-cell foam sheet, ~10 mm, for the press pad</td><td class="mono">1</td><td>Craft / packaging</td><td>Distributes press force over the land. Never press the unsupported wafer area.</td></tr>
+      <tr><td class="ref">F5</td><td>Painter's tape</td><td class="mono">1 roll</td><td>—</td><td>Witness marks for creep inspection, and masking during prep.</td></tr>
+
+      <tr class="grp"><td colspan="5">G — Test &amp; metrology <span class="dim">(gates T1–T7)</span></td></tr>
+      <tr><td class="ref">G1</td><td>Feeler gauge set, 0.05–1.0 mm</td><td class="mono">1</td><td>Auto parts, Harbor Freight</td><td>T1 neighbour clearance (≥3 mm shim) and T4 land flatness (≤0.15 mm).</td></tr>
+      <tr><td class="ref">G2</td><td>Digital calipers, 150 mm</td><td class="mono">1</td><td>—</td><td>T5 taper minimum at the trailing edge.</td></tr>
+      <tr><td class="ref">G3</td><td>Straightedge, 100 mm ground or a steel rule</td><td class="mono">1</td><td>—</td><td>T4, across the land.</td></tr>
+      <tr><td class="ref">G4</td><td>Ø300 printed disks or scrap wafers</td><td class="mono">2</td><td>Print</td><td>T1 — do not risk real wafers proving clearance.</td></tr>
+      <tr><td class="ref">G5</td><td>500 g weight (T3) and 5 kg weight (T7)</td><td class="mono">1 ea</td><td>Anything of known mass</td><td>T3 adhesive shear; <b>T7 dovetail hang</b> — the gate that covers the 2.1× margin.</td></tr>
+      <tr><td class="ref">G6</td><td>Indoor/outdoor thermometer or a garage shelf</td><td class="mono">1</td><td>—</td><td>T3 needs real 10↔30 °C cycles. A garage does this for free overnight.</td></tr>
+
+      <tr class="grp"><td colspan="5">H — Optional: motion drive <span class="dim">(concept, not yet designed)</span></td></tr>
+      <tr><td class="ref">H1</td><td>Stepper, 28BYJ-48 + ULN2003 driver, or NEMA 14</td><td class="mono">1</td><td>Electronics vendor</td><td>Needs ~3.3 mN·m at the pinion. A 28BYJ-48 has 10× that.</td></tr>
+      <tr><td class="ref">H2</td><td>V-groove bearings, 623/608 with V-groove outer</td><td class="mono">3</td><td>Bearing vendor</td><td>These carry the 22.5 N. The pinion supplies torque only — a tooth mesh cannot be the hanger.</td></tr>
+      <tr><td class="ref">H3</td><td>Printed pinion, 28 T module 2, Ø56</td><td class="mono">1</td><td>Print</td><td>Meshes <b>inside</b> the 252 T internal ring gear on the flange = 9:1 exactly. Pinion axis at r=224, inside the central hole, so the drive is invisible.</td></tr>
+      <tr><td class="ref">H4</td><td>5 V / 12 V supply + microcontroller</td><td class="mono">1</td><td>—</td><td>0.3 rpm is one revolution per 3.3 min — the right speed for wall art.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="flag"><span class="tag">D1 is unverified — fill this in before ordering</span><br>
+  McMaster's catalogue is fully script-rendered and blocks fetching, and <span class="mono">98882A118</span> is not indexed anywhere public, so the thread, length, drive and head style on that line are <b>blank on purpose rather than guessed</b>. Paste the one-line description from the product page and the rest of the BOM — nut thread, trap dimensions, bore fit — follows from it. The Ø5 bore in the segment is sized for an M4 clearance fit; if D1 turns out to be M3 or #8-32, that bore diameter needs to change with it.</div>
+
+  <div class="note"><span class="tag">Square nuts are the right call — and here is the trap that fits one</span><br>
+  Your preference is well founded, and the reason is bridging. A captured nut pocket is entered from a side face and printed over, so the slicer has to bridge its ceiling. A square pocket bridges a <b>constant-width flat</b>; a hex pocket's ceiling narrows across the span and its two upper flats become unsupported overhangs, which is why hex traps come out fuzzy and end up needing a reamer. Square also gives more anti-rotation purchase per millimetre of pocket depth.
+  <br><br>Trap geometry, driven off the nut you actually buy (<span class="mono">s</span> = across flats, <span class="mono">m</span> = thickness):
+  <div class="eq">pocket width   s + 0.25      (M4 DIN 562 → 7.25 mm)
+pocket depth   m + 0.20      (M4 DIN 562 → 2.40 mm, DIN 557 → 3.40 mm)
+entry slot     s + 0.25 wide, run it to a side face so the nut drops in
+ceiling        ≥ 3 solid layers over the pocket, no infill
+bore           thread + 0.4 clearance, concentric with the pocket</div>
+  Buy <b>2</b>: the first one you press in at the wrong depth is a write-off, and nylon nuts strip long before steel does.</div>
+
+  <div class="note"><span class="tag">Scaling to other configurations</span><br>
+  Filament is the only line that moves much. At N=9, θ=10°: <b>Ø150 → 198 g</b> of segments (1 spool), <b>Ø200 → 369 g</b> (1 spool), <b>Ø300 → 1143 g</b> (2 spools), all at 45 % density. Wafer count follows N. Tape length is 50 mm per station regardless of wafer size, because pad size is set by the bond physics (§4), not by area.</div>
+  <div class="flag"><span class="tag">Two pads, not one — and stagger them radially</span><br>
+  Two 25 × 25 mm pads give 1250 mm² per station: 18.8 N of sustained shear capacity against 1.25 N applied, a 15× margin. Area was never the constraint. But place one pad near <span class="mono">Ri</span> and one near <span class="mono">Ro</span> rather than side by side at mid-band — the peel moment (§2) acts about the tangential axis, and radial separation is what gives the pad pair any section modulus against it. Two pads at the same radius are ~12× weaker in peel than the full land; staggered, ~6×. Both pass, but the stagger is free.</div>
+  <p class="dim">Prices intentionally omitted — wafer surplus pricing in particular swings by an order of magnitude with grade and availability. Reclaim Ø300 is the line item worth shopping hardest.</p>
 </section>
 
 <footer>
-  <span>HALO-001 · REV B · frame-method iteration</span>
-  <span>datum plane cut + neighbor clearance cut + compliant bond</span>
+  <span>HALO-001 · REV B · frame-method iteration + statics</span>
+  <span>thermal governs · dovetail is the margin · motion retires it</span>
 </footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
-const WR=150, WT=0.775, N=9, SEG=2*Math.PI/N, HALF=SEG/2, CLR=3;
+// ---- units: mm, N, MPa, g(mass), K ----
+const G_ACC=9.81;                      // m/s^2
+const SI ={rho:2.329e-3, E:130000, cte:2.6e-6};   // g/mm3, MPa, /K
+const PET={rho:1.270e-3, E:2000, allow:20, cte:60e-6};
+const CLR=3;                           // neighbor clearance, mm
+const DT_W=16, PLATE=0.922;            // dovetail wide width; plate stiffening (1-nu^2)
+const HOLE_D=5, GEAR_M=2, GEAR_TF=6;   // jig screw bore; gear module; flange thickness
+
+// Internal ring gear on a planar flange at the flat-bottom level -- the only planar
+// face the segment has. Tooth count MUST divide by N or the pitch breaks at the joints.
+function gearSpec(){
+  const target=P.Ri-5;                                   // flange sits just inboard of the band
+  const tps=Math.max(8,Math.round(2*target/GEAR_M/P.N)); // teeth per segment, integer
+  const T=tps*P.N, rp=T*GEAR_M/2;
+  return {tps:tps, T:T, rp:rp, tip:rp-GEAR_M, root:rp+1.25*GEAR_M, m:GEAR_M};
+}
+// Internal-gear inner boundary: tip radius across a tooth, root radius in the gap.
+function gearInner(a,g){
+  const pitch=2*Math.PI/g.T, ph=((a%pitch)+pitch)%pitch, f=ph/pitch;
+  if(f<0.08) return g.root+(g.tip-g.root)*(f/0.08);
+  if(f<0.46) return g.tip;
+  if(f<0.54) return g.tip+(g.root-g.tip)*((f-0.46)/0.08);
+  return g.root;
+}
+
 const canvas=document.getElementById('viz');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 const scene=new THREE.Scene(); scene.background=new THREE.Color(0xEEF1F4);
-const camera=new THREE.PerspectiveCamera(40,2,1,6000);
+const camera=new THREE.PerspectiveCamera(40,2,1,8000);
 scene.add(new THREE.AmbientLight(0xffffff,0.55));
 const key=new THREE.DirectionalLight(0xffffff,0.7); key.position.set(400,600,800); scene.add(key);
 const fill=new THREE.DirectionalLight(0xffffff,0.3); fill.position.set(-500,-200,400); scene.add(fill);
 
 let az=0.6, pol=1.05, dist=1500, group=new THREE.Group(); scene.add(group);
+let view='assembly', autoDist=true;   // autoDist stops honouring the fit once you zoom by hand
 function placeCam(){
   camera.position.set(dist*Math.sin(pol)*Math.cos(az), dist*Math.sin(pol)*Math.sin(az), dist*Math.cos(pol));
   camera.up.set(0,0,1); camera.lookAt(0,0,0);
@@ -202,130 +475,344 @@ let drag=false,px=0,py=0;
 canvas.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-px)*0.008;pol=Math.min(2.6,Math.max(0.3,pol-(e.clientY-py)*0.008));px=e.clientX;py=e.clientY;placeCam();});
 canvas.addEventListener('pointerup',()=>drag=false);
-canvas.addEventListener('wheel',e=>{e.preventDefault();dist=Math.min(3500,Math.max(600,dist*(1+e.deltaY*0.001)));placeCam();},{passive:false});
+canvas.addEventListener('wheel',e=>{e.preventDefault();autoDist=false;dist=Math.min(5000,Math.max(120,dist*(1+e.deltaY*0.001)));placeCam();},{passive:false});
 
-const P={tilt:10,R:350,Ri:248,bw:55,tmin:6,bond:1.1};
+const P={D:300,wt:0.775,N:9,tilt:10,R:350,Ri:248,bw:55,tmin:6,bond:1.1,G:0.06,dT:20,dens:45};
+const WR=()=>P.D/2, SEG=()=>2*Math.PI/P.N, HALF=()=>Math.PI/P.N;
 
-// z of wafer k's plane at global (x,y): plane through (R cos(ka), R sin(ka)) tilted th about its radial axis.
-// local tangential coord = (-sin(ka), cos(ka))·(p - c); z = t_local * tan(th) (leading edge +)
+// z of wafer k's MID-plane at global (x,y): plane through the pitch point, tilted th about its radial axis
 function planeZ(x,y,k,th){
-  const a=k*SEG, tl=-Math.sin(a)*(x-P.R*Math.cos(a))+Math.cos(a)*(y-P.R*Math.sin(a));
+  const a=k*SEG(), tl=-Math.sin(a)*(x-P.R*Math.cos(a))+Math.cos(a)*(y-P.R*Math.sin(a));
   return tl*Math.tan(th);
 }
-function inFootprint(x,y,k,th){ // inside wafer k's projected ellipse
-  const a=k*SEG, c=Math.cos(a), s=Math.sin(a);
-  const xr=c*x+s*y-P.R, yt=(-s*x+c*y)/Math.cos(th); // undo tangential compression
-  return (xr*xr+yt*yt)<=WR*WR;
+function inFootprint(x,y,k,th){                 // inside wafer k's projected ellipse
+  const a=k*SEG(), c=Math.cos(a), s=Math.sin(a);
+  const xr=c*x+s*y-P.R, yt=(-s*x+c*y)/Math.cos(th);
+  return (xr*xr+yt*yt)<=WR()*WR();
 }
-function hideWindow(th){ // radial coverage range at joint meridian (bisection)
-  const m=HALF, b=WR*Math.cos(th);
-  const f=p=>Math.pow((p*Math.cos(m)-P.R)/WR,2)+Math.pow(p*Math.sin(m)/b,2)-1;
-  function bis(lo,hi){for(let i=0;i<50;i++){const md=(lo+hi)/2;(f(lo)*f(md)<=0)?hi=md:lo=md;}return (lo+hi)/2;}
-  return [bis(P.R*0.55,P.R), bis(P.R,P.R*1.35)];
+function hideWindow(th){                        // radial coverage range at the joint meridian
+  const m=HALF(), b=WR()*Math.cos(th);
+  const f=p=>Math.pow((p*Math.cos(m)-P.R)/WR(),2)+Math.pow(p*Math.sin(m)/b,2)-1;
+  const bis=(lo,hi)=>{for(let i=0;i<60;i++){const md=(lo+hi)/2;(f(lo)*f(md)<=0)?hi=md:lo=md;}return (lo+hi)/2;};
+  return [bis(Math.max(1,P.R-WR()),P.R), bis(P.R,P.R+WR())];
+}
+
+// ---- land patch: area, centroid, section modulus, farthest bond point ----
+// Integrated on the same rule the mesh uses, so the clearance cut is reflected in the statics.
+function landStats(th,zBot){
+  const Ro=P.Ri+P.bw, H=HALF(), NR=48, NA=120;
+  const drho=P.bw/NR, da=2*H/NA, cells=[];
+  let A=0,Su=0,Sv=0;
+  for(let i=0;i<NR;i++)for(let j=0;j<NA;j++){
+    const rho=P.Ri+drho*(i+0.5), a=-H+da*(j+0.5);
+    const x=rho*Math.cos(a), y=rho*Math.sin(a);
+    if(!inFootprint(x,y,0,th)) continue;
+    const zOwn=planeZ(x,y,0,th)-P.wt/2-P.bond;
+    if(inFootprint(x,y,1,th) && planeZ(x,y,1,th)-P.wt/2-CLR < zOwn) continue;  // clearance cut kills it
+    if(zOwn<=zBot+1.001) continue;                                            // no material under it
+    const dA=rho*drho*da;
+    const u=x-P.R, v=y/Math.cos(th);   // in the wafer plane, origin at the wafer centre
+    A+=dA; Su+=u*dA; Sv+=v*dA; cells.push([u,v,dA]);
+  }
+  if(A<=0) return null;
+  const cu=Su/A, cv=Sv/A, d=Math.hypot(cu,cv);
+  const ex=d>1e-9?-cu/d:1, ey=d>1e-9?-cv/d:0;   // toward the wafer CG; peel axis is perpendicular
+  let I=0,cmax=0,Lmax=0;
+  for(const c of cells){
+    const s=(c[0]-cu)*ex+(c[1]-cv)*ey;
+    I+=s*s*c[2]; if(Math.abs(s)>cmax)cmax=Math.abs(s);
+    const L=Math.hypot(c[0]-cu,c[1]-cv); if(L>Lmax)Lmax=L;
+  }
+  return {A:A,cu:cu,cv:cv,d:d,S:cmax>0?I/cmax:1e-9,Lmax:Lmax,rc:Math.hypot(P.R+cu,cv)};
 }
 
 function buildScene(){
   while(group.children.length) group.remove(group.children[0]);
-  const th=P.tilt*Math.PI/180, Ro=P.Ri+P.bw;
-  const yMax=Ro*Math.sin(HALF);
+  const th=P.tilt*Math.PI/180, Ro=P.Ri+P.bw, H=HALF(), N=P.N;
+  const yMax=Ro*Math.sin(H);
   const zBot=-(yMax*Math.tan(th)+P.bond+P.tmin);
-  // ---- segments ----
-  const NR=10, NA=40;
-  const segMat=new THREE.MeshPhongMaterial({color:0x33383D,shininess:12,side:THREE.DoubleSide});
   const topZ=(x,y)=>{
-    // top = min(ownLand, neighborClearance) if inside own footprint, else bottom+tmin ledge (kept simple: bottom)
     if(!inFootprint(x,y,0,th)) return zBot+2;
-    let z=planeZ(x,y,0,th)-P.bond;
-    if(inFootprint(x,y,1,th)) z=Math.min(z, planeZ(x,y,1,th)-CLR);
-    if(inFootprint(x,y,-1+N,th)&&false) z=z; // trailing neighbor is above; no cut needed
+    let z=planeZ(x,y,0,th)-P.wt/2-P.bond;
+    if(inFootprint(x,y,1,th)) z=Math.min(z, planeZ(x,y,1,th)-P.wt/2-CLR);
     return Math.max(z,zBot+1);
   };
-  const pos=[],idx=[];
+  // ---- segment mesh ----
+  // Top vertices are colour-coded so the "Frame only" view shows where the land
+  // actually survives: teal = bondable, clay = removed by the neighbour-clearance cut.
+  const NR=24, NA=96, pos=[], idx=[], col=[];
+  const hx=(P.Ri+Ro)/2, hr=HOLE_D/2;   // jig screw bore, mid-band on the segment centreline
+  const C_LAND=[0.078,0.490,0.455], C_CUT=[0.62,0.30,0.26], C_BODY=[0.200,0.220,0.240];
+  const classify=(x,y)=>{
+    if(!inFootprint(x,y,0,th)) return C_BODY;
+    const zOwn=planeZ(x,y,0,th)-P.wt/2-P.bond;
+    if(inFootprint(x,y,1,th) && planeZ(x,y,1,th)-P.wt/2-CLR < zOwn) return C_CUT;
+    if(zOwn<=zBot+1.001) return C_BODY;
+    return C_LAND;
+  };
+  const segMat=new THREE.MeshPhongMaterial({color:0xffffff,vertexColors:true,shininess:12,side:THREE.DoubleSide});
   for(let i=0;i<=NR;i++)for(let j=0;j<=NA;j++){
-    const rho=P.Ri+P.bw*i/NR, a=-HALF+SEG*j/NA;
+    const rho=P.Ri+P.bw*i/NR, a=-H+2*H*j/NA;
     const x=rho*Math.cos(a), y=rho*Math.sin(a);
-    pos.push(x,y,topZ(x,y));
+    pos.push(x,y,topZ(x,y)); col.push(...classify(x,y));
   }
   const base=pos.length/3;
   for(let i=0;i<=NR;i++)for(let j=0;j<=NA;j++){
-    const rho=P.Ri+P.bw*i/NR, a=-HALF+SEG*j/NA;
-    pos.push(rho*Math.cos(a),rho*Math.sin(a),zBot);
+    const rho=P.Ri+P.bw*i/NR, a=-H+2*H*j/NA;
+    pos.push(rho*Math.cos(a),rho*Math.sin(a),zBot); col.push(...C_BODY);
   }
-  function quad(a,b,c,d){idx.push(a,b,c,a,c,d);}
+  const quad=(a,b,c,d)=>{idx.push(a,b,c,a,c,d);};
   for(let i=0;i<NR;i++)for(let j=0;j<NA;j++){
+    const rho=P.Ri+P.bw*(i+0.5)/NR, aa=-H+2*H*(j+0.5)/NA;
+    if(Math.hypot(rho*Math.cos(aa)-hx, rho*Math.sin(aa))<hr) continue;   // open the jig bore
     const A=i*(NA+1)+j;
-    quad(A,A+1,A+NA+2,A+NA+1);                       // top
-    const B=base+A; quad(B+NA+1,B+NA+2,B+1,B);       // bottom
+    quad(A,A+1,A+NA+2,A+NA+1);
+    const B=base+A; quad(B+NA+1,B+NA+2,B+1,B);
   }
-  for(let j=0;j<NA;j++){ // inner & outer walls
+  for(let j=0;j<NA;j++){
     const A=j,B=base+j; quad(B,B+1,A+1,A);
     const C=NR*(NA+1)+j,D=base+NR*(NA+1)+j; quad(C,C+1,D+1,D);
   }
-  for(let i=0;i<NR;i++){ // end walls
+  for(let i=0;i<NR;i++){
     const A=i*(NA+1),B=base+i*(NA+1); quad(A,A+NA+1,B+NA+1,B);
     const C=i*(NA+1)+NA,D=base+i*(NA+1)+NA; quad(D,D+NA+1,C+NA+1,C);
   }
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
   g.setIndex(idx); g.computeVertexNormals();
-  for(let k=0;k<N;k++){
-    const m=new THREE.Mesh(g,segMat); m.rotation.z=k*SEG; group.add(m);
+  // ---- jig screw bore wall ----
+  const boreTop=topZ(hx,0), boreH=Math.max(1,boreTop-zBot);
+  const boreGeo=new THREE.CylinderGeometry(hr,hr,boreH,20,1,true);
+  const boreMat=new THREE.MeshPhongMaterial({color:0x1A1D20,shininess:4,side:THREE.DoubleSide});
+
+  // ---- internal ring gear on a planar flange at the flat-bottom level ----
+  const G=gearSpec();
+  const fPos=[], fIdx=[], NF=Math.max(64,G.tps*10);
+  for(let j=0;j<=NF;j++){
+    const a=-H+2*H*j/NF, ri=gearInner(a,G), ro=P.Ri;
+    const c=Math.cos(a), s=Math.sin(a);
+    fPos.push(ri*c,ri*s,zBot+GEAR_TF, ro*c,ro*s,zBot+GEAR_TF,
+              ri*c,ri*s,zBot,          ro*c,ro*s,zBot);
   }
-  // ---- wafers ----
-  const wg=new THREE.CylinderGeometry(WR,WR,WT,72);
+  const fq=(a,b,c,d)=>{fIdx.push(a,b,c,a,c,d);};
+  for(let j=0;j<NF;j++){
+    const A=j*4, B=(j+1)*4;
+    fq(A,A+1,B+1,B);           // top
+    fq(A+3,A+2,B+2,B+3);       // bottom
+    fq(A+2,A,B,B+2);           // toothed inner wall
+    fq(A+1,A+3,B+3,B+1);       // outer wall
+  }
+  const fGeo=new THREE.BufferGeometry();
+  fGeo.setAttribute('position',new THREE.Float32BufferAttribute(fPos,3));
+  fGeo.setIndex(fIdx); fGeo.computeVertexNormals();
+  const fMat=new THREE.MeshPhongMaterial({color:0x4A5560,shininess:30,side:THREE.DoubleSide});
+
+  // ---- place per view ----
+  const nSeg = (view==='assembly') ? N : 1;
+  const nWaf = (view==='assembly') ? N : (view==='station' ? 1 : 0);
+  for(let k=0;k<nSeg;k++){
+    const m=new THREE.Mesh(g,segMat); m.rotation.z=k*SEG(); group.add(m);
+    const fl=new THREE.Mesh(fGeo,fMat); fl.rotation.z=k*SEG(); group.add(fl);
+    const bo=new THREE.Mesh(boreGeo,boreMat); bo.rotation.x=Math.PI/2;
+    const bp=new THREE.Group(); bp.add(bo); bp.position.set(hx,0,zBot+boreH/2);
+    const bq=new THREE.Group(); bq.add(bp); bq.rotation.z=k*SEG(); group.add(bq);
+  }
+  const wg=new THREE.CylinderGeometry(WR(),WR(),P.wt,72);
   const wm=new THREE.MeshPhongMaterial({color:0xA8B2BB,shininess:95,specular:0x8899AA});
-  for(let k=0;k<N;k++){
-    const w=new THREE.Mesh(wg,wm);
-    w.rotation.x=Math.PI/2;                 // disc into XY plane
-    const p=new THREE.Group(); p.add(w);
-    p.position.set(P.R,0,0); p.rotation.x=th;   // tilt about local radial (X) axis
-    const q=new THREE.Group(); q.add(p); q.rotation.z=k*SEG;
+  for(let k=0;k<nWaf;k++){
+    const w=new THREE.Mesh(wg,wm); w.rotation.x=Math.PI/2;
+    const p=new THREE.Group(); p.add(w); p.position.set(P.R,0,0); p.rotation.x=th;
+    const q=new THREE.Group(); q.add(p); q.rotation.z=k*SEG();
     group.add(q);
   }
-  // ---- readouts ----
-  const [hi,ho]=hideWindow(th);
-  const chord=2*P.R*Math.sin(Math.PI/N);
-  const swing=WR*Math.sin(th);
+  frameView(th,zBot,Ro,H);
+  viewNote();
+  readouts(th,zBot,Ro,yMax,topZ);
+}
+
+// Recentre the group on whatever the current view is showing and pick a sane
+// camera distance. Orbit angles are preserved across view changes.
+function frameView(th,zBot,Ro,H){
+  const r=WR(); let cx=0,cz=0,extent;
+  if(view==='assembly'){
+    extent=P.R+r*Math.cos(th);
+  }else if(view==='station'){
+    cx=P.R; cz=0; extent=r*1.15;
+  }else{
+    cx=(P.Ri+Ro)/2; cz=zBot/2;
+    extent=Math.max(P.bw, 2*Ro*Math.sin(H))*0.72;
+  }
+  group.position.set(-cx,0,-cz);
+  if(autoDist){
+    dist=extent/Math.tan(camera.fov*Math.PI/360)*1.25;
+    placeCam();
+  }
+}
+
+function readouts(th,zBot,Ro,yMax,topZ){
+  const H=HALF(), N=P.N, r=WR(), set=(id,v,cls)=>{const e=document.getElementById(id);e.textContent=v;e.className='v'+(cls?' '+cls:'');};
+  const alerts=[];
+  // ---------- geometry ----------
+  const hw=hideWindow(th), hi=hw[0], ho=hw[1];
+  const chord=2*P.R*Math.sin(H);
   const bandOK=(P.Ri>=hi-0.5)&&(Ro<=ho+0.5);
-  // bondable arc: leading land ends where neighbor footprint begins at band radii (numeric)
-  let lead=HALF;
-  for(let a=0;a<=HALF;a+=0.002){
+  const overlap=2*r*Math.cos(th)-chord;
+  let lead=H;
+  for(let a=0;a<=H;a+=0.002){
     const rho=(P.Ri+Ro)/2, x=rho*Math.cos(a), y=rho*Math.sin(a);
     if(inFootprint(x,y,1,th)){lead=a;break;}
   }
-  const landArc=(HALF+lead)*180/Math.PI;
-  const set=(id,v,cls)=>{const e=document.getElementById(id);e.textContent=v;e.className='v'+(cls?' '+cls:'');};
-  set('r_od',(2*(P.R+WR*Math.cos(th))).toFixed(0)+' mm');
-  set('r_depth',(2*WR*Math.sin(th)+WT).toFixed(1)+' mm');
-  set('r_swing','±'+swing.toFixed(1)+' mm');
+  set('r_od',(2*(P.R+r*Math.cos(th))).toFixed(0)+' mm');
+  set('r_depth',(2*r*Math.sin(th)+P.wt).toFixed(1)+' mm');
+  set('r_swing','±'+(r*Math.sin(th)).toFixed(1)+' mm');
   set('r_hide',hi.toFixed(0)+' – '+ho.toFixed(0)+' mm');
   set('r_bandok',bandOK?'HIDDEN ✓':'FRAME VISIBLE ✗',bandOK?'ok':'bad');
-  set('r_ovl',(2*WR*Math.cos(th)-chord).toFixed(1)+' mm');
-  set('r_gap',(2*hi*Math.sin(HALF)*Math.tan(th)).toFixed(1)+' mm');
+  set('r_ovl',overlap.toFixed(1)+' mm',overlap>5?'ok':'bad');
+  set('r_gap',(2*hi*Math.sin(H)*Math.tan(th)).toFixed(1)+' mm');
   set('r_tmax',(P.tmin+2*yMax*Math.tan(th)+P.bond).toFixed(1)+' mm');
-  set('r_land',landArc.toFixed(0)+'°');
+  set('r_land',((H+lead)*180/Math.PI).toFixed(0)+'° of '+(360/N).toFixed(0)+'°');
+  const G=gearSpec(), gearHidden=G.tip>=hi;
+  set('r_gear',G.tps+'T × '+N+' = '+G.T+'T, Ø'+(2*G.rp).toFixed(0));
+  set('r_gearok',(gearHidden?'HIDDEN ✓ +':'VISIBLE ✗ ')+(G.tip-hi).toFixed(0)+' mm',gearHidden?'ok':'bad');
+  if(!gearHidden) alerts.push('⚠ Gear tips at r='+G.tip.toFixed(0)+' fall inside the hide window ('+hi.toFixed(0)+') — the flange will show through the centre. Raise Ri or use a finer module.');
+  if(!bandOK) alerts.push('⚠ Band ['+P.Ri.toFixed(0)+'–'+Ro.toFixed(0)+'] exits hide window ['+hi.toFixed(0)+'–'+ho.toFixed(0)+'] — frame shows at the joints.');
+  if(overlap<=0) alerts.push('⚠ No neighbor overlap ('+overlap.toFixed(1)+' mm): wafers do not swirl. Reduce R or N, or raise Ø.');
+
+  // ---------- statics ----------
+  const L=landStats(th,zBot);
+  const m_w=SI.rho*Math.PI*r*r*P.wt;                       // g
+  const W_w=m_w*G_ACC/1000;                                // N
+  // printed segment mass: integrate (top - bottom) over the sector
+  let vol=0; { const NRv=40,NAv=80,drho=P.bw/NRv,da=2*H/NAv;
+    for(let i=0;i<NRv;i++)for(let j=0;j<NAv;j++){
+      const rho=P.Ri+drho*(i+0.5), a=-H+da*(j+0.5);
+      vol+=(topZ(rho*Math.cos(a),rho*Math.sin(a))-zBot)*rho*drho*da;
+    } }
+  // the jig bore removes material; the gear flange adds it
+  const hxv=(P.Ri+Ro)/2;
+  vol-=Math.PI*Math.pow(HOLE_D/2,2)*Math.max(0,topZ(hxv,0)-zBot);
+  { const Gv=gearSpec(), NFv=Math.max(240,Gv.tps*20), dav=2*H/NFv;
+    for(let j=0;j<NFv;j++){
+      const av=-H+dav*(j+0.5), riv=gearInner(av,Gv);
+      vol+=0.5*(P.Ri*P.Ri-riv*riv)*dav*GEAR_TF;
+    } }
+  const m_f=vol*PET.rho*P.dens/100;
+  const m_tot=N*(m_w+m_f), W_tot=m_tot*G_ACC/1000;
+
+  set('s_wm',m_w.toFixed(1)+' g / '+W_w.toFixed(2)+' N');
+  set('s_fm',m_f.toFixed(0)+' g');
+  set('s_tot',(m_tot/1000).toFixed(2)+' kg / '+W_tot.toFixed(1)+' N');
+
+  if(!L){
+    ['r_area','s_off','s_tau','s_peel','s_th','s_gam','s_ovh','s_droop','s_sig'].forEach(id=>set(id,'no land','bad'));
+    alerts.push('⚠ Bond land is empty — the clearance cut removed all of it. Move the band inboard or reduce θ.');
+  } else {
+    const W_n=W_w*Math.sin(th), W_s=W_w*Math.cos(th);
+    const tau=W_s/L.A*1000;                                // kPa
+    const peel=(W_n*L.d)/L.S*1000;                         // kPa
+    const slip=(PET.cte-SI.cte)*P.dT*L.Lmax;               // mm
+    const gam=slip/P.bond;
+    const tau_th=P.G*gam*1000;                             // kPa
+    set('r_area',(L.A/100).toFixed(0)+' cm²');
+    set('s_off',L.d.toFixed(0)+' mm (land r='+L.rc.toFixed(0)+')', L.d<15?'ok':(L.d<60?'warn':'bad'));
+    set('s_tau',tau.toFixed(2)+' kPa','ok');
+    set('s_peel',peel.toFixed(2)+' kPa',peel<10?'ok':(peel<40?'warn':'bad'));
+    set('s_th',tau_th.toFixed(1)+' kPa',tau_th<20?'ok':(tau_th<80?'warn':'bad'));
+    set('s_gam',(gam*100).toFixed(1)+' %',gam<0.15?'ok':(gam<0.3?'warn':'bad'));
+    if(tau_th>80) alerts.push('⚠ Thermal shear '+tau_th.toFixed(0)+' kPa — bondline too thin or too stiff for this land size. Thicker/softer bond, or shrink the land.');
+    // wafer overhang, outboard of the land's outer edge
+    const Lo=Math.max(0,(P.R+r)-Ro);
+    const q=SI.rho*P.wt*G_ACC*1e-3;                        // N/mm2 at 1 g
+    const Sm=P.wt*P.wt/6, Im=Math.pow(P.wt,3)/12;
+    const sigFlat=q*Lo*Lo/2/Sm, sigHung=sigFlat*Math.sin(th);
+    const dFlat=q*Math.pow(Lo,4)/(8*SI.E*Im)*PLATE, dHung=dFlat*Math.sin(th);
+    set('s_ovh',Lo.toFixed(0)+' mm');
+    set('s_droop',dHung.toFixed(2)+' / '+dFlat.toFixed(2)+' mm',dHung<CLR/3?'ok':'warn');
+    set('s_sig',sigHung.toFixed(2)+' / '+sigFlat.toFixed(2)+' MPa',sigFlat<10?'ok':'warn');
+    if(dHung>CLR/3) alerts.push('⚠ Tip droop '+dHung.toFixed(2)+' mm eats >1/3 of the '+CLR+' mm neighbor clearance. Move the band outboard.');
+  }
+  // ring hang: conservative curved-cantilever bound, single top anchor
+  const M_j=W_tot*P.R/Math.PI;                             // N·mm
+  const S_j=P.tmin*DT_W*DT_W/6;
+  const sig_j=M_j/S_j, marg=PET.allow/sig_j;
+  set('s_mj',(M_j/1000).toFixed(2)+' N·m');
+  set('s_dt',sig_j.toFixed(1)+' MPa / '+marg.toFixed(1)+'×',marg>4?'ok':(marg>2?'warn':'bad'));
+  if(marg<2) alerts.push('⚠ Dovetail margin '+marg.toFixed(1)+'× on a single-point hang — use two dovetails per face or two hang points.');
+  // out-of-plane CG (frame centroid sits below the wafer plane)
+  const zcg=(N*m_f*(zBot/2)+N*m_w*(-P.wt/2))/(m_tot||1);
+  set('s_zcg',zcg.toFixed(1)+' mm / '+(W_tot*Math.abs(zcg)/1000).toFixed(2)+' N·m');
+
   const al=document.getElementById('alert');
-  if(!bandOK){al.style.display='block';al.textContent='⚠ Band ['+P.Ri+'–'+Ro.toFixed(0)+'] exits hide window ['+hi.toFixed(0)+'–'+ho.toFixed(0)+'] — frame will show at joints.';}
+  if(alerts.length){al.style.display='block';al.innerHTML=alerts.map(a=>'<div>'+a+'</div>').join('');}
   else al.style.display='none';
 }
 
-function bind(id,key,out,fmt){
-  const el=document.getElementById(id);
-  el.addEventListener('input',()=>{P[key]=parseFloat(el.value);document.getElementById(out).textContent=fmt(P[key]);buildScene();});
+// ---- controls ----
+const FMT={N:v=>v,tilt:v=>v+'°',R:v=>v,Ri:v=>v,bw:v=>v,tmin:v=>v,bond:v=>v.toFixed(1),G:v=>v.toFixed(2),dT:v=>v+' K',dens:v=>v+'%'};
+const IDS=['N','tilt','R','Ri','bw','tmin','bond','G','dT','dens'];
+IDS.forEach(k=>{
+  const el=document.getElementById('i_'+k);
+  el.addEventListener('input',()=>{P[k]=parseFloat(el.value);document.getElementById('o_'+k).textContent=FMT[k](P[k]);buildScene();});
+});
+function sync(){
+  IDS.forEach(k=>{const el=document.getElementById('i_'+k);el.value=P[k];document.getElementById('o_'+k).textContent=FMT[k](P[k]);});
 }
-bind('i_tilt','tilt','o_tilt',v=>v+'°');
-bind('i_R','R','o_R',v=>v);
-bind('i_Ri','Ri','o_Ri',v=>v);
-bind('i_bw','bw','o_bw',v=>v);
-bind('i_tmin','tmin','o_tmin',v=>v);
-bind('i_bond','bond','o_bond',v=>v.toFixed(1));
+function rescaleRanges(){
+  const r=WR();
+  const iR=document.getElementById('i_R'); iR.min=Math.round(r*0.6); iR.max=Math.round(r*2.2);
+  const iRi=document.getElementById('i_Ri'); iRi.min=Math.round(r*0.3); iRi.max=Math.round(r*2.5);
+  const ibw=document.getElementById('i_bw'); ibw.max=Math.round(r*0.6);
+}
+document.querySelectorAll('button.pz[data-d]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('button.pz[data-d]').forEach(x=>x.classList.remove('act'));
+    b.classList.add('act');
+    P.D=parseFloat(b.dataset.d); P.wt=parseFloat(b.dataset.t);
+    const th=P.tilt*Math.PI/180;
+    P.R=Math.round(0.81*WR()*Math.cos(th)/Math.sin(HALF())/5)*5;   // 81% of the max-overlap radius
+    rescaleRanges(); fitHide(); sync(); buildScene();
+  });
+});
+function fitHide(){
+  const th=P.tilt*Math.PI/180, hw=hideWindow(th);
+  P.Ri=Math.round(hw[0]+8);
+  P.bw=Math.max(25,Math.round((hw[1]-hw[0])*0.32/5)*5);
+}
+function fitBalanced(){                          // centre the band under the wafer CG
+  const th=P.tilt*Math.PI/180, hw=hideWindow(th);
+  P.bw=Math.max(25,Math.min(Math.round((hw[1]-hw[0])*0.32/5)*5, Math.round((hw[1]-hw[0])*0.9/5)*5));
+  P.Ri=Math.round(Math.min(Math.max(P.R-P.bw/2,hw[0]+2),hw[1]-P.bw-2));
+}
+document.querySelectorAll('button.pz[data-view]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('button.pz[data-view]').forEach(x=>x.classList.remove('act'));
+    b.classList.add('act');
+    view=b.dataset.view; autoDist=true; buildScene();
+  });
+});
+function viewNote(){
+  const el=document.getElementById('viewnote'), r=WR(), Ro=P.Ri+P.bw;
+  const sw=c=>'<span class="swatch" style="background:'+c+'"></span>';
+  if(view==='assembly')
+    el.innerHTML='All '+P.N+' segments and wafers as assembled. Each wafer is bonded to one identical segment.';
+  else if(view==='station')
+    el.innerHTML='One segment with its wafer — the unit you bond on the bench. <b>'+
+      Math.max(0,(P.R+r)-Ro).toFixed(0)+' mm</b> of wafer overhangs the band outboard, and <b>'+
+      Math.max(0,P.Ri-(P.R-r)).toFixed(0)+' mm</b> inboard.';
+  else
+    el.innerHTML=sw('#147D74')+'bondable land &nbsp; '+sw('#9E4D42')+
+      'removed by the neighbour-clearance cut &nbsp; '+sw('#33383D')+'structure';
+}
+document.getElementById('b_hide').addEventListener('click',()=>{fitHide();rescaleRanges();sync();buildScene();});
+document.getElementById('b_bal').addEventListener('click',()=>{fitBalanced();rescaleRanges();sync();buildScene();});
 
 function resize(){
   const w=canvas.clientWidth,h=canvas.clientHeight;
   renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
 }
-window.addEventListener('resize',()=>{resize();});
-resize(); placeCam(); buildScene();
+window.addEventListener('resize',resize);
+rescaleRanges(); sync(); resize(); placeCam(); buildScene();
 (function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);})();
 })();
 </script>
