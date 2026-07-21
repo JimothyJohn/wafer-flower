@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wafer Halo — Cure Jig, Step by Step (OP 012)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#23272B;--steel:#5C6670;--line:#D5DBE1;--paper:#FAFBFC;--card:#FFF;
+  --teal:#147D74;--warn:#C0392B;--warn-bg:#FDF0EE;--amber:#9A6B00;
+  --oxide:linear-gradient(90deg,#C9A227 0%,#C2497B 32%,#4457C4 66%,#1E9E8E 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.page{max-width:940px;margin:0 auto;padding:36px 24px 80px}
+header.traveler{border:1px solid var(--line);background:var(--card);border-radius:4px;overflow:hidden;margin-bottom:28px}
+.oxide-rule{height:5px;background:var(--oxide)}
+.head-main{padding:18px 24px 14px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--steel);text-transform:uppercase}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:30px;letter-spacing:-.01em;margin:2px 0 6px}
+.head-meta{display:flex;flex-wrap:wrap;gap:6px 20px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--steel);padding-bottom:4px}
+.head-meta b{color:var(--ink)}
+section.op{margin:30px 0}
+.op-head{display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:7px;margin-bottom:14px}
+.op-chip{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;background:var(--ink);color:#fff;padding:3px 10px;border-radius:3px;position:relative;top:-1px}
+.op-chip::after{content:"";display:block;height:2px;background:var(--oxide);position:absolute;left:0;right:0;bottom:-2px}
+.op-head h2{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700}
+.op p{margin:9px 0;max-width:74ch}
+table{width:100%;border-collapse:collapse;margin:12px 0;background:var(--card);font-size:13.5px}
+th{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel);text-align:left;padding:7px 10px;border-bottom:2px solid var(--ink)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+td.num{font-family:'IBM Plex Mono',monospace;text-align:right;white-space:nowrap}
+.dim{color:var(--steel)}
+.note{border:1px solid var(--line);border-left:4px solid var(--teal);background:var(--card);border-radius:4px;padding:11px 15px;margin:14px 0;font-size:13.5px}
+.note .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--teal);font-weight:600;text-transform:uppercase}
+.flag{border:1px solid var(--warn);border-left-width:4px;background:var(--warn-bg);border-radius:4px;padding:11px 15px;margin:14px 0;font-size:13.5px}
+.flag .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--warn);font-weight:600;text-transform:uppercase}
+img,video{max-width:100%;display:block;border-radius:4px;border:1px solid var(--line);background:#fff}
+figure{margin:14px 0}
+figcaption{font-size:12.5px;color:var(--steel);margin-top:6px;font-family:'IBM Plex Mono',monospace}
+.step{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:center;border:1px solid var(--line);background:var(--card);border-radius:4px;padding:16px;margin:14px 0}
+.step:nth-child(even of .step){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.step .txt .n{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;color:var(--teal)}
+.step .txt h3{font-family:'Space Grotesk',sans-serif;font-size:18px;margin:2px 0 6px}
+.step .txt p{font-size:13.5px;color:var(--steel);margin:4px 0}
+.step .txt p b{color:var(--ink)}
+@media(max-width:700px){.step{grid-template-columns:1fr}}
+a{color:var(--teal)}
+.vidwrap{position:relative}
+.vidtag{position:absolute;top:8px;left:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;background:rgba(35,39,43,.82);color:#fff;padding:2px 8px;border-radius:3px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="traveler">
+  <div class="oxide-rule"></div>
+  <div class="head-main">
+    <div class="eyebrow">Wafer Halo · OP 012</div>
+    <h1>Cure Jig — Step by Step</h1>
+    <div class="head-meta">
+      <span>parts <b>2 printed fences + 1 rod</b></span>
+      <span>tools <b>none while bonding</b></span>
+      <span>force on wafer <b>zero</b></span>
+      <span>centring <b>±0.15 / ±0.30 mm</b></span>
+      <span>source <b class="mono">scripts/cure_jig_stl.py</b></span>
+    </div>
+  </div>
+</header>
+
+<p style="max-width:74ch">This jig holds a wafer <b>dead-centred on its segment while the glue cures</b>.
+Two printed fences slide toward each other on one threaded rod that passes straight
+through the segment's keyhole — the same axis that runs under the centre of the wafer.
+Tighten one wing nut and both fences seat against the <em>segment</em>, never the wafer:
+the wafer just floats in two curved slots, caught on all sides, squeezed by nothing.</p>
+
+<figure class="vidwrap">
+  <video src="media/turntable.mp4" autoplay loop muted playsinline></video>
+  <span class="vidtag">video · full assembly</span>
+  <figcaption>One segment, one wafer, two fences, one rod. Everything renders straight from the CAD.</figcaption>
+</figure>
+
+<!-- ============================================================ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">A</span><h2>What you need</h2></div>
+
+  <figure><img src="media/parts.png" alt="Exploded view of all parts">
+  <figcaption>Everything in the kit, exploded.</figcaption></figure>
+
+  <table>
+    <tr><th>Part</th><th>Where</th><th>Notes</th></tr>
+    <tr><td>Outboard fence</td><td class="mono">stl/cure_jig_outboard.stl</td><td class="dim">211 g · 6 h 18 m — gcode is already in <span class="mono">gcode/</span></td></tr>
+    <tr><td>Inboard fence</td><td class="mono">stl/cure_jig_inboard.stl</td><td class="dim">107 g · 3 h 24 m</td></tr>
+    <tr><td>#10-24 threaded rod, cut to <b>345&nbsp;mm</b></td><td>Home Depot, 36" stick</td><td class="dim">hacksaw + deburr the cut end so it threads</td></tr>
+    <tr><td>#10-24 hex nut ×1</td><td>Home Depot</td><td class="dim">lives inside the inboard fence — you'll never touch it again</td></tr>
+    <tr><td>#10 washer + #10-24 wing nut</td><td>Home Depot</td><td class="dim">or print <span class="mono">stl/cure_jig_knob.stl</span> instead of the wing nut</td></tr>
+    <tr><td>91% IPA or denatured alcohol</td><td>&nbsp;</td><td class="dim">cleaning. Never acetone on the print.</td></tr>
+  </table>
+
+  <figure class="vidwrap">
+    <video src="media/explode.mp4" autoplay loop muted playsinline></video>
+    <span class="vidtag">video · how it goes together</span>
+    <figcaption>Wing nut → outboard fence → keyhole → inboard fence → captive nut. One closed loop, and the wafer is not part of it.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">B</span><h2>One-time setup</h2></div>
+  <div class="step"><div class="txt">
+    <div class="n">B1</div><h3>Ream the keyhole</h3>
+    <p>Run a <b>5&nbsp;mm (or 13/64") bit</b> through the segment's keyhole — printed holes
+    come out a touch small. It's the radial hole in the outer face, 12.6&nbsp;mm above the bottom,
+    and it goes all the way through.</p>
+    <p class="dim">Segments printed before Rev B.3 have a blind hole at the wrong height —
+    drill through from the outer face at the new height and they're current.</p>
+  </div><figure style="margin:0"><img src="media/step1_segment.png" alt="Segment alone on the bench"></figure></div>
+
+  <div class="step"><div class="txt">
+    <div class="n">B2</div><h3>Cut the rod, drop in the nut</h3>
+    <p>Cut the rod to <b>345&nbsp;mm</b>. Push the hex nut into the six-sided pocket in the back of the
+    inboard fence. Flats are vertical, it only goes in one way, and the rod will hold it captive forever.</p>
+    <p class="dim">Dry-run the whole assembly once without a wafer so the first real bond is boring.</p>
+  </div><figure style="margin:0"><img src="media/step5_inboard.png" alt="Nut and inboard fence"></figure></div>
+</section>
+
+<!-- ============================================================ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">C</span><h2>Bonding a wafer</h2></div>
+
+  <figure class="vidwrap">
+    <video src="media/assemble.mp4" autoplay loop muted playsinline></video>
+    <span class="vidtag">video · the whole sequence, 8 s</span>
+    <figcaption>Wafer on, outer fence, inner fence, rod, done. That's the entire procedure.</figcaption>
+  </figure>
+
+  <div class="step"><div class="txt">
+    <div class="n">01</div><h3>Segment flat on the bench</h3>
+    <p>One segment, flat bottom down, <b>keyhole facing you</b>. Wipe the land and pocket with alcohol.</p>
+  </div><figure style="margin:0"><img src="media/step1_segment.png" alt="Step 1"></figure></div>
+
+  <div class="step"><div class="txt">
+    <div class="n">02</div><h3>Glue in the pocket</h3>
+    <p><b>Two short beads of PL Premium Max</b>, in the recessed pocket, near its middle. Don't overfill —
+    the pocket is the depth stop, and more glue is <em>worse</em>, not better.</p>
+    <p class="dim">Tape path? You don't need this jig — tape grabs instantly. This jig is for glue that needs a day.</p>
+  </div><figure style="margin:0"><img src="media/step2_glue.png" alt="Step 2"></figure></div>
+
+  <div class="step"><div class="txt">
+    <div class="n">03</div><h3>Set the wafer down</h3>
+    <p>Hold it by the <b>edges only</b> and set it on the segment. Within a millimetre is plenty —
+    <b>the jig does the centring, not you.</b> Don't press anywhere.</p>
+  </div><figure style="margin:0"><img src="media/step3_wafer.png" alt="Step 3"></figure></div>
+
+  <div class="step"><div class="txt">
+    <div class="n">04</div><h3>Slide in the outer fence</h3>
+    <p>From outside, on the keyhole axis, until its nose <b>stops hard against the segment</b>.
+    The wafer edge slips into the curved slot as it arrives.</p>
+  </div><figure style="margin:0"><img src="media/step4_outboard.png" alt="Step 4"></figure></div>
+
+  <div class="step"><div class="txt">
+    <div class="n">05</div><h3>Slide in the inner fence</h3>
+    <p>Same move from the middle of the ring, until its prong <b>stops against the segment's inner wall</b>.</p>
+  </div><figure style="margin:0"><img src="media/step5_inboard.png" alt="Step 5"></figure></div>
+
+  <div class="step"><div class="txt">
+    <div class="n">06</div><h3>Rod through, thread it in</h3>
+    <p>Push the rod in from the outside: <b>fence → keyhole → fence</b>, then spin it a few turns
+    into the captive nut.</p>
+  </div><figure style="margin:0"><img src="media/step6_rod.png" alt="Step 6"></figure></div>
+
+  <div class="step"><div class="txt">
+    <div class="n">07</div><h3>Washer, wing nut, finger-tight</h3>
+    <p>Washer on, wing nut on, and stop at <b>finger-tight</b>. You are seating two plastic noses
+    against a plastic segment — there is nothing to torque.</p>
+  </div><figure style="margin:0"><img src="media/step7_tighten.png" alt="Step 7"></figure></div>
+
+  <div class="step"><div class="txt">
+    <div class="n">08</div><h3>Walk away for 24 hours</h3>
+    <p>Then back the rod out, slide both fences straight off, and move to the next segment.
+    The jig is reusable for all nine.</p>
+  </div><figure style="margin:0"><img src="media/hero.png" alt="Step 8"></figure></div>
+
+  <div class="flag"><span class="tag">The three rules</span><br>
+  <b>Edges only</b> — never grip the wafer's faces. <b>Never press the middle</b> — the centre is
+  197&nbsp;mm of unsupported glass-brittle silicon; 2–3&nbsp;N of point load there is the breaking
+  allowable. <b>Finger-tight only</b> — the jig clamps the segment, and the segment doesn't care,
+  but a wrench buys you nothing.</div>
+</section>
+
+<!-- ============================================================ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">D</span><h2>Why it centres itself</h2></div>
+
+  <p>The keyhole sits on the <b>wafer-centre meridian</b>, so the rod runs directly beneath the
+  centre of the wafer, and both slot walls are arcs drawn about that same centre. When the fences
+  hit their stops, the pocket they form <em>is</em> the nominal wafer position: <b>±0.15&nbsp;mm
+  radially, about ±0.30&nbsp;mm sideways</b> (the wings wrap 30° of rim on each side), and the lips
+  block any lift at 1.6&nbsp;mm. Gravity settles it against the same walls every time.</p>
+
+  <figure><img src="media/sec_drivetrain.png" alt="Cross-section through the drivetrain">
+  <figcaption>Straight down the middle: nut — fence — keyhole — fence — washer — wing nut, one axis under the wafer centre.</figcaption></figure>
+
+  <figure><img src="media/sec_capture.png" alt="Close-up of the rim slot">
+  <figcaption>The slot, up close. The rim never touches anything unless it tries to leave.</figcaption></figure>
+
+  <div class="note"><span class="tag">Zero force, on purpose</span><br>
+  Tightening the wing nut pulls both fences onto the <em>segment</em> — the force loop closes
+  through printed plastic and never enters the silicon. The wafer sits in 0.15&nbsp;mm of air on
+  every side. Every clearance and every capture direction is boolean-checked by
+  <span class="mono">scripts/cure_jig_stl.py</span> (18 checks) each time it's regenerated.</div>
+
+  <p class="dim" style="margin-top:22px">Back to the <a href="index.html">traveler</a> ·
+  spec in <span class="mono">CLAUDE.md</span> · every picture and video on this page is rendered
+  from the same CAD that makes the STLs.</p>
+</section>
+
+</div>
+</body>
+</html>

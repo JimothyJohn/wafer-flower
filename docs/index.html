@@ -184,7 +184,7 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);font-fa
     <li><b>Blank</b>: sector 360/#N × Ri→Ri+bw, extruded tall (60). Flat bottom at <span class="mono">z = −(y_max·tanθ + t_wafer/2 + #bond + #tmin)</span> where y_max = (Ri+bw)·sin(180/#N) — gives the taper with your minimum thickness at the trailing edge. <b>The t_wafer/2 term is not optional</b>: the land plane is offset by t/2 + bond, so dropping it leaves the base slab protruding 0.39 mm above the land at the trailing outer corner, pressing into the bondline.</li>
     <li><b>Two cuts</b>: remove everything above the land plane, then everything above the clearance plane. The surviving top is bondable only where the land plane governs.</li>
     <li><b>Dovetails</b> on the radial end faces (12/16 × 8, female +0.25). See OP 015 — if you plan to hang from one point, use <b>two</b> dovetails per face.</li>
-    <li><b>Jig bore</b>: Ø5 through-hole at mid-band on the segment centreline (<span class="mono">ρ = Ri + bw/2, a = 0</span>), normal to the flat bottom so it prints as a clean vertical hole. Clearance for an M4 plastic screw. Structurally free — mid-band <em>is</em> the neutral axis for in-plane ring bending, so it removes 0.075 % of I. Keep the tape pads clear of it.</li>
+    <li><b>Jig keyhole</b> (Rev B.3): Ø5 <b>radial through-hole</b> in from the outer arc face on the segment centreline (<span class="mono">a = 0</span>), axis at <span class="mono">z1 + 2.6</span> — 12.6 mm above the flat bottom. Through, not blind: the OP 012 cure jig passes a #10-24 rod to a fence on the inboard side, and the raised axis lets a wing nut swing over the bench. Exits the inner face 0.1 mm above the gear flange (teeth untouched), keeps a 2.4 mm web under the adhesive pocket floor, and never touches the land. Ream the printed hole Ø5 (13/64" works). Illustrated step-by-step for the jig itself: <a href="cure-jig.html">cure-jig.html</a>.</li>
     <li><b>Gear flange</b>: a planar annular sector, 6 mm thick, sitting on the flat bottom and extending inward from <span class="mono">Ri</span> to the gear root circle. Cut an <b>internal</b> gear into its inner edge. The flat bottom is the only planar face this part has, which is exactly why the flange goes there — see the note below.</li>
   </ol>
   <div class="note"><span class="tag">This is now a solid model</span><br>
@@ -211,7 +211,7 @@ in-plane (shear)           W_s = W·√(1 − sin²θ·cos²α)  → 0.985·W �
   <p>The wafer's centroid sits at pitch radius <span class="mono">R</span>. The bond land sits between <span class="mono">Ri</span> and <span class="mono">Ri+bw</span>, and the clearance cut chews an asymmetric corner off its leading end — so the land centroid is both <b>inboard</b> of the wafer CG and <b>rotated trailing</b> of it. At the current Rev B numbers the land centroid lands at ρ=271 and the offset is <b>79 mm</b>. The normal load component acting on that arm is a peel couple:</p>
   <div class="eq">M_peel = W·sinθ·|cos α| · d        d = |centroid_land − centroid_wafer|, measured in the wafer plane
 σ_peel = M_peel / S               S = I/c of the land patch about the axis ⊥ to d</div>
-  <p>The good news is that <span class="mono">S</span> for the 96 cm² patch is ~64 000 mm³, so σ_peel lands at <b>0.27 kPa</b> — still nothing. The bad news is that the offset is not free: it puts 197 mm of wafer outboard of any support (§3), and once the thing <em>rotates</em>, that peel term reverses sign every revolution (§6). Use the <b>Center under wafer CG</b> button to see the alternative — the hide window at θ=10° runs to 416 mm, so a band at ~322–377 is legal and pulls the offset from 79 mm to 14 mm. <b>It is not free.</b> The band moves to a larger radius, so the segment gets bigger and heavier: mass goes 2.27 → 2.79 kg (+23 %), the land grows 96 → 120 cm² which raises thermal shear 6.0 → 7.8 kPa (§4: stress tracks land size), and the extra mass drags the dovetail margin 2.1× → 1.7× (§5). Centering buys you droop and kills the reversing peel term (§6) — take it <em>if</em> you're fixing the dovetail anyway, which you should be.</p>
+  <p>The good news is that <span class="mono">S</span> for the 96 cm² patch is ~64 000 mm³, so σ_peel lands at <b>0.27 kPa</b> — still nothing. The bad news is that the offset is not free: it puts 197 mm of wafer outboard of any support (§3), and once the thing <em>rotates</em>, that peel term reverses sign every revolution (§6). Use the <b>Center under wafer CG</b> button to see the alternative — the hide window at θ=10° runs to 416 mm, so a band at ~322–377 is legal and pulls the offset from 79 mm to 14 mm. <b>It is not free.</b> The band moves to a larger radius, so the segment gets bigger and heavier: mass goes 2.35 → 2.90 kg (+23 %), the land grows 96 → 120 cm² which raises thermal shear 6.0 → 7.8 kPa (§4: stress tracks land size), and the extra mass drags the dovetail margin 2.0× → 1.6× (§5). Centering buys you droop and kills the reversing peel term (§6) — take it <em>if</em> you're fixing the dovetail anyway, which you should be.</p>
 
   <h3 style="font-family:'Space Grotesk';font-size:15px;margin:18px 0 4px">3 · The wafer as a cantilever</h3>
   <p>Outboard of the land's outer edge, the wafer is an unsupported plate of thickness t carrying its own weight. Treated as a unit-width cantilever with only the plane-normal gravity component:</p>
@@ -245,13 +245,13 @@ shear stress                    τ_th = G_bond · γ</div>
   <p>Note what the formula says about geometry: <b>τ_th scales with L_max, not with area.</b> A bigger bond patch is a <em>worse</em> bond patch. Two 25 mm arcs near the land centroid beat full coverage — that's not a materials-saving heuristic, it's the actual physics. It also means <b>wafer size doesn't drive the thermal load; land size does.</b></p>
 
   <h3 style="font-family:'Space Grotesk';font-size:15px;margin:18px 0 4px">5 · The ring as a structure — and the real weak link</h3>
-  <p>Nine stations at 128 g of silicon plus 127 g of PETG each (including the gear flange, at 45 % print density) is <b>2.29 kg / 22.5 N</b>. Hung from a single point at 12 o'clock, treat each half-ring as a curved cantilever (conservative — a closed ring is stiffer and runs ~0.3× this):</p>
-  <div class="eq">M_max ≈ W_total·R/π          ≈ 22.5 N × 0.35 m / π ≈ 2.5 N·m at the anchor joints</div>
+  <p>Nine stations at 128 g of silicon plus 133 g of PETG each (gear flange included — slicer-measured at 45 % infill, not the 127 g the uniform-density estimate gave) is <b>2.35 kg / 23.0 N</b>. Hung from a single point at 12 o'clock, treat each half-ring as a curved cantilever (conservative — a closed ring is stiffer and runs ~0.3× this):</p>
+  <div class="eq">M_max ≈ W_total·R/π          ≈ 23.0 N × 0.35 m / π ≈ 2.6 N·m at the anchor joints</div>
   <p>Through the full band section (55 mm deep × 6 mm) that's 0.8 MPa — irrelevant. But <b>the joint doesn't have the full band section.</b> A single centered dovetail connects only 16 mm of the band's 55 mm radial depth, so the section modulus collapses:</p>
-  <div class="eq">S_joint = t·w²/6 = 6 × 16²/6 = 256 mm³      σ = 2480 N·mm / 256 = 9.7 MPa
-allowable, printed PETG loaded across layers ≈ 20 MPa   →  margin 2.1×</div>
+  <div class="eq">S_joint = t·w²/6 = 6 × 16²/6 = 256 mm³      σ = 2560 N·mm / 256 = 10.0 MPa
+allowable, printed PETG loaded across layers ≈ 20 MPa   →  margin 2.0×</div>
   <div class="flag"><span class="tag">Tightest margin in the build</span><br>
-  2.1× on a printed dovetail root — a stress concentration, in the print's weak direction, under sustained load with PETG creep. Everything else in this analysis has 47–4000× margin; this has 2. Three fixes, cheapest first: <b>(a)</b> hang from two points at ±50° from top (drops M ~4×), <b>(b)</b> two dovetails per face, one near each band edge (restores most of the 55 mm depth, ~10× S), <b>(c)</b> rest the ring on a ledge instead of hanging it (compression arch, M → near zero). Option (b) is also what the motor drive wants — see below.</div>
+  2.0× on a printed dovetail root — a stress concentration, in the print's weak direction, under sustained load with PETG creep. Everything else in this analysis has 47–4000× margin; this has 2. Three fixes, cheapest first: <b>(a)</b> hang from two points at ±50° from top (drops M ~4×), <b>(b)</b> two dovetails per face, one near each band edge (restores most of the 55 mm depth, ~10× S), <b>(c)</b> rest the ring on a ledge instead of hanging it (compression arch, M → near zero). Option (b) is also what the motor drive wants — see below.</div>
   <p>Out-of-plane, the frame's centroid sits well behind the wafer plane, so the assembly CG is <b>6.5 mm</b> off the wall plane → a <b>0.14 N·m</b> tip-off moment. Trivial for a wall hanger; it's the number the motor bearing will care about.</p>
 
   <h3 style="font-family:'Space Grotesk';font-size:15px;margin:18px 0 4px">6 · How to use this to pick wafer size, R, and band</h3>
@@ -272,14 +272,14 @@ allowable, printed PETG loaded across layers ≈ 20 MPa   →  margin 2.1×</div
   <table>
     <thead><tr><th>θ</th><th>Envelope depth</th><th>Neighbor z-gap</th><th>Droop (hung)</th><th>Assembly mass</th><th>Dovetail margin</th></tr></thead>
     <tbody>
-      <tr><td class="num">5°</td><td class="num">26.9 mm</td><td class="num">14.3 mm</td><td class="num">0.01 mm</td><td class="num">2.14 kg</td><td class="num">2.2×</td></tr>
-      <tr><td class="num">7.5°</td><td class="num">39.9 mm</td><td class="num">21.5 mm</td><td class="num">0.01 mm</td><td class="num">2.46 kg</td><td class="num">1.9×</td></tr>
-      <tr><td class="num">10°</td><td class="num">52.9 mm</td><td class="num">28.9 mm</td><td class="num">0.02 mm</td><td class="num">2.79 kg</td><td class="num">1.7×</td></tr>
-      <tr><td class="num">15°</td><td class="num">78.4 mm</td><td class="num">44.2 mm</td><td class="num">0.02 mm</td><td class="num">3.51 kg</td><td class="num">1.3×</td></tr>
+      <tr><td class="num">5°</td><td class="num">26.9 mm</td><td class="num">14.3 mm</td><td class="num">0.01 mm</td><td class="num">2.31 kg</td><td class="num">2.0×</td></tr>
+      <tr><td class="num">7.5°</td><td class="num">39.9 mm</td><td class="num">21.5 mm</td><td class="num">0.01 mm</td><td class="num">2.60 kg</td><td class="num">1.8×</td></tr>
+      <tr><td class="num">10°</td><td class="num">52.9 mm</td><td class="num">28.9 mm</td><td class="num">0.02 mm</td><td class="num">2.90 kg</td><td class="num">1.6×</td></tr>
+      <tr><td class="num">15°</td><td class="num">78.4 mm</td><td class="num">44.2 mm</td><td class="num">0.02 mm</td><td class="num">3.48 kg</td><td class="num">1.3×</td></tr>
     </tbody>
   </table>
-  <p>The z-gap argument for a larger θ evaporates: even θ=5 gives 14.3 mm of neighbor gap against a 3 mm requirement, and droop is ~0.01 mm either way. What θ actually buys is <b>depth</b> — how far the piece stands off the wall and how much the swirl reads as three-dimensional — at a cost of ~6.5 % assembly mass and ~8 % joint margin per degree. Land arc is 36° of 40° at every θ in this range, so bond area isn't in the trade either.</p>
-  <p><b>Recommendation from the numbers:</b> keep Ø300 — mass is a non-issue (2–3 kg) and it's the look you want. <b>Pick θ purely on how deep you want the piece to sit</b>; θ=10 is a fine choice and costs ~23 % more mass than θ=5, but nothing structural forces it. Move the band outboard toward the wafer CG only in the same revision that fixes the joint. And <b>fix the dovetail first</b> — it is the only number in this document under 40×, and every other improvement makes it worse.</p>
+  <p>The z-gap argument for a larger θ evaporates: even θ=5 gives 14.3 mm of neighbor gap against a 3 mm requirement, and droop is ~0.01 mm either way. What θ actually buys is <b>depth</b> — how far the piece stands off the wall and how much the swirl reads as three-dimensional — at a cost of ~4 % assembly mass and ~5 % joint margin per degree (slicer-calibrated masses — the solid shells dilute the old uniform-density trade). Land arc is 36° of 40° at every θ in this range, so bond area isn't in the trade either.</p>
+  <p><b>Recommendation from the numbers:</b> keep Ø300 — mass is a non-issue (2–3 kg) and it's the look you want. <b>Pick θ purely on how deep you want the piece to sit</b>; θ=10 is a fine choice and costs ~26 % more mass than θ=5, but nothing structural forces it. Move the band outboard toward the wafer CG only in the same revision that fixes the joint. And <b>fix the dovetail first</b> — it is the only number in this document under 40×, and every other improvement makes it worse.</p>
 </section>
 
 <!-- ============ KEY TEST POINTS ============ -->
@@ -294,7 +294,7 @@ allowable, printed PETG loaded across layers ≈ 20 MPa   →  margin 2.1×</div
       <tr><td class="mono">T4</td><td>Land flatness</td><td>Straightedge across a printed land, feeler gauge</td><td>≤0.15 mm stair-stepping; one block-sand pass allowed</td></tr>
       <tr><td class="mono">T5</td><td>Taper minimum</td><td>Caliper the trailing edge of a printed segment</td><td>≥ #tmin; no see-through walls in the slicer preview at the thin end</td></tr>
       <tr><td class="mono">T6</td><td>Centering repeatability</td><td>Jig a dry wafer 3× on one segment, pencil-witness the edge each time</td><td>All witness marks within 0.5 mm band</td></tr>
-      <tr><td class="mono">T7</td><td><b>Dovetail hang</b> <span class="dim">(new — OP 015 §5)</span></td><td>Two joined segments, one dovetail; hang 5 kg from the lower segment's far end so the joint sees ≥2× the calculated 2.5 N·m</td><td>No root whitening, no permanent set after 24 h under load. Fails → go to two dovetails before printing 9.</td></tr>
+      <tr><td class="mono">T7</td><td><b>Dovetail hang</b> <span class="dim">(new — OP 015 §5)</span></td><td>Two joined segments, one dovetail; hang 5 kg from the lower segment's far end so the joint sees ≥2× the calculated 2.6 N·m</td><td>No root whitening, no permanent set after 24 h under load. Fails → go to two dovetails before printing 9.</td></tr>
     </tbody>
   </table>
   <div class="note"><span class="tag">Why T3 is the gate</span><br>
@@ -330,11 +330,11 @@ allowable, printed PETG loaded across layers ≈ 20 MPa   →  margin 2.1×</div
       <tr><td>Rim speed at 0.3 rpm</td><td class="num">9.5 mm/s</td><td>one revolution every 3.3 min — right for wall art</td></tr>
     </tbody>
   </table>
-  <p><b>Torque is not the problem — the load path is.</b> A pinion mesh cannot be the hanging anchor: 22.5 N through a tooth flank with backlash means the ring drops, rocks, and clicks once per tooth. Split the two jobs:</p>
+  <p><b>Torque is not the problem — the load path is.</b> A pinion mesh cannot be the hanging anchor: 23.0 N through a tooth flank with backlash means the ring drops, rocks, and clicks once per tooth. Split the two jobs:</p>
   <ol class="steps">
     <li><b>Three V-groove bearings</b> ride the frame's rim as a rail — two below at ±120° carrying the weight in compression (arch action, which also collapses the §5 joint moment toward zero), one above as a keeper against tip-off.</li>
     <li><b>The pinion only supplies torque</b>, spring-loaded into mesh so backlash never unloads. All four contact points live behind the wafer overhang.</li>
-    <li><b>The bearing plate is the wall anchor.</b> It sees 22.5 N shear plus the 0.14 N·m out-of-plane tip-off moment computed above — a two-screw plate into a stud, not a slewing ring.</li>
+    <li><b>The bearing plate is the wall anchor.</b> It sees 23.0 N shear plus the 0.14 N·m out-of-plane tip-off moment computed above — a two-screw plate into a stud, not a slewing ring.</li>
   </ol>
   <div class="flag"><span class="tag">Rotation changes the analysis</span><br>
   Everything in OP 015 is a <em>static</em> case at a fixed ring angle α. Spin the halo and α sweeps continuously, so the peel term <span class="mono">W·sinθ·cos α·d</span> <b>fully reverses every revolution</b> — each bond goes from compression to tension and back. At 0.3 rpm that is ~158 000 cycles/year. The amplitude is tiny (±0.27 kPa), and silicon does not fatigue, but a viscoelastic adhesive under fully-reversed load ratchets and creeps in a way a static hang never reveals. If motion is on the table, <b>T3 becomes a cyclic test</b>: same coupon, load reversed ~10⁴ times, then check the witness line. And it makes the case for centering the band under the wafer CG much stronger — kill the arm <span class="mono">d</span> and the reversing term goes with it.</div>
@@ -344,7 +344,7 @@ allowable, printed PETG loaded across layers ≈ 20 MPa   →  margin 2.1×</div
 <!-- ============ BILL OF MATERIALS ============ -->
 <section class="op">
   <div class="op-head"><span class="op-chip">BOM</span><h2>Bill of materials</h2></div>
-  <p>Quantities are for the standard build — <b>WH-300-09-10</b>: nine Ø300 × 0.775 mm wafers, N=9, θ=10°, band 248–303, 1.1 mm bondline. Filament mass is integrated from the segment solid model, so it moves with your parameters; re-read it off the calculator if you change them. Groups C1 and C2 are <b>alternatives — pick one adhesive path, not both</b>.</p>
+  <p>Quantities are for the standard build — <b>WH-300-09-10</b>: nine Ø300 × 0.775 mm wafers, N=9, θ=10°, band 248–303, 1.1 mm bondline. Filament mass comes from the segment solid model through a slicer-calibrated skin+infill fit (±3 % against OrcaSlicer output, 35–425 cm³ of segment), so it moves with your parameters; re-read it off the calculator if you change them. Groups C1 and C2 are <b>alternatives — pick one adhesive path, not both</b>.</p>
   <div class="tscroll">
   <table>
     <thead><tr><th>Ref</th><th>Item &amp; specification</th><th>Qty</th><th>Source</th><th>Why this part</th></tr></thead>
@@ -354,8 +354,8 @@ allowable, printed PETG loaded across layers ≈ 20 MPa   →  margin 2.1×</div
       <tr><td class="ref">A2</td><td>Wafer shipping/storage cassette or coin-stack case, 300 mm</td><td class="mono">1</td><td>Usually included with A1 — confirm before ordering</td><td>Loose wafers in a box arrive chipped. Edge chips are fracture initiators.</td></tr>
 
       <tr class="grp"><td colspan="5">B — Printed parts</td></tr>
-      <tr><td class="ref">B1</td><td><b>PETG filament</b>, 1.75 mm. PLA works but has a lower service temperature (see spec sheet §2); ASA if the piece will see sun.</td><td class="mono">2 kg</td><td>Any filament vendor</td><td><b>1143 g</b> of segments at 45 % density (127 g × 9, gear flange included), plus jig, coupons and failed prints. 2 spools is the honest number.</td></tr>
-      <tr><td class="ref">B2</td><td>Frame segment — 40° sector with integral gear flange and Ø5 jig bore, printed flat-bottom-down, 45 % infill, 4 perimeters, no supports</td><td class="mono">9</td><td>Print from the OP 010 model</td><td>127 g and roughly 6–8 h each. Perimeters matter more than infill: the dovetail is the weak link (§5).</td></tr>
+      <tr><td class="ref">B1</td><td><b>PETG filament</b>, 1.75 mm. PLA works but has a lower service temperature (see spec sheet §2); ASA if the piece will see sun.</td><td class="mono">2 kg</td><td>Any filament vendor</td><td><b>1195 g</b> of segments at 45 % infill (slicer-measured 133 g × 9, gear flange included), plus jig, coupons and failed prints. 2 spools is the honest number.</td></tr>
+      <tr><td class="ref">B2</td><td>Frame segment — 40° sector with integral gear flange and Ø5 jig bore, printed flat-bottom-down, 45 % infill, 4 perimeters, no supports</td><td class="mono">9</td><td>Print from the OP 010 model</td><td>133 g and ~4.5 h each (0.20 mm layers, sliced on an X1C). Perimeters matter more than infill: the dovetail is the weak link (§5).</td></tr>
       <tr><td class="ref">B3</td><td>Bonding jig body + 3 locating pegs + offset bar</td><td class="mono">1 set</td><td>Print</td><td>Reusable across all nine stations. Pegs at ±30–40° from the push axis; ±60° doubles the centring error.</td></tr>
       <tr><td class="ref">B4</td><td>Dovetail test coupons, 20 mm, at 0.15 / 0.25 / 0.35 mm clearance</td><td class="mono">3</td><td>Print</td><td>Gate T2. Printers vary; do not guess the clearance.</td></tr>
 
@@ -376,7 +376,7 @@ allowable, printed PETG loaded across layers ≈ 20 MPa   →  margin 2.1×</div
       <tr><td class="ref">D3</td><td>Silicone or TPU peg tips, ~5 mm</td><td class="mono">3</td><td>Print in TPU, or cut from tubing</td><td>Spreads the edge contact. Bare printed PETG on a wafer edge is a point contact on a fracture initiator.</td></tr>
 
       <tr class="grp"><td colspan="5">E — Mounting</td></tr>
-      <tr><td class="ref">E1</td><td>Wall anchor rated ≥ 90 N (≈10 kg), stud screw or rated hollow-wall toggle</td><td class="mono">2</td><td>Hardware aisle</td><td>4× the 22.5 N assembly weight. <b>Two anchors at ±50° from top</b> drops the joint moment ~4× — the cheapest structural fix available (§5).</td></tr>
+      <tr><td class="ref">E1</td><td>Wall anchor rated ≥ 95 N (≈10 kg), stud screw or rated hollow-wall toggle</td><td class="mono">2</td><td>Hardware aisle</td><td>4× the 23.0 N assembly weight. <b>Two anchors at ±50° from top</b> drops the joint moment ~4× — the cheapest structural fix available (§5).</td></tr>
       <tr><td class="ref">E2</td><td>D-ring or keyhole hangers, printed or steel</td><td class="mono">2</td><td>Print or picture-framing aisle</td><td>Must resist pull-out as well as shear: the assembly CG sits 6.5 mm off the wall plane.</td></tr>
       <tr><td class="ref">E3</td><td>Bubble or digital level</td><td class="mono">1</td><td>—</td><td>±2° or the swirl visibly reads crooked.</td></tr>
 
@@ -392,12 +392,12 @@ allowable, printed PETG loaded across layers ≈ 20 MPa   →  margin 2.1×</div
       <tr><td class="ref">G2</td><td>Digital calipers, 150 mm</td><td class="mono">1</td><td>—</td><td>T5 taper minimum at the trailing edge.</td></tr>
       <tr><td class="ref">G3</td><td>Straightedge, 100 mm ground or a steel rule</td><td class="mono">1</td><td>—</td><td>T4, across the land.</td></tr>
       <tr><td class="ref">G4</td><td>Ø300 printed disks or scrap wafers</td><td class="mono">2</td><td>Print</td><td>T1 — do not risk real wafers proving clearance.</td></tr>
-      <tr><td class="ref">G5</td><td>500 g weight (T3) and 5 kg weight (T7)</td><td class="mono">1 ea</td><td>Anything of known mass</td><td>T3 adhesive shear; <b>T7 dovetail hang</b> — the gate that covers the 2.1× margin.</td></tr>
+      <tr><td class="ref">G5</td><td>500 g weight (T3) and 5 kg weight (T7)</td><td class="mono">1 ea</td><td>Anything of known mass</td><td>T3 adhesive shear; <b>T7 dovetail hang</b> — the gate that covers the 2.0× margin.</td></tr>
       <tr><td class="ref">G6</td><td>Indoor/outdoor thermometer or a garage shelf</td><td class="mono">1</td><td>—</td><td>T3 needs real 10↔30 °C cycles. A garage does this for free overnight.</td></tr>
 
       <tr class="grp"><td colspan="5">H — Optional: motion drive <span class="dim">(concept, not yet designed)</span></td></tr>
       <tr><td class="ref">H1</td><td>Stepper, 28BYJ-48 + ULN2003 driver, or NEMA 14</td><td class="mono">1</td><td>Electronics vendor</td><td>Needs ~3.3 mN·m at the pinion. A 28BYJ-48 has 10× that.</td></tr>
-      <tr><td class="ref">H2</td><td>V-groove bearings, 623/608 with V-groove outer</td><td class="mono">3</td><td>Bearing vendor</td><td>These carry the 22.5 N. The pinion supplies torque only — a tooth mesh cannot be the hanger.</td></tr>
+      <tr><td class="ref">H2</td><td>V-groove bearings, 623/608 with V-groove outer</td><td class="mono">3</td><td>Bearing vendor</td><td>These carry the 23.0 N. The pinion supplies torque only — a tooth mesh cannot be the hanger.</td></tr>
       <tr><td class="ref">H3</td><td>Printed pinion, 28 T module 2, Ø56</td><td class="mono">1</td><td>Print</td><td>Meshes <b>inside</b> the 252 T internal ring gear on the flange = 9:1 exactly. Pinion axis at r=224, inside the central hole, so the drive is invisible.</td></tr>
       <tr><td class="ref">H4</td><td>5 V / 12 V supply + microcontroller</td><td class="mono">1</td><td>—</td><td>0.3 rpm is one revolution per 3.3 min — the right speed for wall art.</td></tr>
     </tbody>
@@ -417,7 +417,7 @@ bore           thread + 0.4 clearance, concentric with the pocket</div>
   Buy <b>2</b>: the first one you press in at the wrong depth is a write-off, and nylon nuts strip long before steel does.</div>
 
   <div class="note"><span class="tag">Scaling to other configurations</span><br>
-  Filament is the only line that moves much. At N=9, θ=10°: <b>Ø150 → 198 g</b> of segments (1 spool), <b>Ø200 → 369 g</b> (1 spool), <b>Ø300 → 1143 g</b> (2 spools), all at 45 % density. Wafer count follows N. Tape length is 50 mm per station regardless of wafer size, because pad size is set by the bond physics (§4), not by area.</div>
+  Filament is the only line that moves much. At N=9, θ=10°: <b>Ø150 → 236 g</b> of segments (1 spool), <b>Ø200 → 438 g</b> (1 spool), <b>Ø300 → 1195 g</b> (2 spools), all at 45 % infill, slicer-calibrated — small segments run shell-dominated, so they land <em>above</em> the old uniform-density figures. Wafer count follows N. Tape length is 50 mm per station regardless of wafer size, because pad size is set by the bond physics (§4), not by area.</div>
   <div class="flag"><span class="tag">Two pads, not one — and stagger them radially</span><br>
   Two 25 × 25 mm pads give 1250 mm² per station: 18.8 N of sustained shear capacity against 1.25 N applied, a 15× margin. Area was never the constraint. But place one pad near <span class="mono">Ri</span> and one near <span class="mono">Ro</span> rather than side by side at mid-band — the peel moment (§2) acts about the tangential axis, and radial separation is what gives the pad pair any section modulus against it. Two pads at the same radius are ~12× weaker in peel than the full land; staggered, ~6×. Both pass, but the stagger is free.</div>
   <p class="dim">Prices intentionally omitted — wafer surplus pricing in particular swings by an order of magnitude with grade and availability. Reclaim Ø300 is the line item worth shopping hardest.</p>
@@ -692,12 +692,25 @@ function readouts(th,zBot,Ro,yMax,topZ){
   // the jig bore removes material; the gear flange adds it
   const hxv=(P.Ri+Ro)/2;
   vol-=Math.PI*Math.pow(HOLE_D/2,2)*Math.max(0,topZ(hxv,0)-zBot);
+  let aFlange=0, rinSum=0;
   { const Gv=gearSpec(), NFv=Math.max(240,Gv.tps*20), dav=2*H/NFv;
     for(let j=0;j<NFv;j++){
       const av=-H+dav*(j+0.5), riv=gearInner(av,Gv);
       vol+=0.5*(P.Ri*P.Ri-riv*riv)*dav*GEAR_TF;
+      aFlange+=0.5*(P.Ri*P.Ri-riv*riv)*dav; rinSum+=riv*dav;
     } }
-  const m_f=vol*PET.rho*P.dens/100;
+  // Printed mass, slicer-calibrated (OrcaSlicer 0.20mm Standard, 4 walls,
+  // Generic PETG): a solid skin ~T_SKIN mm thick over the part surface plus
+  // sparse infill at K_INF x the nominal density. NOT rho*V*density — that
+  // uniform model misses the solid shells and under-reads every segment in
+  // this design's size range. Constants fitted to sliced segments and
+  // held to +/-3% against slicer output over 35-425 cm3 (scripts/slice.py).
+  const T_SKIN=1.05, K_INF=0.92;
+  const aFoot=0.5*(Ro*Ro-P.Ri*P.Ri)*2*H+aFlange, rin=rinSum/(2*H);
+  const perim=2*H*(Ro+rin)+2*(Ro-rin);
+  const aEst=2*aFoot+perim*(vol/aFoot);
+  const vSkin=Math.min(vol,T_SKIN*aEst);
+  const m_f=PET.rho*(vSkin+K_INF*(P.dens/100)*(vol-vSkin));
   const m_tot=N*(m_w+m_f), W_tot=m_tot*G_ACC/1000;
 
   set('s_wm',m_w.toFixed(1)+' g / '+W_w.toFixed(2)+' N');

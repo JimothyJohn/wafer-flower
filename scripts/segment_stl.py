@@ -51,7 +51,8 @@ PARAMS = dict(
     gear_pa  = 20.0,    # pressure angle, degrees
     gear_bl  = 0.4,     # tooth thinning for printed backlash
     hole_D   = 5.0,     # jig keyhole bore, RADIAL from the outer face
-    hole_dep = 15.0,    # how far it reaches in from the outer arc (blind)
+    hole_dep = 30.5,    # bw + 0.5: THROUGH the band, so the cure-jig rod can
+                        # reach the inboard fence (was 15, blind, pre-jig)
     pocket_d = 1.0,     # adhesive pocket depth in the land
     pocket_m = 4.0,     # pocket inset from the band edges
     dt_neck  = 12.0,    # dovetail neck width
@@ -103,6 +104,22 @@ class Cfg:
         c = (self.R * ca, self.R * sa, 0.0)
         n = (M[0][2], M[1][2], M[2][2])
         return M, c, n
+
+
+def keyhole_z(cf):
+    """Keyhole axis height, shared with cure_jig_stl.py.
+
+    z1 + 2.6 rather than the old mid-slab z_bot + tmin/2: the cure-jig rod
+    carries a wing nut / captive nut at each end, and at mid-slab the axis sat
+    only tmin/2 = 5 mm above the bench -- under a #10 nut's 5.5 mm corner
+    swing, so nothing could rotate on the rod. At z1 + 2.6 the axis is
+    tmin + 2.6 above the bench (12.6 at Rev B.2), the Ø5 bore bottom stays
+    0.1 mm above the gear flange (a 4.83 rod clears the root land by 0.19),
+    and the bore roof keeps a 2.4 mm web under the adhesive pocket floor.
+    Needs rise > zoff + hole_r + ~1.5, i.e. theta >= ~4 deg at Rev B.2
+    geometry, or the bore breaks out of the band top at y=0.
+    """
+    return cf.z1 + 2.6
 
 
 # ----------------------------------------------------------------------------
@@ -242,10 +259,14 @@ def build_segment(cf):
         pk = prism(pocket_poly(cf), cf.z_bot, cf.tall)
         pk = pk.trim_by_plane([0.0, -tn, 1.0], -(cf.landOff + cf.pocket_d))
         seg = seg - pk
-    # 7. jig keyhole: RADIAL, blind, in from the outer arc face.
-    #    Deliberately not through the land -- the land face stays unbroken.
+    # 7. jig keyhole: RADIAL, THROUGH the band, in from the outer arc face.
+    #    Through, not blind: the cure jig (scripts/cure_jig_stl.py) passes a
+    #    threaded rod to a fence on the inboard side. The land face is still
+    #    unbroken and the bore roof keeps a ~2.4 mm web under the adhesive
+    #    pocket floor. A through hole makes the body genus 1 -- that is
+    #    expected here, unlike the pocket-into-socket tunnel bug.
     if cf.hole_D > 0:
-        zc = cf.z_bot + cf.tmin / 2.0            # centred in the slab, always solid
+        zc = keyhole_z(cf)
         L = cf.hole_dep + 2.0
         key = (Manifold.cylinder(L, cf.hole_r, cf.hole_r, 64)
                .rotate([0.0, 90.0, 0.0])          # +z -> +x, i.e. radial at a=0
@@ -391,7 +412,9 @@ def main():
     print(f"  gear    {cf.tps}T/seg × {cf.N} = {cf.teeth}T  module {cf.gear_m}  "
           f"pitch Ø{2*cf.g_pitch:.0f}  tip r{cf.g_tip:.1f}  root r{cf.g_root:.1f}")
     print(f"  z       flat bottom {cf.z_bot:.2f}   slab top {cf.z1:.2f}")
-    print(f"  bore    Ø{cf.hole_D} at r={cf.rho_c:.1f} on the centreline\n")
+    print(f"  keyhole Ø{cf.hole_D} radial at a=0, z={keyhole_z(cf):.2f}, "
+          f"{'THROUGH' if cf.hole_dep >= cf.bw else 'blind'} "
+          f"({cf.hole_dep:.1f} deep from the outer face)\n")
 
     seg = build_segment(cf)
     bodies = write_stl(seg, os.path.join(a.out, 'segment.stl'))

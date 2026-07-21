@@ -148,7 +148,7 @@ a{color:var(--accent)}
 
 <div class="keys">
   <div class="key"><div class="kv">995 mm</div><div class="kl">Outside dia.</div></div>
-  <div class="key"><div class="kv">2.29 kg</div><div class="kl">Assembly mass</div></div>
+  <div class="key"><div class="kv">2.35 kg</div><div class="kl">Assembly mass</div></div>
   <div class="key"><div class="kv">52.9 mm</div><div class="kl">Wall standoff</div></div>
   <div class="key"><div class="kv">1.5 N</div><div class="kl">Max wafer touch</div></div>
   <div class="key"><div class="kv">2.0×</div><div class="kl">Lowest margin</div></div>
@@ -169,9 +169,9 @@ a{color:var(--accent)}
     <caption>Table 1 — Configuration envelope and resulting characteristics</caption>
     <thead><tr><th>Wafer</th><th>Segments</th><th>Tilt</th><th class="n">Outside dia.</th><th class="n">Standoff</th><th class="n">Mass</th><th class="n">Wafer 1st mode<sup>4</sup></th><th>Joint margin</th></tr></thead>
     <tbody>
-      <tr><td class="sym">Ø150 × 0.675</td><td class="n">9</td><td class="n">10°</td><td class="n">498 mm</td><td class="n">26.7 mm</td><td class="n">0.45 kg</td><td class="n">85 Hz</td><td><span class="p pass">20.7×</span></td></tr>
-      <tr><td class="sym">Ø200 × 0.725</td><td class="n">9</td><td class="n">10°</td><td class="n">667 mm</td><td class="n">35.5 mm</td><td class="n">0.85 kg</td><td class="n">51 Hz</td><td><span class="p pass">8.2×</span></td></tr>
-      <tr><td class="sym">Ø300 × 0.775</td><td class="n">9</td><td class="n">10°</td><td class="n">995 mm</td><td class="n">52.9 mm</td><td class="n">2.29 kg</td><td class="n">24 Hz</td><td><span class="p caut">2.0×</span></td></tr>
+      <tr><td class="sym">Ø150 × 0.675</td><td class="n">9</td><td class="n">10°</td><td class="n">498 mm</td><td class="n">26.7 mm</td><td class="n">0.49 kg</td><td class="n">85 Hz</td><td><span class="p pass">19.0×</span></td></tr>
+      <tr><td class="sym">Ø200 × 0.725</td><td class="n">9</td><td class="n">10°</td><td class="n">667 mm</td><td class="n">35.5 mm</td><td class="n">0.91 kg</td><td class="n">51 Hz</td><td><span class="p pass">7.7×</span></td></tr>
+      <tr><td class="sym">Ø300 × 0.775</td><td class="n">9</td><td class="n">10°</td><td class="n">995 mm</td><td class="n">52.9 mm</td><td class="n">2.35 kg</td><td class="n">24 Hz</td><td><span class="p caut">2.0×</span></td></tr>
     </tbody>
   </table>
   </div>
@@ -202,7 +202,7 @@ a{color:var(--accent)}
       <tr><td class="sym">F<sub>pt</sub></td><td>Point force on unsupported wafer</td><td class="n">1.5</td><td>N</td><td class="cond">At the free outer edge. Reaches the 30 MPa edge-flaw allowable — silicon fractures without warning<sup>1</sup></td></tr>
       <tr><td class="sym">F<sub>pt,land</sub></td><td>Point force over the bond land</td><td class="n">50</td><td>N</td><td class="cond">Wafer fully backed by the frame. This is the only place it is safe to press</td></tr>
       <tr><td class="sym">m<sub>add</sub></td><td>Added suspended mass</td><td class="n">0</td><td>kg</td><td class="cond"><span class="p crit">Zero</span> The joint is already at its 2× design factor carrying its own weight<sup>2</sup></td></tr>
-      <tr><td class="sym">M<sub>j</sub></td><td>Ring joint bending moment</td><td class="n">5.1</td><td>N·m</td><td class="cond">Dovetail root yield. Single-point hang already applies 2.5 N·m</td></tr>
+      <tr><td class="sym">M<sub>j</sub></td><td>Ring joint bending moment</td><td class="n">5.1</td><td>N·m</td><td class="cond">Dovetail root yield. Single-point hang already applies 2.6 N·m</td></tr>
       <tr><td class="sym">a<sub>shock</sub></td><td>Mechanical shock</td><td class="n">Any impact</td><td>—</td><td class="cond"><span class="p crit">None</span> Silicon is brittle and does not deform before failing. A drop is a total loss</td></tr>
       <tr class="rowhead"><td colspan="5">Thermal</td></tr>
       <tr><td class="sym">T<sub>max</sub></td><td>Ambient temperature, upper</td><td class="n">60</td><td>°C</td><td class="cond">PETG glass transition ≈ 80 °C; the frame creeps and the taper sags before that</td></tr>
@@ -269,7 +269,7 @@ a{color:var(--accent)}
     <caption>Table 6 — Margin summary, WH-300-09-10</caption>
     <thead><tr><th>Load path</th><th class="n">Applied</th><th class="n">Allowable</th><th class="n">Margin</th><th>Governing mechanism</th></tr></thead>
     <tbody>
-      <tr><td><b>Dovetail joint</b>, single-point hang</td><td class="n">9.7 MPa</td><td class="n">20 MPa</td><td class="n"><span class="p caut">2.0×</span></td><td class="cond">One dovetail spans only 16 mm of the 55 mm band depth</td></tr>
+      <tr><td><b>Dovetail joint</b>, single-point hang</td><td class="n">10.0 MPa</td><td class="n">20 MPa</td><td class="n"><span class="p caut">2.0×</span></td><td class="cond">One dovetail spans only 16 mm of the 55 mm band depth</td></tr>
       <tr><td>Wafer bending, flat during assembly</td><td class="n">3.4 MPa</td><td class="n">30 MPa</td><td class="n"><span class="p pass">8.8×</span></td><td class="cond">197 mm unsupported overhang under its own weight</td></tr>
       <tr><td>Bond, thermal shear at ΔT = 20 K</td><td class="n">6.0 kPa</td><td class="n">15 kPa</td><td class="n"><span class="p pass">2.5×</span></td><td class="cond">110 µm of CTE slip across a 1.1 mm bondline</td></tr>
       <tr><td>Wafer bending, mounted</td><td class="n">0.60 MPa</td><td class="n">30 MPa</td><td class="n"><span class="p pass">50×</span></td><td class="cond">Only the plane-normal component of gravity bends it</td></tr>
@@ -304,13 +304,13 @@ a{color:var(--accent)}
 <section>
   <div class="sh"><span class="sn">§ 7</span><h2>Mounting</h2></div>
   <ul class="rules">
-    <li><span class="tag ok">Do</span><span>Use <b>two anchors at ±50° from top</b>, each rated ≥ 90 N (4× the 22.5 N assembly weight). This is the single cheapest structural improvement available.</span></li>
+    <li><span class="tag ok">Do</span><span>Use <b>two anchors at ±50° from top</b>, each rated ≥ 95 N (4× the 23.0 N assembly weight). This is the single cheapest structural improvement available.</span></li>
     <li><span class="tag ok">Do</span><span>Anchor into a <b>stud</b> where possible, or a rated hollow-wall anchor. Adhesive wall hooks are not acceptable.</span></li>
     <li><span class="tag ok">Do</span><span>Allow <b>60 mm minimum clearance</b> in front of the wall; the wafers swing ±26 mm off the ring plane at θ = 10°.</span></li>
     <li><span class="tag care">Care</span><span>The assembly centre of mass sits <b>6.5 mm off the wall plane</b>, producing a 0.14 N·m tip-off moment. Anchors must resist pull-out, not just shear.</span></li>
     <li><span class="tag no">Avoid</span><span>Walls shared with <b>laundry appliances, garage door motors, or speakers</b>. The wafer overhang resonates at 24 Hz, squarely inside that excitation band.</span></li>
     <li><span class="tag no">Avoid</span><span><b>Direct sunlight</b>, exterior walls prone to condensation, bathrooms, and unconditioned garages or lofts.</span></li>
-    <li><span class="tag no">Avoid</span><span>Mounting <b>above seating, beds, or walkways</b>. This is a brittle assembly at 2.29 kg.</span></li>
+    <li><span class="tag no">Avoid</span><span>Mounting <b>above seating, beds, or walkways</b>. This is a brittle assembly at 2.35 kg.</span></li>
   </ul>
 </section>
 
@@ -351,10 +351,10 @@ a{color:var(--accent)}
   <div class="sh"><span class="sn">Notes</span><h2>Basis of ratings</h2></div>
   <div class="notes">
     <p><sup>1</sup> Silicon has no single fracture strength; it is flaw-limited and scatters widely. 30 MPa is a conservative design allowable for a handled wafer with a bevelled but unpolished edge. Point-load stress is computed as σ = 6PL/(b<sub>eff</sub>t²) with an effective width of 0.5–1.0 L, giving 1.5–3.0 N at the free edge; the lower bound is quoted.</p>
-    <p><sup>2</sup> At a 2× design factor on printed PETG, the allowable assembly mass through a single centred dovetail is 2.34 kg against an actual 2.29 kg. Headroom is 2 %, which is not headroom.</p>
+    <p><sup>2</sup> At a 2× design factor on printed PETG, the allowable assembly mass through a single centred dovetail is 2.34 kg against an actual, slicer-measured 2.35 kg. A single-point hang no longer meets a 2× factor at all — hang from two points (±50°), which restores ~4× of moment headroom.</p>
     <p><sup>3</sup> Bond shear strain γ = Δα·ΔT·L<sub>max</sub>/t<sub>b</sub>, with Δα ≈ 57 ppm/K and L<sub>max</sub> = 96 mm from the land centroid. Because L<sub>max</sub> and not area sets the stress, <em>a larger bond patch is a worse bond patch</em> — adhesive is applied as two short arcs near the land centroid, never full coverage.</p>
     <p><sup>4</sup> First bending mode of the unsupported outboard wafer, modelled as a uniform cantilever of length L with E = 130 GPa.</p>
-    <p>All values are derived from a parametric solver, cross-checked against an independent implementation with all outputs matching. <strong>They are analysis, not measurement.</strong> Test gates T1–T7 — neighbour clearance, dovetail fit, adhesive shear with 10–30 °C cycling, land flatness, taper minimum, centring repeatability and the dovetail hang test — must pass before any of this is treated as verified.</p>
+    <p>All values are derived from a parametric solver, cross-checked against an independent implementation with all outputs matching. <strong>They are analysis, not measurement</strong> — except the printed masses, which are measured from sliced G-code (OrcaSlicer, 0.20 mm, 45 % infill) and carried through the load numbers. Test gates T1–T7 — neighbour clearance, dovetail fit, adhesive shear with 10–30 °C cycling, land flatness, taper minimum, centring repeatability and the dovetail hang test — must pass before any of this is treated as verified.</p>
   </div>
 </section>
 
