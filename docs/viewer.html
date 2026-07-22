@@ -79,6 +79,8 @@ canvas{width:100%;height:640px;display:block;border:1px solid var(--line);
         <input type="checkbox" id="jig" checked><span class="val" id="jigv">on</span></div>
       <div class="row"><label>Wafers</label>
         <input type="checkbox" id="waf" checked><span class="val" id="wafv">on</span></div>
+      <div class="row" id="onshaperow" style="display:none"><label>OnShape</label>
+        <input type="checkbox" id="onshape"><span class="val" id="onshapev">off</span></div>
       <div class="row"><label>Open ↔ seat</label>
         <input type="range" id="stroke" min="0" max="1" step="0.001" value="1">
         <span class="val" id="strokev">seated</span></div>
@@ -161,8 +163,17 @@ async function load(){
     if(!groups[p.group]){groups[p.group]=new THREE.Group();scene.add(groups[p.group]);}
     const m=new THREE.Mesh(geo[p.name],
       mat(parseInt(p.color.slice(1),16),
-          p.name==='wafer'?{shininess:95,specular:0x8899AA}:{}));
+          p.name==='wafer'?{shininess:95,specular:0x8899AA}:
+          p.group==='onshape'?{transparent:true,opacity:0.75}:{}));
     groups[p.group].add(m);
+  }
+  if(groups.onshape){
+    groups.onshape.visible=false;
+    document.getElementById('onshaperow').style.display='';
+    const op=M.parts.find(p=>p.group==='onshape');
+    if(op && op.oriented===false)
+      document.getElementById('onshapev').title=
+        'export not yet in scene orientation — will float';
   }
   // stations 1..8: segment + wafer clones, rotated into place
   for(let k=1;k<9;k++){
@@ -198,6 +209,10 @@ const ui={jig:document.getElementById('jig'),stroke:document.getElementById('str
   section:document.getElementById('section'),waf:document.getElementById('waf')};
 ui.jig.onchange=()=>{T.jig=ui.jig.checked?1:0;};
 ui.waf.onchange=()=>{T.waf=ui.waf.checked?1:0;};
+document.getElementById('onshape').onchange=e=>{
+  if(groups.onshape)groups.onshape.visible=e.target.checked;
+  document.getElementById('onshapev').textContent=e.target.checked?'on':'off';
+};
 ui.stroke.oninput=()=>{T.stroke=1-parseFloat(ui.stroke.value);};
 ui.lift.oninput=()=>{T.lift=parseFloat(ui.lift.value);};
 ui.stations.oninput=()=>{T.stations=parseInt(ui.stations.value);};
@@ -221,7 +236,7 @@ document.getElementById('presets').onclick=e=>{
 };
 
 function apply(){
-  if(!M)return;
+  if(!M||!groups.wafer)return;   // manifest lands before the meshes do
   const mv=M.motion;
   for(const g of ['out','inboard','rod']){
     if(!groups[g])continue;

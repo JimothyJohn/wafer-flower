@@ -40,8 +40,15 @@ from cure_jig_stl import (JIG, Jig, build_outboard, build_inboard,
                           build_hardware, run_checks)
 
 EPS = 1e-6
-OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                       'docs', 'models')
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT_DIR = os.path.join(REPO, 'docs', 'models')
+
+# Nick's OnShape rebuild, copied through byte-for-byte as a compare overlay.
+# Expected in SCENE orientation (same frame as segment.stl); until it is, the
+# viewer shows it floating wherever the export put it — mis-orientation is
+# WARNED about, never gated: this is hand CAD in progress, not script output.
+PASSTHRU_SRC = os.path.join(REPO, 'stl', 'my_frame_segment.stl')
+PASSTHRU = dict(name='my_frame_segment', group='onshape', color=0x3E8E7E)
 
 # Stroke lengths for the open/close animation, mm. Sized so every moving body
 # fully clears the wafer footprint / keyhole; the travel sweep below PROVES it
@@ -161,6 +168,48 @@ def build_all(cf, j):
     return scene, vecs, checks
 
 
+def stl_stats(path):
+    """Tri count, bbox, and volume (divergence theorem) of a binary STL."""
+    import struct
+    with open(path, 'rb') as f:
+        f.read(80)
+        n = struct.unpack('<I', f.read(4))[0]
+        lo, hi, vol6 = [1e30] * 3, [-1e30] * 3, 0.0
+        for _ in range(n):
+            rec = f.read(50)
+            p = [struct.unpack('<3f', rec[12 + v * 12:24 + v * 12]) for v in range(3)]
+            for v in p:
+                for c in range(3):
+                    lo[c] = min(lo[c], v[c]); hi[c] = max(hi[c], v[c])
+            a, b, c3 = p
+            vol6 += (a[0] * (b[1] * c3[2] - b[2] * c3[1])
+                     + a[1] * (b[2] * c3[0] - b[0] * c3[2])
+                     + a[2] * (b[0] * c3[1] - b[1] * c3[0]))
+    return dict(tris=n, lo=lo, hi=hi, volume=abs(vol6) / 6.0)
+
+
+def passthrough_entry(cf, seg):
+    """Manifest entry for the OnShape overlay, or None if the file is absent.
+    Warns (never fails) when its bbox is nowhere near the scene segment's —
+    the tell of a raw Y-up OnShape export that still needs re-orienting."""
+    if not os.path.exists(PASSTHRU_SRC):
+        return None
+    st = stl_stats(PASSTHRU_SRC)
+    sb = seg.bounding_box()
+    centred = all(abs((st['lo'][i] + st['hi'][i]) / 2 - (sb[i] + sb[i + 3]) / 2) < 60
+                  for i in range(3))
+    if not centred:
+        print(f"\nWARNING: {os.path.basename(PASSTHRU_SRC)} bbox "
+              f"{[round(x, 1) for x in st['lo']]}..{[round(x, 1) for x in st['hi']]} "
+              f"is not in scene orientation (segment sits at "
+              f"{[round(sb[i], 1) for i in range(3)]}..{[round(sb[i + 3], 1) for i in range(3)]}). "
+              f"Overlay will float until it is re-exported in the same frame.")
+    return {'file': f"{PASSTHRU['name']}.stl", 'name': PASSTHRU['name'],
+            'group': PASSTHRU['group'], 'color': f"#{PASSTHRU['color']:06X}",
+            'volume_cm3': round(st['volume'] / 1000.0, 3),
+            'passthrough': True, 'oriented': centred}
+
+
 def make_manifest(cf, scene, vecs, checks, volumes):
     return {
         'source': 'scripts/viewer_export.py',
@@ -197,6 +246,9 @@ def main():
     ok = all(c[3] for c in checks)
     volumes = {name: solid.volume() for name, (solid, _, _) in scene.items()}
     manifest = make_manifest(cf, scene, vecs, checks, volumes)
+    passthru = passthrough_entry(cf, scene['segment'][0])
+    if passthru:
+        manifest['parts'].append(passthru)
 
     if a.verify:
         mpath = os.path.join(a.out, 'manifest.json')
@@ -222,6 +274,15 @@ def main():
         for f in sorted(want):
             if not os.path.exists(os.path.join(a.out, f)):
                 stale.append(f'{f} missing from {a.out}')
+        if passthru:
+            # a byte-for-byte copy, so bytes ARE comparable here (unlike the
+            # regenerated meshes above)
+            dst = os.path.join(a.out, passthru['file'])
+            if os.path.exists(dst):
+                with open(PASSTHRU_SRC, 'rb') as fa, open(dst, 'rb') as fb:
+                    if fa.read() != fb.read():
+                        stale.append(f"{passthru['file']} differs from "
+                                     f"stl/{passthru['file']} — re-copy")
         print()
         if stale:
             print('STALE — docs/models does not match the scripts. '
@@ -237,6 +298,11 @@ def main():
         fname = f'{name}.stl'
         bodies = write_stl(solid, os.path.join(a.out, fname))
         report(fname, solid, bodies, f"group {scene[name][1]}")
+    if passthru:
+        import shutil
+        shutil.copyfile(PASSTHRU_SRC, os.path.join(a.out, passthru['file']))
+        print(f"  {passthru['file']:20} copied through from stl/ "
+              f"({'scene-oriented' if passthru['oriented'] else 'NOT yet in scene orientation'})")
     with open(os.path.join(a.out, 'manifest.json'), 'w') as f:
         json.dump(manifest, f, indent=1)
         f.write('\n')

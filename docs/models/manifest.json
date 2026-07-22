@@ -84,6 +84,15 @@
    "group": "rod",
    "color": "#4A5058",
    "volume_cm3": 0.46
+  },
+  {
+   "file": "my_frame_segment.stl",
+   "name": "my_frame_segment",
+   "group": "onshape",
+   "color": "#3E8E7E",
+   "volume_cm3": 66.028,
+   "passthrough": true,
+   "oriented": false
   }
  ],
  "motion": {
