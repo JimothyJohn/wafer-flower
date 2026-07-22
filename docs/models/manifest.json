@@ -1,0 +1,193 @@
+{
+ "source": "scripts/viewer_export.py",
+ "params": {
+  "N": 9,
+  "wafer_D": 300.0,
+  "wafer_T": 0.775,
+  "theta": 5.0,
+  "R": 350.0,
+  "Ri": 255.0,
+  "bw": 30.0,
+  "tmin": 10.0,
+  "bond": 1.1,
+  "clr": 3.0,
+  "gear_m": 2.0,
+  "gear_pa": 20.0,
+  "gear_bl": 0.4,
+  "hole_D": 5.0,
+  "hole_dep": 30.5,
+  "pocket_d": 1.0,
+  "pocket_m": 4.0,
+  "dt_neck": 12.0,
+  "dt_tip": 16.0,
+  "dt_depth": 8.0,
+  "dt_clear": 0.25,
+  "clr_edge": 2.0,
+  "facets": 512
+ },
+ "sector_deg": 40.0,
+ "keyhole_z": -7.415522292974702,
+ "z_bot": -20.0155222929747,
+ "parts": [
+  {
+   "file": "segment.stl",
+   "name": "segment",
+   "group": "segment",
+   "color": "#B9A87E",
+   "volume_cm3": 94.279
+  },
+  {
+   "file": "wafer.stl",
+   "name": "wafer",
+   "group": "wafer",
+   "color": "#9AA6B2",
+   "volume_cm3": 54.776
+  },
+  {
+   "file": "jig_outboard.stl",
+   "name": "jig_outboard",
+   "group": "out",
+   "color": "#D97742",
+   "volume_cm3": 323.252
+  },
+  {
+   "file": "jig_inboard.stl",
+   "name": "jig_inboard",
+   "group": "inboard",
+   "color": "#3E7CB1",
+   "volume_cm3": 166.624
+  },
+  {
+   "file": "rod.stl",
+   "name": "rod",
+   "group": "rod",
+   "color": "#30343A",
+   "volume_cm3": 6.3
+  },
+  {
+   "file": "hex_nut.stl",
+   "name": "hex_nut",
+   "group": "inboard",
+   "color": "#4A5058",
+   "volume_cm3": 0.205
+  },
+  {
+   "file": "washer.stl",
+   "name": "washer",
+   "group": "rod",
+   "color": "#6A7078",
+   "volume_cm3": 0.104
+  },
+  {
+   "file": "wing_nut.stl",
+   "name": "wing_nut",
+   "group": "rod",
+   "color": "#4A5058",
+   "volume_cm3": 0.46
+  }
+ ],
+ "motion": {
+  "out": {
+   "vector": [
+    90.0,
+    0.0,
+    0.0
+   ]
+  },
+  "inboard": {
+   "vector": [
+    -60.0,
+    0.0,
+    0.0
+   ]
+  },
+  "rod": {
+   "vector": [
+    130.0,
+    0.0,
+    0.0
+   ]
+  },
+  "wafer": {
+   "vector": [
+    0.0,
+    -3.4862,
+    39.8478
+   ]
+  }
+ },
+ "checks": [
+  {
+   "group": "nominal",
+   "name": "cure-jig drivetrain + capture suite (18 checks)",
+   "value_mm3": 0.0,
+   "pass": true
+  },
+  {
+   "group": "travel",
+   "name": "out stroke (90 mm) vs segment+wafer, 5 steps",
+   "value_mm3": 0.0,
+   "pass": true
+  },
+  {
+   "group": "travel",
+   "name": "inboard stroke (60 mm) vs segment+wafer, 5 steps",
+   "value_mm3": 0.0,
+   "pass": true
+  },
+  {
+   "group": "travel",
+   "name": "rod stroke (130 mm) vs segment+wafer, 5 steps",
+   "value_mm3": 0.0,
+   "pass": true
+  },
+  {
+   "group": "placement",
+   "name": "wafer drop (40 mm) vs segment + open jig, 5 steps",
+   "value_mm3": 0.0,
+   "pass": true
+  },
+  {
+   "group": "assembly",
+   "name": "segment vs next segment (dovetail joint)",
+   "value_mm3": 0.0,
+   "pass": true
+  },
+  {
+   "group": "assembly",
+   "name": "segment vs leading neighbour wafer",
+   "value_mm3": 0.0,
+   "pass": true
+  },
+  {
+   "group": "assembly",
+   "name": "segment vs trailing neighbour wafer",
+   "value_mm3": 0.0,
+   "pass": true
+  },
+  {
+   "group": "assembly",
+   "name": "wafer vs neighbour wafer",
+   "value_mm3": 0.0,
+   "pass": true
+  },
+  {
+   "group": "assembly",
+   "name": "depth clearance >= 2.95 mm under the neighbour wafer",
+   "value_mm3": 0.0,
+   "pass": true
+  },
+  {
+   "group": "assembly",
+   "name": "clearance cut present (material within 3.05 mm)",
+   "value_mm3": 36.2522,
+   "pass": true
+  },
+  {
+   "group": "assembly",
+   "name": "segments butt at the joint (0.1 deg nudge contacts)",
+   "value_mm3": 104.0362,
+   "pass": true
+  }
+ ]
+}

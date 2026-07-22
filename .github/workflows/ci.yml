@@ -1,8 +1,12 @@
 name: CI
 
 # This repo is a CAD/art project: loose Python generator scripts in scripts/
-# with no packaged dependency manifest. CI keeps the honest cheap check that
-# can genuinely fail — a byte-compile syntax pass over every tracked script.
+# with no packaged dependency manifest. CI runs a cheap syntax pass, then the
+# CAD generators themselves — they self-verify with boolean interference
+# checks (cure-jig drivetrain, jig open/close sweep, wafer placement, glued
+# ring + depth clearance) and exit nonzero on any FAIL. viewer_export.py
+# --verify also gates the docs/models/ STLs the Pages viewer serves against
+# the scripts, so the published page can't silently go stale.
 
 on:
   push:
@@ -21,3 +25,21 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Byte-compile Python scripts
         run: python3 -m compileall -q scripts
+
+  cad:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install manifold3d
+        run: |
+          python3 -m venv .ci-venv
+          .ci-venv/bin/pip install --quiet manifold3d
+      - name: Segment + cure-jig generators (self-checking, exit nonzero on FAIL)
+        run: |
+          .ci-venv/bin/python scripts/segment_stl.py -o /tmp/stl-ci
+          .ci-venv/bin/python scripts/cure_jig_stl.py -o /tmp/stl-ci
+      - name: Viewer configuration gates + docs/models staleness check
+        run: .ci-venv/bin/python scripts/viewer_export.py --verify
