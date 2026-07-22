@@ -212,15 +212,18 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 - STEP export was built and then dropped at the user's call: it lands in
   OnShape as one dumb non-parametric solid, so DXF + the #variables is the
   route that stays editable. Do not rebuild it without being asked.
-- scripts/slice.py — STL -> Bambu X1 Carbon G-code via OrcaSlicer's CLI
+- scripts/slice.py — STL -> Bambu H2S G-code via OrcaSlicer's CLI
   (`brew install --cask orcaslicer`). Defaults: segment.stl + pinion.stl,
   Generic PETG, 45% infill, 0.20mm Standard, Textured PEI Plate. Emits
   gcode/<name>.gcode + <name>.gcode.3mf (the 3mf is what the printer's
   SD/Handy wants). Orca CLI does NOT resolve profile `inherits` chains —
   unflattened profiles silently slice PETG as PLA@200C; slice.py flattens
-  them. Guard skips STLs wider than the 256 mm bed. `--infill PCT` and
-  `--outdir DIR` exist for calibration runs (that's how the mass model
-  below was fitted). Nick's printer: X1C, 0.4 nozzle.
+  them. Guard skips STLs that fit the 340×320 mm bed in neither
+  orientation. `--infill PCT` and `--outdir DIR` exist for calibration
+  runs (that's how the mass model below was fitted, on the X1C). Nick's
+  printer: H2S, 0.4 nozzle (X1C before 2026-07-22; H2S defaults are
+  "Bambu Lab H2S 0.4 nozzle" / "0.20mm Standard @BBL H2S" /
+  "Generic PETG @BBL H2S", verified present in the installed Orca).
 - MEASURED FROM SLICED G-CODE — supersedes every uniform-45% (ρ·V·0.45)
   mass figure in this file; that model under-reads ALL segments here because
   the solid skins dominate. Sliced mass is exactly linear in infill %:
