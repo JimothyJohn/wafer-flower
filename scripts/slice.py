@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""STL -> Bambu X1C G-code via OrcaSlicer's CLI (free/open-source, ships with
+"""STL -> Bambu H2S G-code via OrcaSlicer's CLI (free/open-source, ships with
 the OrcaSlicer.app bundle -- `brew install --cask orcaslicer`).
 
 Slices with Orca's bundled Bambu system profiles plus this project's overrides
@@ -24,7 +24,7 @@ Orca's CLI quirks this script absorbs:
 Usage:
     python3 scripts/slice.py                      # segment.stl + pinion.stl
     python3 scripts/slice.py stl/segment.stl --copies 3
-    python3 scripts/slice.py --process "0.16mm Optimal @BBL X1C" foo.stl
+    python3 scripts/slice.py --process "0.16mm Standard @BBL H2S" foo.stl
 """
 
 import argparse
@@ -47,9 +47,9 @@ ORCA_CANDIDATES = [
 PROFILES = Path("/Applications/OrcaSlicer.app/Contents/Resources/profiles/BBL")
 
 DEFAULTS = {
-    "machine": "Bambu Lab X1 Carbon 0.4 nozzle",
-    "process": "0.20mm Standard @BBL X1C",
-    "filament": "Generic PETG @base",
+    "machine": "Bambu Lab H2S 0.4 nozzle",
+    "process": "0.20mm Standard @BBL H2S",
+    "filament": "Generic PETG @BBL H2S",
 }
 
 # Project print settings (CLAUDE.md: PETG at 45% infill). Keys are OrcaSlicer
@@ -59,7 +59,7 @@ OVERRIDES = {
     "sparse_infill_density": "45%",
 }
 
-BED_XY = 256.0  # X1C build area, mm
+BED_X, BED_Y = 340.0, 320.0  # H2S build area, mm (from the machine profile)
 
 
 def find_orca():
@@ -115,9 +115,11 @@ def write_profile(kind, name, build_dir, overrides=None):
 def slice_one(orca, stl, args, profiles, out_dir):
     name = stl.stem
     fp = stl_footprint(stl)
-    if fp and max(fp) > BED_XY:
+    # bed is 340x320, not square: the part fits if either orientation does
+    if fp and not (max(fp) <= BED_X and min(fp) <= BED_Y):
         print(f"SKIP {name}: footprint {fp[0]:.0f}x{fp[1]:.0f} mm exceeds "
-              f"{BED_XY:.0f} mm bed (ring-scale STLs are not printable whole)")
+              f"{BED_X:.0f}x{BED_Y:.0f} mm bed (ring-scale STLs are not "
+              f"printable whole)")
         return False
 
     machine, process, filament = profiles
