@@ -8,4 +8,6 @@ Dimensions clearly understood, relationships alive and interconnected, numbers c
 
 ## Really though, what is it?
 
+The current CAD is viewable live at [jimothyjohn.github.io/wafer-flower/viewer.html](https://jimothyjohn.github.io/wafer-flower/viewer.html) — the real exported STLs, with the cure jig opening and closing, the wafer placing, the ring connecting station by station, and the interference checks that gate every one of those configurations in CI.
+
 It's an experiment in how to collaborate iwth AI in both the digital and physical world. Information is contextualized, digested understood, and converted into beautifully-printed reality. Also a ways in I was blown away by how well CAD could be generated, see [stl/](stl/). The entire workholding conceptually made sense and looked like it would actually work...

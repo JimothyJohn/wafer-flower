@@ -234,10 +234,34 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   the corrected static numbers throughout. An earlier note here claimed
   margins "only improve" — wrong baseline; measured mass is ~7% ABOVE the
   B.2 book values, so margins shaved, none governing.
+- scripts/viewer_export.py — exports scene-coordinate STLs + manifest.json
+  into docs/models/ for the Pages viewer, and gates every configuration it
+  can show with boolean CSG: the cure-jig nominal suite, the jig open/close
+  stroke swept in steps, the wafer placement drop, and the glued ring
+  (adjacent segments/wafers + a bidirectional 2.95–3.05 mm depth-clearance
+  probe on the neighbour-wafer cut). Exits nonzero on FAIL. `--verify` is
+  the CI mode: re-runs the checks and compares part volumes against the
+  committed manifest (volumes, not bytes — float last-bits differ across
+  platforms; CI meshed the segment at 5,068 tris vs 5,062 on macOS) so
+  docs/models/ can't go stale. stl/my_frame_segment.stl (Nick's OnShape
+  rebuild) passes through byte-for-byte as a compare overlay, group
+  'onshape': expected in SCENE orientation (same frame as segment.stl,
+  Nick's call 2026-07-21); mis-orientation WARNS but never gates — it's
+  hand CAD in progress. Verify byte-compares the copy (safe: no
+  regeneration involved).
+- docs/viewer.html — Pages CAD viewer for the REAL STLs in docs/models/
+  (Pages serves master:/docs only, so stl/ is invisible to the site — that's
+  why the models live in docs/models/ too). Presets for bare segment / jig
+  open / wafer placed / curing / glued pair / full halo; sliders animate the
+  jig stroke, wafer drop, station count, and a y-section plane; the manifest's
+  check results render as a PASS/FAIL panel. Parses binary STL itself — no
+  loader dependency beyond three.js r128.
+- CI (.github/workflows/ci.yml): `syntax` byte-compile + `cad` job that runs
+  segment_stl.py, cure_jig_stl.py, and viewer_export.py --verify on every PR.
 - scripts/*.py — halo_gen.py, v3_dxf_gen.py (parametric; edit constants).
-- NOTE: cad/ and tools/ do not exist in this repo. Only README.md and
-  docs/ are tracked by git; CLAUDE.md, V3_NOTES.md, ONSHAPE_RECIPE.md and
-  scripts/ are untracked.
+- NOTE: cad/ and tools/ do not exist in this repo. Everything else is
+  tracked: README.md, docs/, scripts/, stl/, CLAUDE.md, V3_NOTES.md,
+  ONSHAPE_RECIPE.md, TODO.md, .github/. gcode/ is gitignored.
 
 ## Conventions & preferences
 - User (Nick) is technical; be direct, lead with problems, no praise
