@@ -37,9 +37,10 @@ jobs:
         run: |
           python3 -m venv .ci-venv
           .ci-venv/bin/pip install --quiet manifold3d
-      - name: Segment + cure-jig generators (self-checking, exit nonzero on FAIL)
+      - name: Segment + cure-jig + gearmotor generators (self-checking, exit nonzero on FAIL)
         run: |
           .ci-venv/bin/python scripts/segment_stl.py -o /tmp/stl-ci
           .ci-venv/bin/python scripts/cure_jig_stl.py -o /tmp/stl-ci
+          .ci-venv/bin/python scripts/gearmotor_stl.py -o /tmp/stl-ci
       - name: Viewer configuration gates + docs/models staleness check
         run: .ci-venv/bin/python scripts/viewer_export.py --verify
