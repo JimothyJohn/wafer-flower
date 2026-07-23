@@ -259,8 +259,39 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   jig stroke, wafer drop, station count, and a y-section plane; the manifest's
   check results render as a PASS/FAIL panel. Parses binary STL itself — no
   loader dependency beyond three.js r128.
+- scripts/gearmotor_stl.py — LOW-PROFILE DRIVE MODULE (2026-07-22): N20-class
+  micro WORM gearmotor (envelope parametric — MEASURE the purchased unit) on
+  a wall plate driving the 28T pinion (3 mm D-bore, grip collar ABOVE the
+  teeth: spur mesh has zero axial force, friction retention suffices).
+  Everything except the pinion hides BEHIND z_bot − 1, so zero added front
+  profile; worm self-holds unpowered. Motor sinks 2 mm sub-flush into the
+  plate pocket (printed lip over the gearbox nose + clamp bar past the pinion
+  swing circle, 2× #6 self-taps). Mounts on TWO #10-24 pan heads 56 mm apart
+  via keyholes; the 8 mm radial slots set mesh backlash. 14 boolean/scalar
+  self-checks (ring + wafers swept one tooth pitch, spin envelope, mesh
+  roll), exit nonzero on FAIL. Emits drive_{plate,clamp,pinion}.stl +
+  drive_fitcheck.stl. Bracket itself still Nick's TODO.
+- scripts/step_export.py — STEP (AP214) export, REINSTATED at Nick's request
+  2026-07-22 for viewing/archival (NOT editable CAD — DXF + #variables stays
+  the editing route). Planar B-rep with coplanar-triangle merging; per-part
+  .stp + halo_drive_assembly.stp (22 named solids) into stl/step/. --verify
+  round-trips every file through gmsh/OpenCASCADE and compares volumes.
+  Mesh->brep traps it handles (do not regress): slit patches fall back to
+  triangle faces, T-vertex seams healed by unmatched-edge chain substitution
+  (NEVER blanket split-at-near-vertices — corrupts micron slivers), sub-µm
+  duplicate vertices welded (5e-4), near-degenerate tris dropped. GitHub
+  previews .stl in-repo but NOT .stp — browse stl/ for 3D, import .stp to CAD.
+- scripts/manual_pdf.py — KISELRING IKEA-style assembly manual ->
+  docs/kiselring-manual.pdf (9 pages A4). All 3D panels are line art rendered
+  from the REAL solids: orthographic projection, triangle z-buffer hidden-line
+  removal, silhouette + >25° crease edges only. Renderer gotcha: SKIP
+  triangles with tiny projected area before z-buffering (their barycentric z
+  is garbage and poisons silhouettes into false dashes). Scene z = wall
+  normal, so wall-art views need azim −90 / high elev, not the bench-view
+  camera. Needs numpy + matplotlib.
 - CI (.github/workflows/ci.yml): `syntax` byte-compile + `cad` job that runs
-  segment_stl.py, cure_jig_stl.py, and viewer_export.py --verify on every PR.
+  segment_stl.py, cure_jig_stl.py, gearmotor_stl.py, and viewer_export.py
+  --verify on every PR. STEP + manual are committed artifacts, not CI-gated.
 - scripts/*.py — halo_gen.py, v3_dxf_gen.py (parametric; edit constants).
 - NOTE: cad/ and tools/ do not exist in this repo. Everything else is
   tracked: README.md, docs/, scripts/, stl/, CLAUDE.md, V3_NOTES.md,
@@ -288,3 +319,5 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
    Pinion supplies torque ONLY; 3 V-groove rollers on the outer rim carry
    the assembly weight (17.1 N current build / 23.0 N θ=10). Rotation fully reverses the peel term every rev → T3 becomes
    a cyclic test, but it also retires the single-point-hang joint case.
+   DRIVE MODULE DONE 2026-07-22 (scripts/gearmotor_stl.py); rollers + wall
+   bracket remain open.
