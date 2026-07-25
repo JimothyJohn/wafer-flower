@@ -24,8 +24,9 @@ bevel pinion is impossible here: its swept Ø90 disc spans +/-45 along the
 wall normal vs the 38 mm standoff (it poked 39 mm through the drywall —
 caught 2026-07-25 when the wall check finally included the pinion).
 
-Standoff: plate_t = 38 hides the wheels, the motor body (26 long) and the
-pinion hub behind the ring.
+Standoff: plate_t = 76 (2026-07-25, Nick: twice the original 38 — room for
+the motor) hides the wheels, the N20 body (26 long, MEASURE it) and the
+pinion hub behind the ring with depth to spare for a longer gearmotor.
 
 Hardware: printed M6 screws (printed_hardware_stl) as wheel axles, threaded
 into captive printed M6 nuts in the deck; wall mounting via two #10-24 pan
@@ -56,7 +57,7 @@ BRK = dict(
     rib_w    = 1.2,    # groove rib width  (groove ledge is grv_h = 1.5)
     rib_h    = 1.6,    # groove rib height (groove is grv_d = 2.0 deep)
     axle_D   = 6.8,    # wheel bore: spins on a printed M6 screw shank
-    plate_t  = 38.0,   # bracket standoff wall-to-ring (see header)
+    plate_t  = 76.0,   # bracket standoff wall-to-ring (2x, motor room; see header)
     back_t   = 6.0,    # wall plate thickness
     key_gap  = 120.0,  # wall keyhole spacing, tangential
     key_d    = 5.5,    # keyhole slot width (#10 / M5 pan shank)

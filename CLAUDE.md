@@ -307,13 +307,14 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   left the band) and is driven purely rotationally from the top. The
   pinion (2026-07-25 rework) is a BEVELOID on an AXIAL axis at r=325.5 —
   motor points out of the wall, N20 body + Ø16 pinion hub inside the
-  plate_t=38 standoff (axial motor pocket behind a Ø21 deck recess). 9
+  plate_t=76 standoff (2026-07-25, Nick: doubled from 38 for motor room;
+  axial motor pocket behind a Ø21 deck recess). 9
   self-checks vs the full ring + wafers (seat, rib jam both ways, axial
   float, clocking sweep, hidden ≤ r410, nothing behind the wall — NOW
   INCLUDING THE PINION; the plate-only version let the old radial-axis
   pinion sail 39 mm through the drywall) — exits nonzero on FAIL.
-  Sliced: plate 379.9 g / 11h00 @45%, wheels 7.7 g / 19 min each,
-  pinion 12.9 g.
+  Sliced: plate 525.1 g / 15h49 @45% (30% is fine — no real load
+  path), wheels 7.7 g / 19 min each, pinion 12.9 g.
 - scripts/cure_jig_stl.py — OP 012 cure jig (see Frame design). Imports
   segment_stl for params/geometry, emits cure_jig_{outboard,inboard,knob}.stl
   print-ready plus cure_jig_fitcheck.stl (segment+wafer+fences+drivetrain,
