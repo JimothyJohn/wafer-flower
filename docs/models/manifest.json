@@ -98,6 +98,20 @@
    "volume_cm3": 0.348
   },
   {
+   "file": "saddle_l.stl",
+   "name": "saddle_l",
+   "group": "bracket",
+   "color": "#B86038",
+   "volume_cm3": 30.68
+  },
+  {
+   "file": "saddle_r.stl",
+   "name": "saddle_r",
+   "group": "bracket",
+   "color": "#B86038",
+   "volume_cm3": 30.68
+  },
+  {
    "file": "my_frame_segment.stl",
    "name": "my_frame_segment",
    "group": "onshape",
