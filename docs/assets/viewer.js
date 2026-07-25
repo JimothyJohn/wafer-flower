@@ -159,6 +159,7 @@ function apply(){
     groups[g].children.forEach(m=>{m.material.transparent=S.jig<0.98;
       m.material.opacity=Math.max(S.jig,0.05);});
   }
+  if(groups.bracket) groups.bracket.visible=S.stations>1.5;  // saddles: halo only
   const w=mv.wafer.vector;
   groups.wafer.position.set(w[0]*S.lift,w[1]*S.lift,w[2]*S.lift);
   groups.wafer.visible=S.waf>0.03;

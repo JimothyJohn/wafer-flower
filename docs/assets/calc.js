@@ -59,7 +59,11 @@ canvas.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-px)*0.0
 canvas.addEventListener('pointerup',()=>drag=false);
 canvas.addEventListener('wheel',e=>{e.preventDefault();autoDist=false;dist=Math.min(5000,Math.max(120,dist*(1+e.deltaY*0.001)));placeCam();},{passive:false});
 
-const P={D:300,wt:0.775,N:9,tilt:10,R:350,Ri:248,bw:55,tmin:6,bond:1.1,G:0.06,dT:20,dens:45};
+// boots at the SHIPPED Rev B.3 parameters, so the first render is the real
+// CAD (below); the old traveler values are one slider-drag away
+const P={D:300,wt:0.775,N:9,tilt:5,R:350,Ri:255,bw:30,tmin:10,bond:1.1,G:0.06,dT:20,dens:45};
+const B3={D:300,wt:0.775,N:9,tilt:5,R:350,Ri:255,bw:30,tmin:10,bond:1.1};
+const atB3=()=>Object.keys(B3).every(k=>Math.abs(P[k]-B3[k])<1e-9);
 const WR=()=>P.D/2, SEG=()=>2*Math.PI/P.N, HALF=()=>Math.PI/P.N;
 
 // z of wafer k's MID-plane at global (x,y): plane through the pitch point, tilted th about its radial axis
@@ -126,12 +130,6 @@ function geoCtx(){
 // ---- parametric scene extras: retention groove, cure jig, bracket saddles.
 // Diagram-grade approximations of the checked CAD (cure_jig_stl.py /
 // bracket_stl.py) — boxes and arc strips, re-derived from the sliders.
-function boxMesh(x0,x1,y0,y1,z0,z1,color){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,z1-z0),
-    new THREE.MeshPhongMaterial({color:color,shininess:16}));
-  m.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);
-  return m;
-}
 function arcStrip(cx,cy,r0,r1,a0,a1,z0,z1,color,n){
   // annular wall band about (cx,cy), angles a0..a1, z0..z1
   const pos=[],idx=[],q=(a,b,c,d)=>{idx.push(a,b,c,a,c,d);};
@@ -155,55 +153,80 @@ function grooveStrip(zBot,Ro,H,k){
   const m=arcStrip(0,0,Ro-2.0,Ro+0.06,-H,H,zBot+2.5,zBot+4.0,0x14181C,40);
   m.rotation.z=k*SEG(); return m;
 }
-function jigParts(th,zBot){
-  // OP 012 cure jig, one station at a=0: two fences + rod + knob
-  const r=WR(), R=P.R, Ro=P.Ri+P.bw, tn=Math.tan(th);
-  const w2=Math.max(18,Math.min(30,r*0.2)), wing=Math.min(75,r*0.5);
-  const rl=r-1.5, band=7.0;
-  const zc=zBot+P.tmin+HOLE_D/2+0.1;
-  const wingTop=wing*tn+P.wt/2+5.0, xin=R-r, xout=R+r;
-  const OB=0x1E9E8E, IB=0x4457C4;
-  const parts=[];
-  // outboard: nose foot, rear block, bore-roof spine
-  parts.push(boxMesh(Ro-2,Ro+12,-w2,w2,zBot,-(P.wt/2+w2*tn+2),OB));
-  parts.push(boxMesh(xout-30,xout+10,-w2,w2,zBot,-(P.wt/2+w2*tn+2),OB));
-  parts.push(boxMesh(Ro-2,xout+10,-6,6,zBot,zc+HOLE_D/2+0.8,OB));
-  // inboard: base + nut tower
-  parts.push(boxMesh(xin-28,xin+2,-w2,w2,zBot,-(P.wt/2+w2*tn+2),IB));
-  parts.push(boxMesh(xin-28,xin-10,-w2,w2,zBot,w2*tn+P.wt/2+5,IB));
-  // wing wall bands (arc about the wafer centre), split at the rim slot
-  const aW=Math.asin(Math.min(0.98,wing/(rl+band/2)));
-  for(const [c0,c1,col] of [[Math.PI-aW,Math.PI+aW,IB],[-aW,aW,OB]]){
-    parts.push(arcStrip(R,0,rl,rl+band,c0,c1,zBot,-P.wt/2-2.2,col,28));
-    parts.push(arcStrip(R,0,rl,rl+band,c0,c1,P.wt/2+2.2,wingTop,col,28));
+
+// ---- the SHIPPED CAD: real STLs from models_data.js (the same bundle the
+// viewer uses for file://). Whenever the sliders sit exactly at Rev B.3,
+// the scene renders these — byte-identical to stl/ — instead of the
+// parametric approximation. Move any slider and it re-derives live; the
+// cure jig and bracket only exist as CAD at the shipped params, so away
+// from B.3 they hide (the viewnote says so).
+let REAL=null;
+function parseSTLbuf(buf){
+  const dv=new DataView(buf), n=dv.getUint32(80,true);
+  const pos=new Float32Array(n*9);
+  for(let i=0;i<n;i++){
+    const o=84+i*50;
+    for(let v=0;v<3;v++)for(let c=0;c<3;c++)
+      pos[i*9+v*3+c]=dv.getFloat32(o+12+v*12+c*4,true);
   }
-  // rod + printed knob
-  const rod=new THREE.Mesh(new THREE.CylinderGeometry(3,3,(xout+16)-(xin-24),20),
-    new THREE.MeshPhongMaterial({color:0x2A2E33,shininess:30}));
-  rod.rotation.z=Math.PI/2; rod.position.set((xin-24+xout+16)/2,0,zc); parts.push(rod);
-  const knob=new THREE.Mesh(new THREE.CylinderGeometry(10,10,14,12),
-    new THREE.MeshPhongMaterial({color:0xC2497B,shininess:20}));
-  knob.rotation.z=Math.PI/2; knob.position.set(xout+18,0,zc); parts.push(knob);
-  return parts;
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.computeVertexNormals();
+  return g;
 }
-function saddleParts(zBot){
-  // static wall bracket: two saddles at +/-50 deg from bottom (gravity -y)
-  const Ro=P.Ri+P.bw, CLAY=0xD97742, parts=[];
-  for(const az of [270-50,270+50]){
-    const gp=new THREE.Group(); gp.rotation.z=az*Math.PI/180;
-    const w=32;
-    gp.add(boxMesh(Ro-22,Ro+34,-w,w,zBot-6,zBot,CLAY));            // wall plate
-    const body=arcStrip(0,0,Ro+0.15,Ro+34,-w/Ro,w/Ro,zBot,zBot+5.2,CLAY,16);
-    gp.add(body);                                                   // shelf body
-    gp.add(arcStrip(0,0,Ro-1.6,Ro+0.15,-w/Ro,w/Ro,zBot+2.8,zBot+3.9,CLAY,16)); // nose
-    parts.push(gp);
+function bootReal(){
+  const D=window.HALO_MODELS; if(!D)return;
+  const geo={};
+  for(const pt of D.manifest.parts){
+    const bin=atob(D.files[pt.file]), u=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+    geo[pt.name]=parseSTLbuf(u.buffer);
   }
-  return parts;
+  REAL={geo:geo, parts:D.manifest.parts, sector:D.manifest.sector_deg*Math.PI/180};
+  buildScene();
+}
+(function(){
+  if(window.HALO_MODELS){setTimeout(bootReal,0);return;}
+  const sc=document.createElement('script');
+  sc.src='models/models_data.js'; sc.onload=bootReal;
+  sc.onerror=()=>{};             // no bundle: parametric-only, still fine
+  document.head.appendChild(sc);
+})();
+function realMesh(name){
+  const pt=REAL.parts.find(q=>q.name===name); if(!pt)return null;
+  const opts={color:parseInt(pt.color.slice(1),16),shininess:18,side:THREE.DoubleSide};
+  if(name==='wafer'){opts.shininess=95;opts.specular=0x8899AA;}
+  if(pt.group==='onshape')return null;
+  return new THREE.Mesh(REAL.geo[name],new THREE.MeshPhongMaterial(opts));
 }
 
 function buildScene(){
   while(group.children.length) group.remove(group.children[0]);
   const {th,Ro,H,yMax,zBot,topZ}=geoCtx(), N=P.N;
+  if(REAL && atB3()){
+    // ---- SHIPPED CAD: exact stl/ solids ----
+    const nSeg=(view==='assembly')?N:1;
+    const nWaf=(view==='assembly')?N:(view!=='frame'?1:0);
+    for(let k=0;k<nSeg;k++){
+      const m=realMesh('segment'); m.rotation.z=k*REAL.sector; group.add(m);
+    }
+    for(let k=0;k<nWaf;k++){
+      const w=realMesh('wafer'); w.rotation.z=k*REAL.sector; group.add(w);
+    }
+    if(view==='jig')
+      for(const n of ['jig_outboard','jig_inboard','rod','hex_nut','washer','knob','knob_nut']){
+        const m=realMesh(n); if(m)group.add(m);
+      }
+    if(view==='assembly')
+      for(const n of ['saddle_l','saddle_r']){
+        const m=realMesh(n); if(m)group.add(m);
+      }
+    frameView(th,zBot,Ro,H);
+    viewNote();
+    readouts(th,zBot,Ro,yMax,topZ);
+    document.getElementById('cadcmd').textContent=cadCmd();
+    return;
+  }
   // ---- segment mesh ----
   // Top vertices are colour-coded so the "Frame only" view shows where the land
   // actually survives: teal = bondable, clay = removed by the neighbour-clearance cut.
@@ -296,8 +319,6 @@ function buildScene(){
   }
   // groove recess on every placed segment's outer face
   for(let k=0;k<nSeg;k++) group.add(grooveStrip(zBot,Ro,H,k));
-  if(view==='jig') for(const m of jigParts(th,zBot)) group.add(m);
-  if(view==='assembly') for(const m of saddleParts(zBot)) group.add(m);
   frameView(th,zBot,Ro,H);
   viewNote();
   readouts(th,zBot,Ro,yMax,topZ);
@@ -584,24 +605,33 @@ document.querySelectorAll('button.pz[data-view]').forEach(b=>{
   b.addEventListener('click',()=>{
     document.querySelectorAll('button.pz[data-view]').forEach(x=>x.classList.remove('act'));
     b.classList.add('act');
-    view=b.dataset.view; autoDist=true; buildScene();
+    view=b.dataset.view; autoDist=true;
+    if(view==='jig'){az=0.7; pol=1.25;}       // bench-style angle: the front
+    buildScene();                             // view hides all behind wafers
   });
 });
 function viewNote(){
   const el=document.getElementById('viewnote'), r=WR(), Ro=P.Ri+P.bw;
   const sw=c=>'<span class="swatch" style="background:'+c+'"></span>';
+  const real=REAL&&atB3();
+  const tag=real?'<b>SHIPPED CAD</b> — the exact checked solids from stl/. ':'';
   if(view==='assembly')
-    el.innerHTML='All '+P.N+' segments and wafers as assembled, resting in the two printed bracket saddles (\u00b150\u00b0 from bottom \u2014 the ring sits in compression and the lip noses ride the retention groove).';
+    el.innerHTML=tag+'All '+P.N+' segments and wafers as assembled'+
+      (real?', resting in the two printed bracket saddles (±50° from bottom — compression arch, lip noses in the retention groove).'
+           :'. Segments re-derived from the sliders; the saddles render at the shipped Rev B.3 parameters.');
   else if(view==='jig')
-    el.innerHTML='OP 012 cure jig, schematic: two fences slide on one M6 rod through the keyhole, the wafer floats edge-captured with zero clamp load. The checked CAD is <a href="viewer.html">the viewer</a>.';
+    el.innerHTML=real?tag+'OP 012 cure jig, seated: two fences on one M6 rod through the keyhole; the wafer floats edge-captured with zero clamp load.'
+      :'The cure jig is CAD at the shipped parameters only — press <b>Rev B.3 build</b> to see the real fences, or regenerate them for these values via the command line below.';
   else if(view==='station')
-    el.innerHTML='One segment with its wafer — the unit you bond on the bench. <b>'+
+    el.innerHTML=tag+'One segment with its wafer — the unit you bond on the bench. <b>'+
       Math.max(0,(P.R+r)-Ro).toFixed(0)+' mm</b> of wafer overhangs the band outboard, and <b>'+
       Math.max(0,P.Ri-(P.R-r)).toFixed(0)+' mm</b> inboard.';
   else
-    el.innerHTML=sw('#147D74')+'bondable land &nbsp; '+sw('#9E4D42')+
-      'removed by the neighbour-clearance cut &nbsp; '+sw('#33383D')+'structure';
+    el.innerHTML=tag+sw('#147D74')+'bondable land &nbsp; '+sw('#9E4D42')+
+      'removed by the neighbour-clearance cut &nbsp; '+sw('#33383D')+'structure'+
+      (real?' — real solid: orbit under it for the generated 45° teeth.':'');
 }
+
 document.getElementById('b_hide').addEventListener('click',()=>{fitHide();rescaleRanges();sync();buildScene();});
 document.getElementById('b_bal').addEventListener('click',()=>{fitBalanced();rescaleRanges();sync();buildScene();});
 // The shipped Rev B.3 parameter set (scripts/segment_stl.py defaults).

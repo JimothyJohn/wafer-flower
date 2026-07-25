@@ -38,6 +38,7 @@ from segment_stl import (PARAMS, Cfg, build_segment, build_wafer, write_stl,
                          report, wafer_cut, keyhole_z, Manifold, HAVE_MANIFOLD)
 from cure_jig_stl import (JIG, Jig, build_outboard, build_inboard,
                           build_hardware, run_checks)
+from bracket_stl import BRK, build_saddle, place as place_saddle
 
 EPS = 1e-6
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -71,6 +72,12 @@ def build_scene(cf, j):
         'washer':       (washer,             'rod',      0x6A7078),
         'knob':         (knob,               'rod',      0xD97742),
         'knob_nut':     (knob_nut,           'rod',      0x4A5058),
+        # static wall bracket saddles, placed in the hanging orientation
+        # (gravity -y): shown by the viewers only in ring/halo contexts
+        'saddle_l':     (place_saddle(build_saddle(cf, dict(BRK)), 220.0),
+                         'bracket', 0xB86038),
+        'saddle_r':     (place_saddle(build_saddle(cf, dict(BRK)), 320.0),
+                         'bracket', 0xB86038),
     }
 
 
