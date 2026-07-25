@@ -47,7 +47,13 @@ PARAMS = dict(
     tmin     = 10.0,    # base thickness = dovetail height = gear flange thickness
     bond     = 1.1,     # bondline
     clr      = 3.0,     # neighbour clearance
-    gear_m   = 2.0,     # gear module
+    gear_m   = 4.0,     # gear module. 4 (2026-07-25, Nick: module-2 teeth
+                        # "look insignificant") gives 126T ring / 14T pinion
+                        # at the same Ø504 pitch and 9:1 — teeth 9 mm deep,
+                        # proper mixer-style bevel presence. Chunkier still:
+                        # --gear_m 5.6 (90T/10T, 12.6 deep; 10T pinion is
+                        # undercut territory). Module-2 (252T/28T) remains a
+                        # flag away.
     gear_pa  = 20.0,    # pressure angle, degrees
     gear_bl  = 0.6,     # tooth thinning for printed backlash. 0.6 is the
                         # face-drive tune: the mesh sweep measures 0.002 mm3
@@ -128,7 +134,8 @@ class Cfg:
         # The slab's straight inner boundary sits just inside the toothed
         # band's outer overlap. 'spur' keeps the legacy internal teeth.
         self.g_bev   = (self.gear_drive == 'bevel45')
-        self.g_band_o= self.g_tip + 16.0           # toothed band outer overlap
+        self.g_band_o= self.g_root + self.tmin + 1.5   # band outer overlap
+                       # (= tip+16 at the old module 2; scales with tooth size)
         self.g_fi    = (self.g_band_o - 2.0 if self.g_bev
                         else self.g_root)          # slab inner boundary radius
         self.tall    = 4 * self.r
@@ -279,7 +286,7 @@ def bevel_pinion_at(cf, pin, d):
                .translate([bg['x0'], 0.0, bg['z_p']]))
 
 
-def gear_teeth_bevel45(cf, z0=0.0, steps=61, span_pitches=4.0):
+def gear_teeth_bevel45(cf, z0=0.0, steps=None, span_pitches=4.0):
     """The 45-deg coned ring teeth, GENERATED: sweep the zero-backlash cutter
     pinion through the meshing motion (in the ring frame), subtract it from a
     coned blank, extract one tooth pitch, and pattern it 28x with slots at
@@ -300,14 +307,23 @@ def gear_teeth_bevel45(cf, z0=0.0, steps=61, span_pitches=4.0):
     # contact meridian, and without this chamfer it severs a 2 mm top-inner
     # rim ring (physically unattached scrap — showed up as a 348 mm3 second
     # component spanning the whole segment arc)
-    blank = blank - (Manifold.cylinder(2.9, cf.g_tip + 2.7, cf.g_tip + 2.7, 256)
-                     .translate([0.0, 0.0, F - 2.7]))
+    rel = 1.35 * cf.gear_m
+    blank = blank - (Manifold.cylinder(rel + 0.2, cf.g_tip + rel, cf.g_tip + rel, 256)
+                     .translate([0.0, 0.0, F - rel]))
     cutter_pin, _ = bevel_pinion(cf, backlash=0.0)
+    # sweep resolution scales with the module: the per-step cutter travel is
+    # what leaves scallops, and a module-4 tooth pitch is twice a module-2's
+    steps = steps or (30 * int(round(cf.gear_m)) + 1)
     span = span_pitches * (2.0 * math.pi / cf.teeth)
+    # the cutter runs 0.3 mm DEEPER (+z) than the running position: backlash
+    # thinning only clears the flanks tangentially, and without this radial
+    # tip relief the runner's tips graze the generated envelope along the
+    # pitch line at zero clearance (~0.08 mm3 of micron-deep contact)
     cut = None
     for i in range(steps):
         d = -span / 2.0 + span * i / (steps - 1)
-        c = bevel_pinion_at(cf, cutter_pin, d).rotate([0, 0, -math.degrees(d)])
+        c = (bevel_pinion_at(cf, cutter_pin, d).translate([0.0, 0.0, 0.3])
+             .rotate([0, 0, -math.degrees(d)]))
         cut = c if cut is None else cut + c
     gen = blank - cut
     pitch = 360.0 / cf.teeth
