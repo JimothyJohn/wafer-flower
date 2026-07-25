@@ -15,17 +15,23 @@ Load path:
   section (the gear left the band, so the joint never shares space with
   teeth). The groove rib carries only the ~0.5 N tip-off keeper load.
 
-Standoff:
-  The external bevel pinion's axis sits |z_p| behind the ring's wall face
-  (bevel_geom), so the ring must float that far off the wall for the motor
-  to fit in front of the drywall — plate_t defaults to 38. That standoff is
-  the price of the outboard drive and is now the bracket's job.
+Drive (2026-07-25 parallel-axis rework): the pinion is a BEVELOID on an
+AXIAL axis — parallel to the halo axis, at centre distance C above the
+ring at 12 o'clock, big end forward, meshing the ring's big-at-wall cone.
+The N20 gearmotor sits in an AXIAL pocket behind it, output shaft pointing
+out of the wall ("motor inline, i.e. perpendicular" — Nick). A radial-axis
+bevel pinion is impossible here: its swept Ø90 disc spans +/-45 along the
+wall normal vs the 38 mm standoff (it poked 39 mm through the drywall —
+caught 2026-07-25 when the wall check finally included the pinion).
+
+Standoff: plate_t = 38 hides the wheels, the motor body (26 long) and the
+pinion hub behind the ring.
 
 Hardware: printed M6 screws (printed_hardware_stl) as wheel axles, threaded
 into captive printed M6 nuts in the deck; wall mounting via two #10-24 pan
 heads (or M5) through keyholes in the back plate. The N20-class worm
-gearmotor (MEASURE the purchased unit; envelope parametric) drops into a
-pocket with its output shaft pointing radially down, pinion on the shaft.
+gearmotor (MEASURE the purchased unit; envelope parametric) drops into the
+axial pocket, D-shaft forward into the pinion hub.
 
 Self-checks (exits nonzero on FAIL): ring-on-wheels seat and settle, rib in
 groove z-capture both ways, pinion mesh clearance at the hanging position,
@@ -96,11 +102,15 @@ class Brk:
         # deck the wheels/motor mount on, and the wall plate behind it
         self.deck_z = cf.z_bot - 0.8                    # deck front face
         self.wall_z = cf.z_bot - self.plate_t           # actual wall plane
-        # pinion placement at 12 o'clock, from the shared bevel geometry
+        # pinion placement at 12 o'clock, from the shared beveloid geometry:
+        # AXIAL axis at (0, C), teeth spanning the band z, Ø16 hub 5 mm deep
+        # behind the wall face (the deck gets a recess for it), N20 in an
+        # axial pocket behind the recess floor
         bg = bevel_geom(cf)
         self.bg = bg
-        self.pin_y0 = bg['x0']                          # big-end plane radius
-        self.pin_z = cf.z_bot + bg['z_p']               # pinion axis z
+        self.pin_C = bg['C']                            # pinion axis radius
+        self.hub_len = 5.0
+        self.recess_z = cf.z_bot - self.hub_len - 0.5   # recess floor
 
 
 def build_wheel(b):
@@ -122,7 +132,7 @@ def build_plate(b):
     """The one bracket: wall plate (keyholed) + standoff shell + front deck
     carrying the wheel axle bosses and the motor pocket at 12 o'clock."""
     cf = b.cf
-    y0, y1 = cf.Ri - 45.0, b.pin_y0 + 18.0          # radial span at the top
+    y0, y1 = cf.Ri - 45.0, b.pin_C + 22.0            # radial span at the top
     x2 = 118.0                                       # half-width, covers wheels
     sh = 6.0                                         # shell wall
     body = box(-x2, x2, y0, y1, b.wall_z, b.deck_z)
@@ -136,16 +146,15 @@ def build_plate(b):
         hx = [(R * math.cos(math.radians(60 * i + 30)),
                R * math.sin(math.radians(60 * i + 30))) for i in range(6)]
         body -= (prism(hx, 0.0, 6.0).translate([cx, cy, b.wall_z + 2.0]))
-    # motor pocket: body horizontal (tangential), output shaft down through
-    # the deck at the pinion axis radius
-    pkt = (Manifold.cylinder(b.mot_L + 2.0, b.mot_D / 2.0 + 0.4,
-                             b.mot_D / 2.0 + 0.4, 96)
-           .rotate([0.0, 90.0, 0.0])
-           .translate([-(b.mot_L + 2.0) / 2.0, b.pin_y0 - b.bg['face'] / 2.0,
-                       b.pin_z]))
-    body -= pkt
-    body -= zcyl_at(b.shaft_D / 2.0, b.plate_t, 0.0,
-                    b.pin_y0 - b.bg['face'] / 2.0, b.wall_z - 1.0, fn=48)
+    # motor boss + AXIAL pocket at (0, C): solid boss through the shell,
+    # front recess for the pinion hub, N20 body pocket behind it (shaft
+    # pointing forward, out of the wall)
+    body += zcyl_at(b.mot_D / 2.0 + 4.0, b.deck_z - b.wall_z, 0.0, b.pin_C,
+                    b.wall_z, fn=96)
+    body -= zcyl_at(10.5, b.deck_z - b.recess_z + 1.0, 0.0, b.pin_C,
+                    b.recess_z, fn=96)               # hub recess, open front
+    body -= zcyl_at(b.mot_D / 2.0 + 0.4, b.mot_L + 1.0, 0.0, b.pin_C,
+                    b.recess_z - b.mot_L - 1.0, fn=96)  # N20 body pocket
     # wall keyholes in the back plate, slots running upward (gravity seats)
     for sx in (1.0, -1.0):
         kx = sx * b.key_gap / 2.0
@@ -158,12 +167,15 @@ def build_plate(b):
 
 
 def pinion_at_top(cf, b, backlash=None):
-    """The running pinion in the hanging scene: bevel_geom's mesh frame
-    (contact at plan angle 0, wall face z=0) rotated to 12 o'clock and
-    dropped onto the ring's wall face."""
-    pin, _ = bevel_pinion(cf, backlash=backlash)
-    return (pin.rotate([0.0, -90.0, 0.0])
-               .translate([b.bg['x0'], 0.0, cf.z_bot + b.bg['z_p']])
+    """The running pinion (with hub + D-bore) in the hanging scene:
+    bevel_geom's mesh frame (axis at (C,0), teeth z 0..gear_F off the wall
+    face) rotated to 12 o'clock. With 12 teeth the mesh-frame phase carries
+    straight over: a tooth points at the ring, the ring has a space at
+    azimuth 90 (spaces tile k*pitch from the joints and 110/3.333 is an
+    integer), so the nominal scene meshes without a phase shim."""
+    from segment_stl import build_pinion
+    pin, _ = build_pinion(cf, backlash=backlash)
+    return (pin.translate([b.pin_C, 0.0, cf.z_bot])
                .rotate([0.0, 0.0, 90.0]))
 
 
@@ -193,13 +205,14 @@ def main():
     ring = frame + wafers
     hardware = plate + wheels[0] + wheels[1] + pin
 
-    W = 9 * (0.128 + 0.094) * 9.81  # N: 94 g/segment sliced at the outer drive
+    W = 9 * (0.128 + 0.070) * 9.81  # N: ~70 g/segment sliced (beveloid drive)
     print(f"Top idler bracket  ·  wheels Ø{2*b.wheel_R:.0f} at ±{b.wheel_az:.0f}° "
           f"from top, bodies on the bore at Ri={cf.Ri:.0f}, ribs in the groove")
     print(f"  hang    ring hangs on 2 wheels ({W:.1f} N est.); groove rib takes "
           f"only the tip-off keeper load")
-    print(f"  drive   pinion at 12 o'clock, axis radial, {-b.bg['z_p']:.1f} behind "
-          f"the ring's wall face — hence plate_t = {b.plate_t:.0f} standoff")
+    print(f"  drive   beveloid pinion at 12 o'clock, axis AXIAL at r={b.pin_C:.1f} "
+          f"— motor points out of the wall, body + hub inside the "
+          f"plate_t = {b.plate_t:.0f} standoff")
     print(f"  wall    back plate at z = {b.wall_z:.1f}; 2 keyholes {b.key_gap:.0f} "
           f"apart; motor pocket Ø{b.mot_D + 0.8:.1f} (MEASURE your N20)\n")
 
@@ -246,9 +259,14 @@ def main():
     good = rmax <= 410.0
     ok &= good
     print(f"    {'PASS' if good else 'FAIL':4}  {'hidden: max plan radius':58} {rmax:10.1f}")
-    good = plate.bounding_box()[2] >= b.wall_z - 1e-6
+    # EVERYTHING vs the drywall — plate, wheels AND the pinion. The first
+    # outer-drive build checked the plate only, and the radial-axis Ø90
+    # pinion sailed 39 mm through the drywall unnoticed.
+    zmin = min(s_.bounding_box()[2] for s_ in (plate, wheels[0], wheels[1], pin))
+    good = zmin >= b.wall_z - 1e-6
     ok &= good
-    print(f"    {'PASS' if good else 'FAIL':4}  {'nothing behind the wall plane':58}")
+    print(f"    {'PASS' if good else 'FAIL':4}  "
+          f"{'nothing behind the wall plane (incl. pinion)':58} {zmin:10.1f}")
 
     dz = -b.wall_z
     outs = [('bracket_plate.stl', [plate.translate([0, 0, dz])],

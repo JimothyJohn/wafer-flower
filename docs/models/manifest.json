@@ -41,7 +41,7 @@
    "name": "segment",
    "group": "segment",
    "color": "#B9A87E",
-   "volume_cm3": 107.441
+   "volume_cm3": 95.405
   },
   {
    "file": "wafer.stl",
@@ -104,7 +104,7 @@
    "name": "bracket_plate",
    "group": "bracket",
    "color": "#B86038",
-   "volume_cm3": 451.324
+   "volume_cm3": 518.407
   },
   {
    "file": "wheel_l.stl",
@@ -125,7 +125,7 @@
    "name": "drive_pinion",
    "group": "bracket",
    "color": "#C2497B",
-   "volume_cm3": 33.625
+   "volume_cm3": 14.712
   },
   {
    "file": "my_frame_segment.stl",
@@ -237,7 +237,7 @@
   {
    "group": "assembly",
    "name": "segments butt at the joint (0.1 deg nudge contacts)",
-   "value_mm3": 135.2038,
+   "value_mm3": 104.8434,
    "pass": true
   }
  ]
