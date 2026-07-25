@@ -35,7 +35,12 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
 - Segment = 40° ring sector, flat bottom, top = min(own wafer plane − bond,
   neighbor plane − 3). Tapered thickness: t_min at trailing edge to
   t_min + 2·Ro·sin20°·tanθ at leading. Dovetail joints 12/16 × 8 mm,
-  female +0.25 clearance (tune via coupon), slide in Z, no tools.
+  dt_h = 5 TALL (2026-07-25, Nick, two rounds: the tmin-tall male read
+  too thick, and the tmin-tall SOCKET left its roof <0.5 mm at the
+  trailing edge — unprintable; socket cut is dt_h+0.5 so the roof is
+  ~5.4 mm), female +0.25 clearance (tune via coupon), slide in Z, no
+  tools. S_joint 213 mm³ — fine on the two-point idler hang (>3×), but
+  revisit dt_h before ever returning to a single-point hang (2.2×).
 - Land plane construction: plane through radial line at (R,0), angle θ from
   Top, offset −(t_wafer/2 + bondline).
 - Ø6.5 (M6) JIG KEYHOLE is RADIAL and THROUGH (2026-07-24; was Ø5/#10-24):
@@ -210,7 +215,7 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
 - The clearance cut is a DISC, never a half-space: a half-space removes
   material 300 mm outside the neighbour wafer's footprint (caught by a guard).
 - Measured: T1 clearance exactly 3.000 mm, dovetail/socket interference 0 mm³.
-- Dovetail is a prism only over the bottom `tmin`, open at the flat bottom so
+- Dovetail is a prism only over the bottom `dt_h` (socket dt_h+0.5), open at the flat bottom so
   segments slide together in Z. It cannot be full-height: each segment's top
   follows ITS OWN wafer, so tail and socket tops would never match.
 

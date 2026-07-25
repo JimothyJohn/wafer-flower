@@ -125,10 +125,12 @@ PARAMS = dict(
     dt_neck  = 12.0,    # dovetail neck width
     dt_tip   = 16.0,    # dovetail tip width
     dt_depth = 8.0,     # dovetail depth
-    dt_h     = 5.0,     # dovetail HEIGHT (2026-07-25, Nick: the full-tmin
-                        # tail read as too thick — the male tail is now
-                        # trimmed to dt_h above the flat bottom; the socket
-                        # stays tmin-deep, so segments still slide in Z.
+    dt_h     = 5.0,     # dovetail HEIGHT (2026-07-25, Nick, two rounds):
+                        # male tail trimmed to dt_h above the flat bottom,
+                        # and the SOCKET cut is dt_h+0.5 tall — the old
+                        # tmin-tall cutout left its roof under 0.5 mm at
+                        # the trailing edge, unprintable. Both open at the
+                        # flat bottom, so segments still slide in Z.
                         # S_joint = dt_h·dt_tip²/6 = 213 mm³ at 5.)
     dt_clear = 0.25,    # socket clearance per side
     clr_edge = 2.0,     # extra radius on the clearance disc, past the wafer rim
@@ -433,10 +435,11 @@ def pocket_poly(cf, na=120):
     it. Centring stays the jig's job.
     """
     m = cf.pocket_m
-    # Angular inset must clear the dovetail zones. At the trailing end the band
-    # above the socket ceiling is under 0.5 mm thick, so a 1 mm pocket punches
-    # straight into the socket and turns the part into a tunnel (genus 1).
-    # Keeping tape near the land centroid is what OP 015 wants anyway.
+    # Angular inset must clear the dovetail zones. Historically load-bearing:
+    # when the socket was tmin-tall its roof was <0.5 mm at the trailing end
+    # and a 1 mm pocket punched through into it (genus tunnel). The dt_h
+    # socket leaves ~4.5 mm under the pocket floor now, but the inset stays —
+    # tape near the land centroid is what OP 015 wants anyway.
     da = (cf.dt_depth + cf.dt_clear + 5.0) / cf.rho_c
     ri, ro = cf.Ri + m, cf.Ro - m
     a0, a1 = -cf.half + da, cf.half - da
@@ -534,8 +537,12 @@ def build_segment(cf):
         seg = seg + gear_teeth(cf, cf.z_bot)
     # 4. neighbour clearance cut
     seg = seg - wafer_cut(cf, 1, -cf.clrOff, cf.tall)
-    # 5. female socket, blind from the bottom face
-    seg = seg - prism(socket_poly(cf), cf.z_bot - 0.5, cf.tmin + 0.5)
+    # 5. female socket, blind from the bottom face. Height dt_h + 0.5, NOT
+    #    tmin (2026-07-25, Nick: the tmin-tall cutout left the roof under
+    #    0.5 mm at the trailing edge — unprintable). The 0.5 headroom
+    #    clears the dt_h-tall male; the thick roof (~5 mm at the trailing
+    #    edge) is what prints over the cavity.
+    seg = seg - prism(socket_poly(cf), cf.z_bot - 0.5, cf.dt_h + 1.0)
     # 6. adhesive pocket, recessed into the land face
     if cf.pocket_d > 0:
         pk = prism(pocket_poly(cf), cf.z_bot, cf.tall)
@@ -765,7 +772,7 @@ def main():
     profiles = [
         ('01_band.dxf',      [band_poly(cf)],                        'extrude tall, trim to the land plane'),
         ('02_slab.dxf',      [slab_poly(cf)],                        f'extrude {cf.tmin} mm up from the flat bottom'),
-        ('03_socket.dxf',    [socket_poly(cf)],                      f'cut {cf.tmin} mm from the flat bottom'),
+        ('03_socket.dxf',    [socket_poly(cf)],                      f'cut {cf.dt_h + 0.5} mm from the flat bottom'),
         ('04_pocket.dxf',    [pocket_poly(cf)],                      f'cut {cf.pocket_d} mm down from the land plane'),
         (('05_bevel_cutter.dxf',
           [[(x * bevel_geom(cf)['s_prof'], y * bevel_geom(cf)['s_prof'])
