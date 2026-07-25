@@ -125,6 +125,11 @@ PARAMS = dict(
     dt_neck  = 12.0,    # dovetail neck width
     dt_tip   = 16.0,    # dovetail tip width
     dt_depth = 8.0,     # dovetail depth
+    dt_h     = 5.0,     # dovetail HEIGHT (2026-07-25, Nick: the full-tmin
+                        # tail read as too thick — the male tail is now
+                        # trimmed to dt_h above the flat bottom; the socket
+                        # stays tmin-deep, so segments still slide in Z.
+                        # S_joint = dt_h·dt_tip²/6 = 213 mm³ at 5.)
     dt_clear = 0.25,    # socket clearance per side
     clr_edge = 2.0,     # extra radius on the clearance disc, past the wafer rim
     facets   = 512,     # circular resolution for the big cuts
@@ -493,6 +498,18 @@ def build_segment(cf):
     # 3. bottom slab (band + flange + male dovetail); gear per gear_drive —
     #    face slots cut INTO the wall face, or the legacy internal spur teeth
     seg = seg + prism(slab_poly(cf), cf.z_bot, cf.tmin)
+    # trim the male dovetail to dt_h: slab_poly carries the tail at full
+    # slab height, so everything beyond the +half radial face plane above
+    # dt_h is cut away. Only the tail crosses that plane (the sector clip
+    # keeps the teeth 1e-5 rad inside), and the cutter overshoots the
+    # tail's 8 mm depth by ~4x.
+    if cf.dt_h < cf.tmin:
+        dx, dy = math.cos(cf.half), math.sin(cf.half)
+        nx, ny = -math.sin(cf.half), math.cos(cf.half)
+        wedge = [(0.0, 0.0), (500 * dx, 500 * dy),
+                 (500 * dx + 30 * nx, 500 * dy + 30 * ny), (30 * nx, 30 * ny)]
+        seg = seg - prism(wedge, cf.z_bot + cf.dt_h,
+                          cf.tmin - cf.dt_h + 0.5)
     if cf.g_bev:
         t = gear_teeth_bevel45(cf, cf.z_bot)
         # the tooth SPACES must stay open below the band OD: the flush

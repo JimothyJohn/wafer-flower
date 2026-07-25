@@ -10,7 +10,7 @@ const G_ACC=9.81;                      // m/s^2
 const SI ={rho:2.329e-3, E:130000, cte:2.6e-6};   // g/mm3, MPa, /K
 const PET={rho:1.270e-3, E:2000, allow:20, cte:60e-6};
 const CLR=3;                           // neighbor clearance, mm
-const DT_W=16, PLATE=0.922;            // dovetail wide width; plate stiffening (1-nu^2)
+const DT_W=16, DT_H=5, PLATE=0.922;    // dovetail wide width / height (dt_h); plate stiffening (1-nu^2)
 const HOLE_D=6.5, GEAR_M=5.6, GEAR_SP=0, GEAR_F=4.5; // M6 keyhole bore; module; spiral angle (0 = straight); ring band face height (4.86 ceiling: the band must clear the neighbour wafer plane - 3)
 
 // BEVELOID gear (2026-07-25, generated, parallel axes): the teeth live on
@@ -493,7 +493,7 @@ function readouts(th,zBot,Ro,yMax,topZ){
   }
   // ring hang: conservative curved-cantilever bound, single top anchor
   const M_j=W_tot*P.R/Math.PI;                             // N·mm
-  const S_j=P.tmin*DT_W*DT_W/6;
+  const S_j=DT_H*DT_W*DT_W/6;          // male tail is dt_h tall, not tmin
   const sig_j=M_j/S_j, marg=PET.allow/sig_j;
   set('s_mj',(M_j/1000).toFixed(2)+' N·m');
   set('s_dt',sig_j.toFixed(1)+' MPa / '+marg.toFixed(1)+'×',marg>4?'ok':(marg>2?'warn':'bad'));
