@@ -42,13 +42,33 @@ const SEC=()=>M?M.sector_deg*Math.PI/180:0;
 
 async function load(){
   try{
-    M=await (await fetch('models/manifest.json')).json();
-    const bufs=await Promise.all(M.parts.map(p=>
-      fetch('models/'+p.file).then(r=>r.arrayBuffer())));
+    let bufs;
+    try{
+      M=await (await fetch('models/manifest.json')).json();
+      bufs=await Promise.all(M.parts.map(p=>
+        fetch('models/'+p.file).then(r=>{
+          if(!r.ok)throw new Error(p.file);return r.arrayBuffer();})));
+    }catch(e){
+      // fetch() is blocked under file:// — fall back to the base64 bundle,
+      // which loads through a <script> tag (allowed under file://)
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='models/models_data.js'; s.onload=res; s.onerror=rej;
+        document.head.appendChild(s);
+      });
+      const D=window.HALO_MODELS;
+      M=D.manifest;
+      bufs=M.parts.map(p=>{
+        const bin=atob(D.files[p.file]), u=new Uint8Array(bin.length);
+        for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+        return u.buffer;
+      });
+    }
     M.parts.forEach((p,i)=>{geo[p.name]=parseSTL(bufs[i]);});
   }catch(e){
     document.getElementById('status').textContent=
-      'failed to load models/ — serve over http (python3 -m http.server in docs/), not file://';
+      'failed to load models/ — neither fetch nor the models_data.js bundle '+
+      'worked. Regenerate with scripts/viewer_export.py.';
     throw e;
   }
   // station 0: full drivetrain, one THREE.Group per motion group
