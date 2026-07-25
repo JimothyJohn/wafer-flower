@@ -319,7 +319,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   margins "only improve" — wrong baseline; measured mass is ~7% ABOVE the
   B.2 book values, so margins shaved, none governing.
 - scripts/viewer_export.py — exports scene-coordinate STLs + manifest.json
-  into docs/models/ for the Pages viewer, and gates every configuration it
+  + models_data.js into docs/models/ for the Pages viewer (models_data.js
+  is a base64 bundle: fetch() is blocked under file://, so a double-clicked
+  index.html falls back to loading it via <script src>, which file://
+  allows; --verify byte-gates it against the committed manifest + STLs), and gates every configuration it
   can show with boolean CSG: the cure-jig nominal suite, the jig open/close
   stroke swept in steps, the wafer placement drop, and the glued ring
   (adjacent segments/wafers + a bidirectional 2.95–3.05 mm depth-clearance
