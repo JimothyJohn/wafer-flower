@@ -101,10 +101,10 @@
       <tr><td class="ref">D2</td><td>Compression spring, ~1 N/mm, 10 mm free length <span class="dim">(optional)</span></td><td class="mono">1</td><td>Hardware assortment pack</td><td>Turns the screw from a displacement source into a force source. Not required for a first prototype — light finger contact and normal thread backlash are sufficient.</td></tr>
       <tr><td class="ref">D3</td><td>Silicone or TPU peg tips, ~5 mm</td><td class="mono">3</td><td>Print in TPU, or cut from tubing</td><td>Spreads the edge contact. Bare printed PETG on a wafer edge is a point contact on a fracture initiator.</td></tr>
 
-      <tr class="grp"><td colspan="5">E — Mounting</td></tr>
-      <tr><td class="ref">E1</td><td>Wall anchor rated ≥ 95 N (≈10 kg), stud screw or rated hollow-wall toggle</td><td class="mono">2</td><td>Hardware aisle</td><td>4× the 23.0 N assembly weight. <b>Two anchors at ±50° from top</b> drops the joint moment ~4× — the cheapest structural fix available (OP 015 §5).</td></tr>
-      <tr><td class="ref">E2</td><td>D-ring or keyhole hangers, printed or steel</td><td class="mono">2</td><td>Print or picture-framing aisle</td><td>Must resist pull-out as well as shear: the assembly CG sits 6.5 mm off the wall plane.</td></tr>
-      <tr><td class="ref">E3</td><td>Bubble or digital level</td><td class="mono">1</td><td>—</td><td>±2° or the swirl visibly reads crooked.</td></tr>
+      <tr class="grp"><td colspan="5">E — Mounting <span class="dim">(static bracket, 2026-07-24)</span></td></tr>
+      <tr><td class="ref">E1</td><td><b>Printed bracket saddle</b> — <span class="mono">stl/bracket_saddle.stl</span> from <span class="mono">scripts/bracket_stl.py</span> (12 boolean self-checks vs the full ring + wafers). Mounted at ±50° from bottom; lip nose rides the segments' retention groove.</td><td class="mono">2</td><td>Print, 23 g / 47 min each, wall face down</td><td>Cradling the ring puts it in compression and retires the single-point-hang dovetail case. Drop-in install, lift ~5 mm to remove; ring stays hand-rotatable for clocking.</td></tr>
+      <tr><td class="ref">E2</td><td>#10-24 pan head screws into stud or ≥95 N rated anchors, through the saddles' keyhole slots (44 mm apart per saddle)</td><td class="mono">4</td><td>Hardware aisle</td><td>&gt;10× on the 17.5 N assembly. M5 pans also fit the keyholes.</td></tr>
+      <tr><td class="ref">E3</td><td>Bubble or digital level</td><td class="mono">1</td><td>—</td><td>Level the two saddles or the swirl visibly reads crooked.</td></tr>
 
       <tr class="grp"><td colspan="5">F — Consumables</td></tr>
       <tr><td class="ref">F1</td><td>Isopropyl alcohol, 91 %+, or denatured alcohol</td><td class="mono">500 ml</td><td>Paint / pharmacy</td><td>Land and wafer prep. <b>Never acetone</b> — harmless on silicon, crazes PETG.</td></tr>
@@ -121,7 +121,7 @@
       <tr><td class="ref">G5</td><td>500 g weight (T3) and 5 kg weight (T7)</td><td class="mono">1 ea</td><td>Anything of known mass</td><td>T3 adhesive shear; <b>T7 dovetail hang</b> — the gate that covers the 2.0× margin.</td></tr>
       <tr><td class="ref">G6</td><td>Indoor/outdoor thermometer or a garage shelf</td><td class="mono">1</td><td>—</td><td>T3 needs real 10↔30 °C cycles. A garage does this for free overnight.</td></tr>
 
-      <tr class="grp"><td colspan="5">H — Optional: motion drive <span class="dim">(drive module designed — rollers + bracket open)</span></td></tr>
+      <tr class="grp"><td colspan="5">H — Optional: motion drive <span class="dim">(PARKED 2026-07-24 — the face gear is cut into every segment, so this stays a bracket-swap away)</span></td></tr>
       <tr><td class="ref">H1</td><td>Stepper, 28BYJ-48 + ULN2003 driver, or NEMA 14 — or the N20-class micro worm gearmotor the drive module (<span class="mono">scripts/gearmotor_stl.py</span>) is built around</td><td class="mono">1</td><td>Electronics vendor</td><td>Needs ~3.3 mN·m at the pinion. A 28BYJ-48 has 10× that; the worm self-holds unpowered.</td></tr>
       <tr><td class="ref">H2</td><td>V-groove bearings, 623/608 with V-groove outer</td><td class="mono">3</td><td>Bearing vendor</td><td>These carry the 23.0 N. The pinion supplies torque only — a tooth mesh cannot be the hanger.</td></tr>
       <tr><td class="ref">H3</td><td>Printed pinion, 28 T module 2, Ø56</td><td class="mono">1</td><td>Print</td><td>Meshes <b>inside</b> the 252 T internal ring gear on the flange = 9:1 exactly. Pinion axis at r=224, inside the central hole, so the drive is invisible.</td></tr>

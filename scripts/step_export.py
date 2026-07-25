@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Wafer Halo — STEP (AP214) export of every assembly component + the full
-halo-with-drive assembly as one file.
+halo-on-brackets assembly as one file.
 
 The manifold3d solids are polyhedra (planar faces only — cylinders and
 involutes are already faceted at the model's own resolution), so the export
@@ -15,10 +15,9 @@ the one that stays editable (this export exists for viewing, archival, and
 assembly examination — Nick asked for it 2026-07-22).
 
 Outputs (stl/step/):
-    segment.stp  wafer.stp  drive_plate.stp  drive_clamp.stp
-    drive_pinion.stp  motor_dummy.stp
-    halo_drive_assembly.stp   — 9 segments + 9 wafers + the whole drive
-                                module, every body named, in scene coords
+    segment.stp  wafer.stp  pinion.stp  bracket_saddle.stp
+    halo_static_assembly.stp  — 9 segments + 9 wafers + 2 bracket saddles,
+                                every body named, in scene coords
 
 Verification: --verify round-trips every emitted file through gmsh's
 OpenCASCADE STEP reader and compares solid count and per-solid volume
@@ -34,8 +33,9 @@ import math, os, sys, argparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from segment_stl import (PARAMS, Cfg, build_segment, build_wafer, build_ring,
                          to_arrays, Manifold, HAVE_MANIFOLD)
-from gearmotor_stl import (DRIVE, Drive, build_plate, build_clamp,
-                           build_motor_dummy, build_drive_pinion)
+from bracket_stl import BRK, build_saddle, place
+# NOTE: the gearmotor drive module is PARKED (2026-07-24, predates the face
+# gear) — its parts are no longer exported here; see gearmotor_stl.py.
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(REPO, 'stl', 'step')
@@ -404,27 +404,28 @@ def write_step(path, bodies):
 
 
 # ----------------------------------------------------------------------------
-def build_everything(cf, d):
-    """(filename, [(body name, solid)]) for every export."""
-    seg   = build_segment(cf)
-    waf   = build_wafer(cf, 0)
-    plate = build_plate(d)
-    clamp = build_clamp(d)
-    motor = build_motor_dummy(d)
-    pin   = build_drive_pinion(d)
+def build_everything(cf, b):
+    """(filename, [(body name, solid)]) for every export. Current design
+    state only: segment (face gear + retention groove), wafer, spur pinion,
+    static bracket saddle, and the hanging assembly (ring + wafers + two
+    saddles at +/-sad_ang from bottom). The parked drive parts stay in
+    stl/ via gearmotor_stl.py but are not archived here."""
+    from segment_stl import build_pinion
+    seg = build_segment(cf)
+    waf = build_wafer(cf, 0)
+    pin, _ = build_pinion(cf)
+    sad = build_saddle(cf, b)
     singles = [
-        ('segment.stp',      [('segment', seg)]),
-        ('wafer.stp',        [('wafer', waf)]),
-        ('drive_plate.stp',  [('drive_plate', plate)]),
-        ('drive_clamp.stp',  [('drive_clamp', clamp)]),
-        ('drive_pinion.stp', [('drive_pinion', pin)]),
-        ('motor_dummy.stp',  [('motor_dummy', motor)]),
+        ('segment.stp',        [('segment', seg)]),
+        ('wafer.stp',          [('wafer', waf)]),
+        ('pinion.stp',         [('pinion', pin)]),
+        ('bracket_saddle.stp', [('bracket_saddle', sad)]),
     ]
     assembly = [(f'segment_{k+1}', s) for k, s in enumerate(build_ring(cf))]
     assembly += [(f'wafer_{k+1}', build_wafer(cf, k)) for k in range(cf.N)]
-    assembly += [('drive_plate', plate), ('drive_clamp', clamp),
-                 ('motor_dummy', motor), ('drive_pinion', pin)]
-    return singles + [('halo_drive_assembly.stp', assembly)]
+    assembly += [(f'saddle_{i+1}', place(sad, q))
+                 for i, q in enumerate((270.0 - b['sad_ang'], 270.0 + b['sad_ang']))]
+    return singles + [('halo_static_assembly.stp', assembly)]
 
 
 def verify(outputs, outdir):
@@ -464,14 +465,15 @@ def main():
     ap.add_argument('-o', '--out', default=OUT_DIR)
     ap.add_argument('--verify', action='store_true',
                     help='round-trip every file through the gmsh/OCC reader')
-    for k, v in {**PARAMS, **DRIVE}.items():
+    for k, v in {**PARAMS, **BRK}.items():
         ap.add_argument(f'--{k}', type=type(v), default=None)
     a = ap.parse_args()
     cf = Cfg(**{k: getattr(a, k) for k in PARAMS if getattr(a, k) is not None})
-    d = Drive(cf, **{k: getattr(a, k) for k in DRIVE if getattr(a, k) is not None})
+    b = dict(BRK)
+    b.update({k: getattr(a, k) for k in BRK if getattr(a, k) is not None})
     os.makedirs(a.out, exist_ok=True)
 
-    outputs = build_everything(cf, d)
+    outputs = build_everything(cf, b)
     for fname, bodies in outputs:
         path = os.path.join(a.out, fname)
         n = write_step(path, bodies)

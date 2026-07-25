@@ -65,18 +65,35 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   the socket and turns the part into a tunnel.
 - NUT LIVES IN THE JIG (single-peg side), not the segment. Segment has no
   nut trap.
-- INTERNAL RING GEAR on a planar flange (6 mm) sitting on the flat bottom,
-  extending inward from Ri to the root circle. WHY THERE: neither the inner
-  nor outer edge of the segment is planar — both follow the tilted land and
-  swing ±15 mm out of the ring plane per sector (30 mm p-p), so a fixed
-  pinion cannot mesh with them. The flat bottom is the segment's ONLY planar
-  face. Do not try to put teeth on a rim.
+- BRACKET RETENTION GROOVE (2026-07-24): circumferential, in the OUTER arc
+  face, 2.5 mm up from the flat bottom — 2 deep, 1.5 straight ledge + 45°
+  chamfer roof (printability; the face is vertical on the bed). The static
+  bracket's lip nose rides in it: it is the ONLY forward-facing ledge on
+  the ring that is not bond land or within ~1 mm of the wafer underside at
+  the worst clocking (wafers dip to 6.8 mm above the wall face over the
+  saddle footprint). Clear of the keyhole (4.6 below its bore), dovetails,
+  and the cure-jig fence nose (checked). grv_d=0 deletes it.
+- FACE GEAR (2026-07-24, was internal spur) on the planar flange (tmin
+  thick) sitting on the flat bottom, extending inward from Ri to r=246:
+  the 252 teeth are AXIAL SLOTS in the WALL FACE (band r248–256, 4.5 deep,
+  rack-form flanks + 1.6 mm mouth flare for the pinion tip trochoids),
+  meshing the plain 28T spur pinion on a RADIAL axis 26 mm behind the wall
+  face — motor flat against the wall, perpendicular to the halo axis. WHY
+  NOT the 45/45 bevel Nick first asked for: at 9:1 with 90° shafts a true
+  bevel needs 83.7/6.3 cones, and a forced 45° internal cone MEASURES
+  276–386 mm³ of curvature interference against any perpendicular 45°
+  pinion (concave internal ring × crossed-axis pinion wrap digs into the
+  root wings ±14 mm around contact — not tunable, geometric). The face
+  gear is that bevel at its 90° limit; the mesh sweep measures 0.002 mm³
+  at gear_bl=0.6 (now the default; the sweep GATES segment_stl's exit).
+  WHY ON THE FACE AT ALL: neither the inner nor outer edge of the segment
+  is planar — both follow the tilted land and swing ±15 mm out of the ring
+  plane per sector; the flat bottom is the segment's ONLY planar face.
 - GEAR TOOTH COUNT MUST DIVIDE BY N or the pitch breaks at every joint.
-  Module 2, N=9: 28T/segment = 252T (pitch Ø504, tips r=250) needs Ri≈255 —
-  10 mm clear of the hide window. At Ri=248 only 243T fits and tips clear by
-  1 mm, inside print tolerance. Calculator flags this live (r_gearok).
-  28T pinion → exactly 9:1; axis at r=224, inside the Ø500 central hole, so
-  motor + rollers + wall anchor all mount on one hidden hub plate.
+  Module 2, N=9: 28 slots/segment = 252 (pitch Ø504, band 248–256) needs
+  Ri≈255 — every joint lands mid-slot and the pattern tiles seamlessly.
+  Calculator flags the fit live (r_gearok; it still renders the legacy
+  internal-tooth look). 28T pinion → exactly 9:1, radial axis.
 - DESIGN FORK RESOLVED (user's call): keep the one-piece wedge and add the
   gear flange. Rejected: two-piece planar-ring + bolted-saddle split (would
   have cut 124→67 g and raised joint margin to 2.7×, but adds a screw per
@@ -138,8 +155,9 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   allowable — press over the LAND CENTROID only.
 - ASSEMBLY (slicer-measured masses): θ=10 traveler build 2.35 kg / 23.0 N
   (9× 128 g Si + 9× 132.8 g PETG at 45% infill, gear flange included);
-  current B.2/B.3 build 1.74 kg / 17.1 N (65.5 g PETG at the M6 keyhole). The old uniform-45%
-  figures (2.29 / 1.64 kg) under-read the PETG.
+  current face-gear build 1.78 kg / 17.5 N (70.3 g PETG — the face flange
+  annulus outweighs the old spur teeth; 65.5 g at the M6-keyhole spur, 66.0
+  pre-M6). The old uniform-45% figures (2.29 / 1.64 kg) under-read the PETG.
 - TIGHTEST MARGIN IN THE BUILD: single centred dovetail on a one-point
   hang. M ≈ W·R/π = 2.6 N·m, S_joint = 6×16²/6 = 256 mm³ → 10.0 MPa vs
   ~20 MPa printed-PETG allowable = 2.0×. Everything else is 47–4000×.
@@ -177,6 +195,20 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   interference from a profile that is actually conjugate.
 - Multi-body STLs: weld per body. Welding across touching bodies makes
   non-manifold edges where 4 triangles meet.
+- A 45° INTERNAL cone ring cannot mesh a perpendicular 45° pinion at 9:1:
+  the pinion's wrap about its radial axis grows its plan radius into the
+  concave root wings — 276–386 mm³ measured, phase-independent, not
+  tunable. Curvature signs, not backlash. (This is why the drive is a face
+  gear.) Also: cutting a 45°-leaning tooth with the ~5° clearance plane
+  leaves orphaned tooth-tip crumbs (decompose() finds them; they masquerade
+  as wrong genus because the crumb's Euler characteristic cancels the
+  keyhole handle's).
+- Face-slot cutters (and any cutter) must OVERSHOOT the face they break out
+  of; ending exactly on the flange bore face left sliver faces that read
+  as OPEN after the float32 weld.
+- The pinion tip corners sweep trochoids past a straight rack flank near
+  the face plane — the slot mouth needs the 1.6 mm flare or the mesh sweep
+  shows ~9.5 mm³ of symmetric tip-corner interference.
 
 ## Glue area (measured, θ=5, one Ø300 station)
 - Load: 1.247 N shear, 0.109 N peel, peel arm 80 mm → 8.73 N·mm.
@@ -219,7 +251,21 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 - scripts/segment_stl.py — THE CAD. Parametric CSG -> watertight STLs
   (segment / pair / frame / assembly / pinion) + DXF sketch profiles in
   stl/dxf/ for OnShape. Needs `pip install manifold3d`. Every PARAMS entry is
-  also a CLI flag. Run it before trusting any dimension.
+  also a CLI flag. Run it before trusting any dimension. gear_drive =
+  'face' (default) | 'spur' (legacy); the 3D mesh sweep GATES the exit code
+  (>0.05 mm³ fails). The face-slot cutter must OVERSHOOT the flange bore
+  by 2 mm — ending it on the bore face is the cap-to-cap coplanar-seam
+  gotcha and reads as OPEN after the float32 weld.
+- scripts/bracket_stl.py — STATIC WALL BRACKET (2026-07-24): two identical
+  saddles at ±50° from bottom cradle the band OD (V-block, ring in
+  compression → retires the single-point-hang dovetail case); lip nose
+  rides the segments' retention groove for positive pull-off retention at
+  any clocking; ring stays hand-rotatable. 12 self-checks vs the FULL ring
+  + wafers (seat, retention play 0.15, lift-out, flush drop-in sweep,
+  clocking sweep, hidden ≤ plan r410) — exits nonzero on FAIL. Sliced 45%:
+  22.7 g / 47 min each. plate_t=6 standoff; the parked face-drive pinion
+  would need its radial axis 26 mm behind the wall face → reprint saddles
+  at plate_t ≥ 32 when the drive returns.
 - scripts/cure_jig_stl.py — OP 012 cure jig (see Frame design). Imports
   segment_stl for params/geometry, emits cure_jig_{outboard,inboard,knob}.stl
   print-ready plus cure_jig_fitcheck.stl (segment+wafer+fences+drivetrain,
@@ -262,9 +308,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   the solid skins dominate. Sliced mass is exactly linear in infill %:
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
   35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted). CURRENT B.3
-  build: 65.5 g/segment (book estimate 54; 66.0 pre-M6-keyhole), 2h26m
-  each, assembly 1.74 kg / 17.1 N, M = 1.9 N·m, dovetail 4.5× (book said
-  4.8× at 1.64 kg). Traveler
+  build: 70.3 g/segment (65.5 at the spur gear; book estimate 54), 2h34m
+  each, assembly 1.78 kg / 17.5 N, M = 1.95 N·m, dovetail 4.4× (book said
+  4.8× at 1.64 kg) — and the static bracket cradles retire that hang case
+  anyway. Traveler
   standard θ=10 build: 132.8 g/segment, 2.35 kg / 23.0 N, M = 2.6 N·m,
   dovetail 2.0×. The traveler solver + spec sheet now carry this calibrated
   model (T_SKIN=1.05 on the solver's cruder area estimate, K_INF=0.92) and
@@ -293,22 +340,20 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   jig stroke, wafer drop, station count, and a y-section plane; the manifest's
   check results render as a PASS/FAIL panel. Parses binary STL itself — no
   loader dependency beyond three.js r128.
-- scripts/gearmotor_stl.py — LOW-PROFILE DRIVE MODULE (2026-07-22): N20-class
-  micro WORM gearmotor (envelope parametric — MEASURE the purchased unit) on
-  a wall plate driving the 28T pinion (3 mm D-bore, grip collar ABOVE the
-  teeth: spur mesh has zero axial force, friction retention suffices).
-  Everything except the pinion hides BEHIND z_bot − 1, so zero added front
-  profile; worm self-holds unpowered. Motor sinks 2 mm sub-flush into the
-  plate pocket (printed lip over the gearbox nose + clamp bar past the pinion
-  swing circle, 2× #6 self-taps). Mounts on TWO #10-24 pan heads 56 mm apart
-  via keyholes; the 8 mm radial slots set mesh backlash. 14 boolean/scalar
-  self-checks (ring + wafers swept one tooth pitch, spin envelope, mesh
-  roll), exit nonzero on FAIL. Emits drive_{plate,clamp,pinion}.stl +
-  drive_fitcheck.stl. Bracket itself still Nick's TODO.
+- scripts/gearmotor_stl.py — PARKED (2026-07-24, Nick's call: drive train
+  filed away). Models the pre-face-gear internal-SPUR drive concept and now
+  PINS gear_drive='spur' so it stays a self-consistent record; its checks
+  run against the legacy ring, NOT the shipped segment. Removed from CI.
+  Its stl/drive_*.stl artifacts remain as the parked record; its STEP
+  exports were dropped. When the drive returns: the spur pinion survives
+  as-is (it IS the face-gear pinion), the worm-motor plate needs a new home
+  ~26 mm behind the ring, saddles reprint at plate_t ≥ 32.
 - scripts/step_export.py — STEP (AP214) export, REINSTATED at Nick's request
   2026-07-22 for viewing/archival (NOT editable CAD — DXF + #variables stays
   the editing route). Planar B-rep with coplanar-triangle merging; per-part
-  .stp + halo_drive_assembly.stp (22 named solids) into stl/step/. --verify
+  .stp (segment / wafer / pinion / bracket_saddle) +
+  halo_static_assembly.stp (20 named solids: ring + wafers + 2 saddles)
+  into stl/step/. Parked drive parts no longer archived here. --verify
   round-trips every file through gmsh/OpenCASCADE and compares volumes.
   Mesh->brep traps it handles (do not regress): slit patches fall back to
   triangle faces, T-vertex seams healed by unmatched-edge chain substitution
@@ -316,7 +361,9 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   duplicate vertices welded (5e-4), near-degenerate tris dropped. GitHub
   previews .stl in-repo but NOT .stp — browse stl/ for 3D, import .stp to CAD.
 - scripts/manual_pdf.py — KISELRING IKEA-style assembly manual ->
-  docs/kiselring-manual.pdf (9 pages A4). All 3D panels are line art rendered
+  docs/kiselring-manual.pdf (9 pages A4). PARKED CONTENT: it documents the
+  MOTORISED concept and pins gear_drive='spur' to stay self-consistent; a
+  static-bracket manual is TODO. All 3D panels are line art rendered
   from the REAL solids: orthographic projection, triangle z-buffer hidden-line
   removal, silhouette + >25° crease edges only. Renderer gotcha: SKIP
   triangles with tiny projected area before z-buffering (their barycentric z
@@ -324,8 +371,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   normal, so wall-art views need azim −90 / high elev, not the bench-view
   camera. Needs numpy + matplotlib.
 - CI (.github/workflows/ci.yml): `syntax` byte-compile + `cad` job that runs
-  segment_stl.py, cure_jig_stl.py, gearmotor_stl.py, and viewer_export.py
-  --verify on every PR. STEP + manual are committed artifacts, not CI-gated.
+  segment_stl.py, cure_jig_stl.py, bracket_stl.py, printed_hardware_stl.py,
+  and viewer_export.py --verify on every PR (gearmotor_stl dropped when it
+  was parked, 2026-07-24). STEP + manual are committed artifacts, not
+  CI-gated.
 - scripts/*.py — halo_gen.py, v3_dxf_gen.py (parametric; edit constants).
 - NOTE: cad/ and tools/ do not exist in this repo. Everything else is
   tracked: README.md, docs/, scripts/, stl/, CLAUDE.md, V3_NOTES.md,
@@ -348,10 +397,11 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 3. Port the calculator's segment surface function to a mesh/STEP generator
    (build123d or CadQuery) so parts export directly without OnShape.
 4. Lock a Rev C traveler once θ is picked and the joint is fixed.
-5. Motion: INTERNAL 252-tooth module-2 ring gear on the flat-bottom flange
-   (see Frame design), 28 T pinion = exactly 9:1, ~3.3 mN·m at the pinion.
-   Pinion supplies torque ONLY; 3 V-groove rollers on the outer rim carry
-   the assembly weight (17.1 N current build / 23.0 N θ=10). Rotation fully reverses the peel term every rev → T3 becomes
-   a cyclic test, but it also retires the single-point-hang joint case.
-   DRIVE MODULE DONE 2026-07-22 (scripts/gearmotor_stl.py); rollers + wall
-   bracket remain open.
+5. Motion: PARKED (2026-07-24, Nick's call). The 252-slot FACE gear is cut
+   into every segment now (costs ~5 g, nothing structural), so motion stays
+   a bracket-swap away: spur pinion on a radial axis 26 mm behind the wall
+   face, ~3.3 mN·m needed. gearmotor_stl.py holds the parked spur-era
+   module. The static bracket (DONE 2026-07-24, scripts/bracket_stl.py)
+   already banks the compression-arch win — the single-point-hang dovetail
+   case is retired either way. Rotation would make T3 cyclic (peel term
+   reverses every rev).

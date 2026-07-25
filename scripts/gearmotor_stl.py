@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 """
-Wafer Halo — low-profile gearmotor drive module.
+Wafer Halo — low-profile gearmotor drive module.  ** PARKED 2026-07-24 **
+
+PARKED: the drive train is filed away for now (Nick's call) and the ring
+gear has since changed from the internal spur this module was designed
+around to the FACE drive (segment_stl gear_drive='face', spur pinion on a
+radial axis ~26 mm behind the wall face). This script therefore pins
+gear_drive='spur' so it stays a self-consistent record of the old concept —
+its checks run against the LEGACY spur ring, not the shipped segment. It is
+no longer in CI. When the drive comes back, redesign around the face gear
+(the pinion survives as-is; the worm-motor plate needs a new home ~26 mm
+behind the ring and the static bracket reprinted at plate_t >= 32).
 
 Drives the 252T module-2 INTERNAL ring gear (the flange on the frame's flat
 bottom) with the existing 28T pinion at 9:1, from an N20-class micro WORM
@@ -300,7 +310,11 @@ def main():
     for k, v in {**PARAMS, **DRIVE}.items():
         ap.add_argument(f'--{k}', type=type(v), default=None)
     a = ap.parse_args()
-    cf = Cfg(**{k: getattr(a, k) for k in PARAMS if getattr(a, k) is not None})
+    kw = {k: getattr(a, k) for k in PARAMS if getattr(a, k) is not None}
+    kw.setdefault('gear_drive', 'spur')   # PARKED: legacy spur ring (see header)
+    print('*** PARKED module: models the LEGACY internal-spur drive, not the '
+          'shipped face-gear segment ***\n')
+    cf = Cfg(**kw)
     d = Drive(cf, **{k: getattr(a, k) for k in DRIVE if getattr(a, k) is not None})
     os.makedirs(a.out, exist_ok=True)
 
