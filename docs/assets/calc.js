@@ -11,7 +11,7 @@ const SI ={rho:2.329e-3, E:130000, cte:2.6e-6};   // g/mm3, MPa, /K
 const PET={rho:1.270e-3, E:2000, allow:20, cte:60e-6};
 const CLR=3;                           // neighbor clearance, mm
 const DT_W=16, PLATE=0.922;            // dovetail wide width; plate stiffening (1-nu^2)
-const HOLE_D=6.5, GEAR_M=2;             // M6 keyhole bore; gear module
+const HOLE_D=6.5, GEAR_M=4;             // M6 keyhole bore; gear module (m4: chunky bevel)
 
 // BEVEL45 gear (2026-07-24, generated): the teeth live on a 45-deg cone —
 // tips start at r = pitch - m on the wafer side and drop radially outward
@@ -26,7 +26,7 @@ function gearSpec(){
   const T=tps*P.N, rp=T*GEAR_M/2;
   const tip=rp-GEAR_M;                                   // cone small end, wafer side
   return {tps:tps, T:T, rp:rp, tip:tip, tip_wall:tip+P.tmin,
-          band_o:tip+16, m:GEAR_M};
+          band_o:rp+1.25*GEAR_M+P.tmin+1.5, m:GEAR_M};
 }
 // schematic tooth boundary at the cone FRONT (wafer side); the wall layer
 // scales it by (tip+tmin)/tip for the 45-deg lean

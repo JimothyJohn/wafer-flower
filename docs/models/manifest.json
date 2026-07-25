@@ -11,7 +11,7 @@
   "tmin": 10.0,
   "bond": 1.1,
   "clr": 3.0,
-  "gear_m": 2.0,
+  "gear_m": 4.0,
   "gear_pa": 20.0,
   "gear_bl": 0.6,
   "gear_drive": "bevel45",
@@ -39,7 +39,7 @@
    "name": "segment",
    "group": "segment",
    "color": "#B9A87E",
-   "volume_cm3": 88.645
+   "volume_cm3": 88.714
   },
   {
    "file": "wafer.stl",

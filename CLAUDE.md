@@ -74,27 +74,31 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   saddle footprint). Clear of the keyhole (4.6 below its bore), dovetails,
   and the cure-jig fence nose (checked). grv_d=0 deletes it.
 - BEVEL45 GEAR (2026-07-25, Nick's call — replaced the one-day face-slot
-  drive): the 252 teeth live on a 45° CONE, tips r250 at the WAFER side
-  dropping radially outward to r260 at the wall face, band outer overlap
-  to r266, slab inner boundary r264. They are GENERATED, not drawn: ideal
-  involutes on 45/45 cones at 9:1 with 90° shafts bind (true bevel needs
-  83.7/6.3; forcing 45 measured 276–386 mm³ of wing interference), so the
-  module-matched 45° coned pinion (profile ×1.198, m_eff 2.397 at the cone
-  mid, face 10) is swept through the meshing motion in CSG (61 positions,
-  ±2 tooth pitches) and subtracted — the runner (same shape thinned by
-  gear_bl=0.6) cannot interfere with what its own shape cut. Mesh sweep
-  measures 0.034 mm³ of scallop; it GATES segment_stl's exit (≤0.05).
-  Pinion axis RADIAL, 23.6 mm behind the wall face — motor flat against
-  the wall, perpendicular to the halo axis. WHY teeth at the flat-bottom
-  level at all: neither the inner nor outer edge of the segment is planar
-  — both follow the tilted land and swing ±15 mm out of the ring plane per
-  sector. gear_drive='spur' keeps the legacy internal ring (the parked
-  gearmotor pins it).
+  drive; module 4 same day: module-2 teeth "look insignificant"): 126
+  teeth (14/segment), MODULE 4, on a 45° CONE — tips r248 at the WAFER
+  side dropping radially outward to r258 at the wall face, 9 mm deep,
+  proper mixer-bevel presence. Same Ø504 pitch, same exact 9:1 with the
+  14T coned pinion. GENERATED, not drawn: ideal involutes on 45/45 cones
+  at 9:1 with 90° shafts bind (true bevel needs 83.7/6.3; forcing 45
+  measured 276–386 mm³ of wing interference), so the module-matched coned
+  cutter (m_eff 4.794 at the cone mid, face 10) is swept through the
+  meshing motion in CSG (steps scale with module; ±2 tooth pitches) and
+  subtracted, 0.3 mm DEEPER than the running position — backlash thinning
+  only clears flanks tangentially, and without that radial tip relief the
+  runner's tips graze the envelope along the pitch line (~0.08 mm³).
+  Result: mesh sweep measures 0.000 mm³; it GATES segment_stl's exit
+  (≤0.05). Pinion axis RADIAL, 23.6 mm behind the wall face — motor flat
+  against the wall, perpendicular to the halo axis. Chunkier still:
+  --gear_m 5.6 (90T/10T). WHY teeth at the flat-bottom level at all:
+  neither the inner nor outer edge of the segment is planar — both follow
+  the tilted land and swing ±15 mm out of the ring plane per sector.
+  gear_drive='spur' keeps the legacy internal ring (the parked gearmotor
+  pins it).
 - GEAR TOOTH COUNT MUST DIVIDE BY N or the pitch breaks at every joint.
-  Module 2, N=9: 28T/segment = 252 (pitch Ø504, cone tips r250→260) needs
+  Module 4, N=9: 14T/segment = 126 (pitch Ø504, cone tips r248→258) needs
   Ri≈255 — every joint lands mid-slot and the pattern tiles seamlessly.
   Calculator flags the fit live (r_gearok, hide check on the cone's front
-  tips) and renders the coned tooth band schematically. 28T coned pinion →
+  tips) and renders the coned tooth band schematically. 14T coned pinion →
   exactly 9:1, radial axis.
 - DESIGN FORK RESOLVED (user's call): keep the one-piece wedge and add the
   gear flange. Rejected: two-piece planar-ring + bolted-saddle split (would
@@ -323,10 +327,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   the solid skins dominate. Sliced mass is exactly linear in infill %:
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
   35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted). CURRENT B.3
-  build: 61.8 g/segment (70.3 face-slot, 65.5 spur; book estimate 54),
-  2h14m each, assembly 1.71 kg / 16.8 N, M = 1.87 N·m, dovetail 4.6× (book
-  said 4.8× at 1.64 kg) — and the static bracket cradles retire that hang
-  case anyway. Traveler
+  build: 61.6 g/segment at module 4 (61.8 at m2 bevel, 70.3 face-slot,
+  65.5 spur; book estimate 54), 2h15m each, assembly 1.71 kg / 16.8 N,
+  M = 1.87 N·m, dovetail 4.6× (book said 4.8× at 1.64 kg) — and the
+  static bracket cradles retire that hang case anyway. Traveler
   standard θ=10 build: 132.8 g/segment, 2.35 kg / 23.0 N, M = 2.6 N·m,
   dovetail 2.0×. The traveler solver + spec sheet now carry this calibrated
   model (T_SKIN=1.05 on the solver's cruder area estimate, K_INF=0.92) and
