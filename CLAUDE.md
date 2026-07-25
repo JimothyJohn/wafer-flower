@@ -65,37 +65,32 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   the socket and turns the part into a tunnel.
 - NUT LIVES IN THE JIG (single-peg side), not the segment. Segment has no
   nut trap.
-- BRACKET RETENTION GROOVE (2026-07-24): circumferential, in the OUTER arc
-  face, 2.5 mm up from the flat bottom — 2 deep, 1.5 straight ledge + 45°
-  chamfer roof (printability; the face is vertical on the bed). The static
-  bracket's lip nose rides in it: it is the ONLY forward-facing ledge on
-  the ring that is not bond land or within ~1 mm of the wafer underside at
-  the worst clocking (wafers dip to 6.8 mm above the wall face over the
-  saddle footprint). Clear of the keyhole (4.6 below its bore), dovetails,
-  and the cure-jig fence nose (checked). grv_d=0 deletes it.
-- SPIRAL BEVEL GEAR (2026-07-25 evolution: face-slot → straight bevel m2
-  → m4 → SPIRAL m5.6, Nick: "a true spiral bevel"; DESIGN.md concurs):
-  90 teeth (10/segment), MODULE 5.6, on a 45° CONE with a 35° SPIRAL
-  (gear_sp) — tips r246 at the WAFER side sweeping down-and-around to
-  r256 at the wall face, 12.6 mm deep. Same Ø504 pitch, same exact 9:1
-  with the 10T spiral pinion (viable at 10T BECAUSE the set is spiral
-  and the ring is generated from it). GENERATED, not drawn: the cutter
-  pinion is ONE extrusion with taper (scale_top) AND twist
-  (tan(sp)·face/pin_mid of circumferential advance), swept through the
-  meshing motion in CSG (steps scale with module; ±2 tooth pitches) and
-  subtracted 0.3 mm DEEPER than the running position (radial tip relief:
-  backlash thinning only clears flanks tangentially; without it the
-  runner's tips graze the envelope at the pitch line). Mesh sweep
-  measures 0.000 mm³ and GATES segment_stl's exit (≤0.05). The segment
-  is now legitimately genus 10 — each tooth space is an open window
-  through the band, plus the keyhole; the shard gate counts COMPONENTS,
-  not genus. Tooth FACE height is capped at tmin (10) by the hide window
-  — taller teeth would poke tips inside r~240 and show through the
-  centre. Pinion axis RADIAL, 23.6 mm behind the wall face — motor flat
-  against the wall, perpendicular. WHY teeth at the flat-bottom level at
-  all: neither edge of the segment is planar — both swing ±15 mm out of
-  the ring plane per sector. gear_drive='spur' keeps the legacy internal
-  ring (the parked gearmotor pins it).
+- IDLER RETENTION GROOVE (2026-07-25, moved from the outer face):
+  circumferential, in the INNER face at Ri — 2 deep, 1.5 straight ledge +
+  45° chamfer roof, 2.5 mm up from the flat bottom. The bracket's idler
+  wheel RIBS ride in it: the ring hangs on the wheel bodies (rolling on
+  the bore at Ri) and the groove walls are its only axial restraint
+  (±0.15 float, hard jam at +0.5 out; -z backs onto the rib ramp then the
+  bracket deck). grv_d=0 deletes it.
+- EXTERNAL BEVEL GEAR (2026-07-25 final rethink, Nick: drive from the top,
+  ring hangs on idlers; straight teeth by joint call — a spiral buys
+  nothing at 0.3 rpm and its ~tan(sp) axial thrust would fight the idler
+  groove, the ring's only axial restraint; gear_sp=0 default, 35 restores
+  the spiral look): 108 teeth (12/segment), MODULE 5.6, on a 45° cone ON A
+  WEB OUTSIDE THE BAND — tips r318 at the WAFER side dropping to r308 at
+  the wall (big-at-front is forced: it is the only orientation whose
+  working face points outward-and-back where the bracket pinion lives).
+  Pitch Ø605, 12T pinion (~Ø90 big end), exactly 9:1, radial axis 29.2
+  BEHIND the ring's wall face at 12 o'clock — hence the bracket's 38 mm
+  standoff. GENERATED as before (cutter swept ±2 pitches, 0.3 mm deep for
+  tip relief; runner thinned gear_bl=0.6): mesh sweep 0.0006 mm³, gating
+  segment_stl's exit. The old INNER flange and inner teeth are GONE — the
+  bore is plain Ri with the idler groove. COST: +31 g/segment (94.0 g
+  sliced vs 63.0 inner-spiral) for the web + outer teeth. Generation traps
+  added this round: the sector clip backs off 1e-5 rad (clipping exactly
+  at ±half leaves facet wobble reading as 1e-4 joint interference), and
+  build_segment drops <0.01 mm³ specks at source (they survived as
+  phantom second solids in the STEP round-trip).
 - GEAR TOOTH COUNT MUST DIVIDE BY N or the pitch breaks at every joint.
   Module 5.6, N=9: 10T/segment = 90 (pitch Ø504, cone tips r246→256)
   needs Ri≈255 — every joint lands mid-slot and the pattern tiles
@@ -280,16 +275,18 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   top rim ring otherwise), and the mesh-check backing annulus must extend
   OUTWARD from the band (Ri+6 < g_fi puts a phantom ring in the pinion's
   path — 9.4 mm³).
-- scripts/bracket_stl.py — STATIC WALL BRACKET (2026-07-24): two identical
-  saddles at ±50° from bottom cradle the band OD (V-block, ring in
-  compression → retires the single-point-hang dovetail case); lip nose
-  rides the segments' retention groove for positive pull-off retention at
-  any clocking; ring stays hand-rotatable. 12 self-checks vs the FULL ring
-  + wafers (seat, retention play 0.15, lift-out, flush drop-in sweep,
-  clocking sweep, hidden ≤ plan r410) — exits nonzero on FAIL. Sliced 45%:
-  22.7 g / 47 min each. plate_t=6 standoff; the parked face-drive pinion
-  would need its radial axis 26 mm behind the wall face → reprint saddles
-  at plate_t ≥ 32 when the drive returns.
+- scripts/bracket_stl.py — TOP IDLER BRACKET (2026-07-25 rewrite, was two
+  saddles): ONE part bolts to the wall at 12 o'clock; two printed Ø48
+  idler wheels (rib in the inner groove, spinning on printed M6 screws
+  into captive printed nuts) and the N20 worm gearmotor + 12T pinion all
+  mount on it. The ring HANGS on the wheels (±25° from top — the OP 015
+  two-hang-point case; the dovetail keeps its full 427 mm³ since the gear
+  left the band) and is driven purely rotationally from the top. plate_t
+  = 38 standoff exists because the external pinion axis sits 29.2 behind
+  the ring's wall face. 9 self-checks vs the full ring + wafers (seat,
+  rib jam both ways, axial float, clocking sweep, hidden ≤ r410, nothing
+  behind the wall) — exits nonzero on FAIL. Sliced: plate 337 g / 9h46
+  @45%, wheels 7.7 g / 19 min each.
 - scripts/cure_jig_stl.py — OP 012 cure jig (see Frame design). Imports
   segment_stl for params/geometry, emits cure_jig_{outboard,inboard,knob}.stl
   print-ready plus cure_jig_fitcheck.stl (segment+wafer+fences+drivetrain,
@@ -332,10 +329,12 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   the solid skins dominate. Sliced mass is exactly linear in infill %:
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
   35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted). CURRENT B.3
-  build: 63.0 g/segment at spiral m5.6 (61.6 m4, 61.8 m2 bevel, 70.3
-  face-slot, 65.5 spur; book estimate 54), 2h20m each, assembly 1.72 kg
-  / 16.9 N, M = 1.88 N·m, dovetail 4.5× (book said 4.8× at 1.64 kg) —
-  and the static bracket cradles retire that hang case anyway. Traveler
+  build: 94.0 g/segment at the EXTERNAL bevel (63.0 inner spiral, 61.6
+  m4, 70.3 face-slot, 65.5 spur; book estimate 54), 3h19m each, assembly
+  2.00 kg / 19.6 N. Hanging on the two top idlers is the OP 015
+  two-hang-point case: M well under the single-point 2.2 N·m, and the
+  dovetail keeps its full 427 mm³ section (gear left the band) — margin
+  comfortably >6×. Traveler
   standard θ=10 build: 132.8 g/segment, 2.35 kg / 23.0 N, M = 2.6 N·m,
   dovetail 2.0×. The traveler solver + spec sheet now carry this calibrated
   model (T_SKIN=1.05 on the solver's cruder area estimate, K_INF=0.92) and

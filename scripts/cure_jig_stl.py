@@ -171,27 +171,32 @@ def hex_pocket(j, x0):
 
 # ---- the two fences ---------------------------------------------------------
 def build_outboard(j):
-    """Rail on the bench under the wafer overhang, nose butting the outer arc
-    face, TWO capture pegs just past the rim, knob face at the back. Pegs
-    only (2026-07-25): the wafer is constrained in X/Y by peg flanks at
-    rim + slack; gravity owns Z. No walls, no slot, no lips — part-agnostic
-    (any wafer Ø / tilt re-derives the peg circle) and never overconstrained:
-    on the tilted land the wafer settles downhill onto the two down-slope
-    pegs, one per fence, and that IS the centring."""
+    """Outboard fence, reworked for the EXTERNAL gear (2026-07-25): the
+    outer spiral-bevel teeth now occupy r285..~318 over the bottom tmin, so
+    the old bench-level nose foot would land on teeth. The fence became a
+    BRIDGE: feet on the bench beyond the tooth tips, a deck spanning over
+    the teeth 0.8 mm proud of their top face, and a nose FINGER reaching
+    down to butt the band's outer face ABOVE the tooth band (that face is
+    exposed from z1 up to the land). Pegs and the drivetrain are unchanged.
+    Capture pegs only: X/Y held, gravity owns Z (see build_inboard)."""
     cf = j.cf
-    x0, x1 = cf.Ro - 2.0, j.x_out + 10.0
-    f  = box(x0, x0 + 14.0, -j.w2, j.w2, cf.z_bot, j.under_top)             # nose foot
+    tip_front = cf.g_tip * (cf.g_pitch + cf.tmin) / cf.g_pitch
+    xf = tip_front + 4.0                    # feet start beyond the tooth tips
+    x1 = j.x_out + 10.0
+    deck_lo, deck_hi = cf.z1 + 0.8, -3.5    # over the teeth, under the wafer
+    f  = box(cf.Ro, x1, -j.w2, j.w2, deck_lo, deck_hi)                      # deck
+    f += box(xf, xf + 16.0, -j.w2, j.w2, cf.z_bot, deck_lo + 1.0)           # front foot
     f += box(j.x_out - 30.0, x1, -j.w2, j.w2, cf.z_bot, j.under_top)        # rear block
-    f += box(x0, x1, -j.boss_w / 2, j.boss_w / 2, cf.z_bot, j.boss_top)     # spine + bore roof
     for px, py in j.pegs_out:
         sy = 1.0 if py > 0 else -1.0
         f += box(px - 8.0, px + 8.0, sy * (j.w2 - 2.0), py + sy * 8.0,
                  cf.z_bot, j.arm_top)                                       # peg arm
         f += peg(j, px, py)
-    # nose: butts the outer arc face. +0.05 standoff so the different chord
-    # phases of this 512-gon and the segment's 160-point arc don't overlap.
+    # nose finger: butts the outer arc face above the tooth band. +0.05
+    # standoff so the different chord phases of this 512-gon and the
+    # segment's 160-point arc don't overlap.
     f -= vcyl(cf.Ro + 0.05, cf.z_bot - 1.0, 60.0)
-    f -= xcyl(j.bore_r, x0 - 2.0, x1 + 2.0, j.zc)
+    f -= xcyl(j.bore_r, cf.Ro - 2.0, x1 + 2.0, j.zc)
     return f
 
 

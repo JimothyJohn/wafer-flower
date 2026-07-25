@@ -12,7 +12,7 @@
   "bond": 1.1,
   "clr": 3.0,
   "gear_m": 5.6,
-  "gear_sp": 35.0,
+  "gear_sp": 0.0,
   "gear_pa": 20.0,
   "gear_bl": 0.6,
   "gear_drive": "bevel45",
@@ -40,7 +40,7 @@
    "name": "segment",
    "group": "segment",
    "color": "#B9A87E",
-   "volume_cm3": 89.891
+   "volume_cm3": 134.755
   },
   {
    "file": "wafer.stl",
@@ -54,7 +54,7 @@
    "name": "jig_outboard",
    "group": "out",
    "color": "#D97742",
-   "volume_cm3": 93.672
+   "volume_cm3": 122.6
   },
   {
    "file": "jig_inboard.stl",
@@ -99,18 +99,32 @@
    "volume_cm3": 0.348
   },
   {
-   "file": "saddle_l.stl",
-   "name": "saddle_l",
+   "file": "bracket_plate.stl",
+   "name": "bracket_plate",
    "group": "bracket",
    "color": "#B86038",
-   "volume_cm3": 30.68
+   "volume_cm3": 460.785
   },
   {
-   "file": "saddle_r.stl",
-   "name": "saddle_r",
+   "file": "wheel_l.stl",
+   "name": "wheel_l",
    "group": "bracket",
-   "color": "#B86038",
-   "volume_cm3": 30.68
+   "color": "#6A7078",
+   "volume_cm3": 9.516
+  },
+  {
+   "file": "wheel_r.stl",
+   "name": "wheel_r",
+   "group": "bracket",
+   "color": "#6A7078",
+   "volume_cm3": 9.516
+  },
+  {
+   "file": "drive_pinion.stl",
+   "name": "drive_pinion",
+   "group": "bracket",
+   "color": "#C2497B",
+   "volume_cm3": 34.23
   },
   {
    "file": "my_frame_segment.stl",
@@ -210,7 +224,7 @@
   {
    "group": "assembly",
    "name": "depth clearance >= 2.95 mm under the neighbour wafer",
-   "value_mm3": 0.0,
+   "value_mm3": -0.0,
    "pass": true
   },
   {
@@ -222,7 +236,7 @@
   {
    "group": "assembly",
    "name": "segments butt at the joint (0.1 deg nudge contacts)",
-   "value_mm3": 100.8977,
+   "value_mm3": 168.8098,
    "pass": true
   }
  ]

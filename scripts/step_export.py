@@ -34,7 +34,7 @@ import math, os, sys, argparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from segment_stl import (PARAMS, Cfg, build_segment, build_wafer, build_ring,
                          to_arrays, Manifold, HAVE_MANIFOLD)
-from bracket_stl import BRK, build_saddle, place
+from bracket_stl import BRK, Brk, build_plate, build_wheel, wheel_at, pinion_at_top
 # NOTE: the gearmotor drive module is PARKED (2026-07-24, predates the face
 # gear) — its parts are no longer exported here; see gearmotor_stl.py.
 
@@ -407,25 +407,22 @@ def write_step(path, bodies):
 # ----------------------------------------------------------------------------
 def build_everything(cf, b):
     """(filename, [(body name, solid)]) for every export. Current design
-    state only: segment (face gear + retention groove), wafer, spur pinion,
-    static bracket saddle, and the hanging assembly (ring + wafers + two
-    saddles at +/-sad_ang from bottom). The parked drive parts stay in
-    stl/ via gearmotor_stl.py but are not archived here."""
+    state: segment (external bevel + inner groove), wafer, the drive
+    pinion, and the top idler bracket (plate + wheel). No assembly file —
+    generated-teeth segments exceed GitHub's 100 MB as planar-face STEP;
+    compose from parts (segments at k*40 deg about Z, bracket at the top)."""
     from segment_stl import build_pinion
+    brk = Brk(cf, **{k: v for k, v in b.items() if k in BRK})
     seg = build_segment(cf)
     waf = build_wafer(cf, 0)
     pin, _ = build_pinion(cf)
-    sad = build_saddle(cf, b)
     singles = [
         ('segment.stp',        [('segment', seg)]),
         ('wafer.stp',          [('wafer', waf)]),
         ('pinion.stp',         [('pinion', pin)]),
-        ('bracket_saddle.stp', [('bracket_saddle', sad)]),
+        ('bracket_plate.stp',  [('bracket_plate', build_plate(brk))]),
+        ('bracket_wheel.stp',  [('bracket_wheel', build_wheel(brk))]),
     ]
-    # NO assembly export since the generated bevel teeth (2026-07-25): nine
-    # 24k-triangle segments make a ~143 MB planar-face STEP, over GitHub's
-    # 100 MB limit. Compose the assembly in CAD from the per-part files
-    # (segments at k*40 deg about Z, saddles at 270 +/- sad_ang).
     return singles
 
 

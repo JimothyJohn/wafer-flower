@@ -1,41 +1,36 @@
 #!/usr/bin/env python3
 """
-Wafer Halo — static wall bracket (2026-07-24): hangs the assembled ring on
-the wall with TWO identical printed saddles. No motor, no rollers — the
-drive train is filed away; this is the minimal static mount.
+Wafer Halo — top-mount idler bracket (2026-07-25, Nick's rethink of the
+drive mechanism): ONE bracket bolts to the wall at 12 o'clock; two printed
+IDLER WHEELS and the gearmotor pinion bolt to it. The ring HANGS on the
+wheels — their bodies carry the ring's inner bore (Ri) while a rib on each
+wheel rides the segment's INNER retention groove, which is what keeps the
+ring on the wall axis — and it is driven purely rotationally from the top
+by the EXTERNAL spiral bevel pinion meshing the ring's outer teeth.
 
-How it carries:
-  Two saddles sit at +/-50 deg either side of bottom-dead-centre. Each is a
-  channel the ring drops into: a concave shelf at band-OD + 0.15 carries the
-  weight radially (a V-block, so the ring cannot translate in-plane), the
-  back plate face stops the ring's flat wall face, and a lip NOSE rides in
-  the segment's circumferential RETENTION GROOVE (segment_stl grv_* params:
-  2 deep in the outer arc face, straight ledge + 45-deg print chamfer).
-  Pulling the ring off the wall jams the groove's front wall on the nose —
-  positive +z retention at ANY clocking, because the groove runs the full
-  360. The groove exists because nothing else can do this job: every other
-  forward-facing surface on the ring is either bond land or within ~1 mm of
-  the wafer underside at the worst clocking (the wafers dip to 6.8 mm above
-  the wall face over the saddle footprint — measured from the wafer
-  ellipse, and the whole saddle above the wall plate stays under 5 mm
-  proud). Install: offer the ring to the plates slightly high, drop it in —
-  the noses enter the groove over the last few mm. Lift ~5 mm to remove.
-  Resting on shelves also puts the ring in compression (arch), which
-  retires the single-point-hang dovetail case entirely (OP 015 §5 fix (c)),
-  and the ring stays free to rotate in the cradles for clocking.
+Load path:
+  Two wheels at +/-wheel_az from top, wheel bodies rolling on the bore face
+  (Ri). Hanging on two points near the top is the classic OP 015 case with
+  the reduction for a second hang point; the dovetail keeps its full
+  section (the gear left the band, so the joint never shares space with
+  teeth). The groove rib carries only the ~0.5 N tip-off keeper load.
 
-Mounting: two #10-24 pan heads (or M5 pans) per saddle into stud/anchor,
-through keyhole slots in the plate tail below the rim — outside the ring's
-silhouette, so the screws go in first and the bracket hooks on. Slot runs
-radially outward = downhill at both saddle azimuths, so gravity seats it.
+Standoff:
+  The external bevel pinion's axis sits |z_p| behind the ring's wall face
+  (bevel_geom), so the ring must float that far off the wall for the motor
+  to fit in front of the drywall — plate_t defaults to 38. That standoff is
+  the price of the outboard drive and is now the bracket's job.
 
-Hidden: everything stays under plan radius ~335 mm, far inside the wafer
-disc coverage (hide window outer edge ~410 at these params) — asserted, and
-wafer/bracket interference is boolean-checked, not assumed.
+Hardware: printed M6 screws (printed_hardware_stl) as wheel axles, threaded
+into captive printed M6 nuts in the deck; wall mounting via two #10-24 pan
+heads (or M5) through keyholes in the back plate. The N20-class worm
+gearmotor (MEASURE the purchased unit; envelope parametric) drops into a
+pocket with its output shaft pointing radially down, pinion on the shaft.
 
-Standoff: plate_t sets how far the ring floats off the wall (default 6 mm).
-The parked face-drive pinion would someday need its axis ~26 mm behind the
-ring's wall face — when the drive returns, reprint with plate_t >= 32.
+Self-checks (exits nonzero on FAIL): ring-on-wheels seat and settle, rib in
+groove z-capture both ways, pinion mesh clearance at the hanging position,
+wafer clearance across a full clocking sweep, hidden-radius bound, and
+everything vs the wall plane.
 
     pip install manifold3d
     python3 scripts/bracket_stl.py            # -> stl/, self-checking
@@ -44,21 +39,25 @@ from __future__ import annotations
 import math, os, sys, argparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from segment_stl import (PARAMS, Cfg, prism, build_ring, build_wafer,
-                         write_stl, report, Manifold, HAVE_MANIFOLD)
+from segment_stl import (PARAMS, Cfg, prism, arc, build_ring, build_wafer,
+                         bevel_geom, bevel_pinion, write_stl, report,
+                         Manifold, HAVE_MANIFOLD)
 
 BRK = dict(
-    sad_ang  = 50.0,   # saddle azimuth, deg either side of bottom-dead-centre
-    slack    = 0.15,   # radial gap shelf-to-band at nominal seat
-    nose_r   = 1.6,    # lip nose reach into the groove (groove is 2.0 deep)
-    nose_c   = 0.3,    # nose z-clearance per side inside the groove ledge
-    plate_t  = 6.0,    # wall plate thickness = ring standoff off the wall
-    width    = 64.0,   # tangential width of the saddle
-    tail     = 34.0,   # plate tail beyond the band OD (carries the keyholes)
-    key_gap  = 44.0,   # keyhole spacing, tangential
+    wheel_az = 25.0,   # idler azimuth, deg either side of top-dead-centre
+    wheel_R  = 24.0,   # idler body radius (rolls on the bore face at Ri)
+    wheel_w  = 5.2,    # idler body width in z
+    rib_w    = 1.2,    # groove rib width  (groove ledge is grv_h = 1.5)
+    rib_h    = 1.6,    # groove rib height (groove is grv_d = 2.0 deep)
+    axle_D   = 6.8,    # wheel bore: spins on a printed M6 screw shank
+    plate_t  = 38.0,   # bracket standoff wall-to-ring (see header)
+    back_t   = 6.0,    # wall plate thickness
+    key_gap  = 120.0,  # wall keyhole spacing, tangential
     key_d    = 5.5,    # keyhole slot width (#10 / M5 pan shank)
     key_D    = 11.0,   # keyhole entry (pan head passes)
-    key_sink = 3.5,    # head pocket depth in the plate front face
+    mot_D    = 12.5,   # N20 gearmotor body Ø (MEASURE the purchased unit)
+    mot_L    = 26.0,   # N20 body length, gearbox included
+    shaft_D  = 3.2,    # output shaft clearance bore
 )
 
 
@@ -70,132 +69,169 @@ def vcyl(r, z0, h, cx=0.0, cy=0.0, fn=256):
     return Manifold.cylinder(h, r, r, fn).translate([cx, cy, z0])
 
 
-def build_saddle(cf, b):
-    """One saddle, LOCAL frame: ring centre at origin, saddle radially along
-    +x (the ring's outer face is the r=Ro cylinder about the origin). Placed
-    into the hanging scene by a z-rotation. The wall plate's inner edge at
-    Ro - 22 bears on the flange's back annulus OUTSIDE the tooth-slot band
-    (slots end at g_pitch + fw/2 + 2 = 258; boolean-checked, not assumed).
-    The saddle body above the plate is a shelf ring spanning the groove's
-    z-range plus a nose ring reaching nose_r into the groove; its concave
-    faces are carved with the seat / nose bore cylinders. Everything above
-    the plate stays under z_bot + grv_z0 + grv_h + nose_c + 1.2 — about
-    5 mm proud of the ring's wall face, far below the wafers' worst dip."""
-    w2 = b['width'] / 2.0
-    r_seat = cf.Ro + b['slack']
-    z_back = cf.z_bot
-    z_wall = z_back - b['plate_t']
-    x_out = cf.Ro + b['tail']
-    # groove geometry from the segment CAD — single source of truth
-    g0 = z_back + cf.grv_z0                      # groove floor z
-    g1 = g0 + cf.grv_h                           # groove ledge (front wall) z
-    n0, n1 = g0 + b['nose_c'], g1 - 0.15         # nose z-extent inside groove
-                                                 # (0.15 nominal retention play)
-    top = g1 + 1.2                               # saddle body roof
-    p = box(cf.Ro - 22.0, x_out, -w2, w2, z_wall, z_back)                 # plate
-    p += box(cf.Ro - 2.0, x_out, -w2, w2, z_back, top)                    # body
-    # seat carve starts exactly at the plate top: starting below it would
-    # eat the plate's bearing face (the ring's wall face rests on it)
-    p -= vcyl(r_seat, z_back, top - z_back + 1.0, fn=cf.facets)           # seat
-    # nose ring: reaches into the groove over the straight ledge only; its
-    # outer boundary overlaps 3 mm into the body so the union welds clean
-    nose = (vcyl(r_seat + 3.0, n0, n1 - n0, fn=cf.facets)
-            - vcyl(cf.Ro - b['nose_r'], n0 - 0.5, n1 - n0 + 1.0, fn=cf.facets))
-    p += nose ^ box(cf.Ro - b['nose_r'] - 1.0, x_out, -w2, w2, n0, n1)
-    # keyholes in the plate tail: entry circle + slot running outward
-    for s in (1.0, -1.0):
-        ky = s * b['key_gap'] / 2.0
-        kx = cf.Ro + b['tail'] - 12.0
-        p -= vcyl(b['key_D'] / 2.0, z_wall - 1.0, b['plate_t'] + 2.0,
-                  kx - 7.0, ky, fn=64)
-        p -= box(kx - 7.0, kx + 6.0, ky - b['key_d'] / 2.0,
-                 ky + b['key_d'] / 2.0, z_wall - 1.0, z_back + 1.0)
-        p -= box(kx - 7.0, kx + 6.0, ky - b['key_D'] / 2.0,
-                 ky + b['key_D'] / 2.0, z_wall + b['plate_t'] - b['key_sink'],
-                 z_back + 1.0)
-    return p
+def zcyl_at(r, h, cx, cy, z0, fn=128):
+    return Manifold.cylinder(h, r, r, fn).translate([cx, cy, z0])
 
 
-def place(solid, az_deg):
-    return solid.rotate([0.0, 0.0, az_deg])
+class Brk:
+    def __init__(self, cf, **kw):
+        p = dict(BRK); p.update(kw); self.p = p
+        for k, v in p.items(): setattr(self, k, v)
+        self.cf = cf
+        # wheel centres: bodies tangent to the bore face at Ri, at
+        # +/-wheel_az from top (gravity -y, top = +y)
+        self.d_c = cf.Ri - self.wheel_R                 # ring-centre distance
+        self.wheels = []
+        for s_ in (1, -1):
+            a = math.radians(90.0 + s_ * self.wheel_az)
+            self.wheels.append((self.d_c * math.cos(a), self.d_c * math.sin(a)))
+        # groove z (scene coords: ring wall face at z_bot)
+        self.g0 = cf.z_bot + cf.grv_z0                  # groove floor z
+        self.g1 = self.g0 + cf.grv_h                    # ledge top
+        # wheel body z-extent: from just off the ring back to under the
+        # wafers' worst dip (clocking sweep checks it for real)
+        self.w_lo = cf.z_bot + 0.3
+        self.w_hi = self.w_lo + self.wheel_w
+        self.rib_lo = self.g0 + (cf.grv_h - self.rib_w) / 2.0
+        # deck the wheels/motor mount on, and the wall plate behind it
+        self.deck_z = cf.z_bot - 0.8                    # deck front face
+        self.wall_z = cf.z_bot - self.plate_t           # actual wall plane
+        # pinion placement at 12 o'clock, from the shared bevel geometry
+        bg = bevel_geom(cf)
+        self.bg = bg
+        self.pin_y0 = bg['x0']                          # big-end plane radius
+        self.pin_z = cf.z_bot + bg['z_p']               # pinion axis z
+
+
+def build_wheel(b):
+    """Idler wheel, local frame (axis +z, wall side at z=0): body cylinder
+    with the groove rib, axle bore through. Print flat, no supports."""
+    w = vcyl(b.wheel_R, 0.0, b.wheel_w, fn=128)
+    rib_z0 = b.rib_lo - b.w_lo
+    w += vcyl(b.wheel_R + b.rib_h, rib_z0, b.rib_w, fn=128)
+    w -= vcyl(b.axle_D / 2.0, -1.0, b.wheel_w + 2.0, fn=64)
+    return w
+
+
+def wheel_at(b, k):
+    cx, cy = b.wheels[k]
+    return build_wheel(b).translate([cx, cy, b.w_lo])
+
+
+def build_plate(b):
+    """The one bracket: wall plate (keyholed) + standoff shell + front deck
+    carrying the wheel axle bosses and the motor pocket at 12 o'clock."""
+    cf = b.cf
+    y0, y1 = cf.Ri - 45.0, b.pin_y0 + 18.0          # radial span at the top
+    x2 = 118.0                                       # half-width, covers wheels
+    sh = 6.0                                         # shell wall
+    body = box(-x2, x2, y0, y1, b.wall_z, b.deck_z)
+    body -= box(-x2 + sh, x2 - sh, y0 + sh, y1 - sh,
+                b.wall_z + b.back_t, b.deck_z - sh)  # hollow the standoff
+    # wheel axle bosses: deck-mounted, captive M6 nut pocket from behind
+    for cx, cy in b.wheels:
+        body += zcyl_at(12.0, b.deck_z - b.wall_z, cx, cy, b.wall_z)
+        body -= zcyl_at(3.4, b.deck_z - b.wall_z + 2.0, cx, cy, b.wall_z - 1.0)
+        R = (10.0 + 0.45) / math.sqrt(3.0)           # M6 nut pocket
+        hx = [(R * math.cos(math.radians(60 * i + 30)),
+               R * math.sin(math.radians(60 * i + 30))) for i in range(6)]
+        body -= (prism(hx, 0.0, 6.0).translate([cx, cy, b.wall_z + 2.0]))
+    # motor pocket: body horizontal (tangential), output shaft down through
+    # the deck at the pinion axis radius
+    pkt = (Manifold.cylinder(b.mot_L + 2.0, b.mot_D / 2.0 + 0.4,
+                             b.mot_D / 2.0 + 0.4, 96)
+           .rotate([0.0, 90.0, 0.0])
+           .translate([-(b.mot_L + 2.0) / 2.0, b.pin_y0 - b.bg['face'] / 2.0,
+                       b.pin_z]))
+    body -= pkt
+    body -= zcyl_at(b.shaft_D / 2.0, b.plate_t, 0.0,
+                    b.pin_y0 - b.bg['face'] / 2.0, b.wall_z - 1.0, fn=48)
+    # wall keyholes in the back plate, slots running upward (gravity seats)
+    for sx in (1.0, -1.0):
+        kx = sx * b.key_gap / 2.0
+        body -= zcyl_at(b.key_D / 2.0, b.back_t + 2.0, kx, y1 - 26.0,
+                        b.wall_z - 1.0, fn=48)
+        body -= box(kx - b.key_d / 2.0, kx + b.key_d / 2.0,
+                    y1 - 26.0, y1 - 12.0, b.wall_z - 1.0,
+                    b.wall_z + b.back_t + 1.0)
+    return body
+
+
+def pinion_at_top(cf, b, backlash=None):
+    """The running pinion in the hanging scene: bevel_geom's mesh frame
+    (contact at plan angle 0, wall face z=0) rotated to 12 o'clock and
+    dropped onto the ring's wall face."""
+    pin, _ = bevel_pinion(cf, backlash=backlash)
+    return (pin.rotate([0.0, -90.0, 0.0])
+               .translate([b.bg['x0'], 0.0, cf.z_bot + b.bg['z_p']])
+               .rotate([0.0, 0.0, 90.0]))
 
 
 def main():
     if not HAVE_MANIFOLD:
         sys.exit("needs manifold3d for STL output:  pip install manifold3d")
-    ap = argparse.ArgumentParser(description="Wafer Halo — static wall bracket")
+    ap = argparse.ArgumentParser(description="Wafer Halo — top idler bracket")
     ap.add_argument('-o', '--out', default='stl')
     for k, v in {**PARAMS, **BRK}.items():
         ap.add_argument(f'--{k}', type=type(v), default=None)
     a = ap.parse_args()
     cf = Cfg(**{k: getattr(a, k) for k in PARAMS if getattr(a, k) is not None})
-    b = dict(BRK)
-    b.update({k: getattr(a, k) for k in BRK if getattr(a, k) is not None})
+    b = Brk(cf, **{k: getattr(a, k) for k in BRK if getattr(a, k) is not None})
     os.makedirs(a.out, exist_ok=True)
 
-    assert cf.grv_d > 0, "segment has no retention groove (grv_d=0) — " \
-        "the saddle nose has nothing to lock into"
-    assert b['nose_r'] < cf.grv_d - 0.2, "nose bottoms out in the groove"
+    assert cf.grv_d > 0, "segment has no inner groove (grv_d=0)"
+    assert b.rib_h < cf.grv_d - 0.2, "rib bottoms out in the groove"
+    assert b.rib_w < cf.grv_h - 0.2, "rib wider than the groove ledge"
 
-    # hanging scene: gravity is -y, saddles at +/-sad_ang from bottom (270)
-    az = [270.0 - b['sad_ang'], 270.0 + b['sad_ang']]
-    sad = build_saddle(cf, b)
-    saddles = [place(sad, q) for q in az]
-    bodies = build_ring(cf)          # list of solids, one per segment
+    plate = build_plate(b)
+    wheels = [wheel_at(b, k) for k in (0, 1)]
+    pin = pinion_at_top(cf, b)
+    bodies = build_ring(cf)
     frame = sum(bodies[1:], bodies[0])
     wafer_list = [build_wafer(cf, k) for k in range(cf.N)]
     wafers = sum(wafer_list[1:], wafer_list[0])
     ring = frame + wafers
-    both = saddles[0] + saddles[1]
+    hardware = plate + wheels[0] + wheels[1] + pin
 
-    W = 17.5  # N, face-gear build: 9 x (128 g Si + 70.3 g PETG sliced)
-    Nn = W / (2.0 * math.cos(math.radians(b['sad_ang'])))
-    print(f"Static bracket  ·  saddles at ±{b['sad_ang']:.0f}° from bottom, "
-          f"seat r{cf.Ro + b['slack']:.2f}, nose {b['nose_r']:.1f} into the "
-          f"{cf.grv_d:.1f}-deep groove")
-    print(f"  load    {W:.1f} N assembly → {Nn:.1f} N per shelf normal; "
-          f"2 screws/saddle, ≥95 N anchors → >10× on hardware")
-    print(f"  hidden  bracket plan radius ≤ {cf.Ro + b['tail']:.0f} mm "
-          f"(wafer coverage to ~410 at the joint meridians)")
-    print(f"  wall    ring floats plate_t = {b['plate_t']:.0f} mm off the wall; "
-          f"future face-drive pinion needs ~26+6 → reprint at plate_t ≥ 32\n")
+    W = 9 * (0.128 + 0.094) * 9.81  # N: 94 g/segment sliced at the outer drive
+    print(f"Top idler bracket  ·  wheels Ø{2*b.wheel_R:.0f} at ±{b.wheel_az:.0f}° "
+          f"from top, bodies on the bore at Ri={cf.Ri:.0f}, ribs in the groove")
+    print(f"  hang    ring hangs on 2 wheels ({W:.1f} N est.); groove rib takes "
+          f"only the tip-off keeper load")
+    print(f"  drive   pinion at 12 o'clock, axis radial, {-b.bg['z_p']:.1f} behind "
+          f"the ring's wall face — hence plate_t = {b.plate_t:.0f} standoff")
+    print(f"  wall    back plate at z = {b.wall_z:.1f}; 2 keyholes {b.key_gap:.0f} "
+          f"apart; motor pocket Ø{b.mot_D + 0.8:.1f} (MEASURE your N20)\n")
 
     EPS = 1e-6
-    mv = lambda s, v: s.translate(list(v))
+    mv = lambda s_, v: s_.translate(list(v))
     checks = [
-        ('saddles vs frame, nominal seat', (both ^ frame).volume(), False),
-        ('saddles vs wafers, nominal',     (both ^ wafers).volume(), False),
-        ('ring dropped 0.4 meets both shelves, L',
-         (mv(ring, (0, -0.4, 0)) ^ saddles[0]).volume(), True),
-        ('ring dropped 0.4 meets both shelves, R',
-         (mv(ring, (0, -0.4, 0)) ^ saddles[1]).volume(), True),
-        ('ring pushed 0.4 to wall meets the plates',
-         (mv(ring, (0, 0, -0.4)) ^ both).volume(), True),
-        ('ring pulled 0.1 off wall still free (retention play)',
-         (mv(ring, (0, 0, 0.1)) ^ both).volume(), False),
-        ('ring pulled 0.5 off wall jams groove ledge on the noses',
-         (mv(ring, (0, 0, 0.5)) ^ both).volume(), True),
-        ('ring raised 5.0 frees the noses from the groove',
-         (mv(ring, (0, 5.0, 0)) ^ both).volume(), False),
-        ('ring raised 5.0 then pulled 4.0 lifts clear',
-         (mv(ring, (0, 5.0, 4.0)) ^ both).volume(), False),
+        ('ring nominal vs plate + pinion (wheels touch by design)',
+         ((plate + pin) ^ ring).volume(), False),
+        ('ring settles -0.3 onto both wheels',
+         min((mv(ring, (0, -0.3, 0)) ^ wheels[0]).volume(),
+             (mv(ring, (0, -0.3, 0)) ^ wheels[1]).volume()), True),
+        ('ring lifted +0.5 comes free of the wheels',
+         (mv(ring, (0, 0.5, 0)) ^ (wheels[0] + wheels[1])).volume(), False),
+        ('ring pulled +0.5 off wall: ribs jam the groove ledge',
+         (mv(ring, (0, 0, 0.5)) ^ (wheels[0] + wheels[1])).volume(), True),
+        # -z has TWO stops: the groove's 45-deg chamfer roof is a ramp the
+        # rib corner wedges against (~0.55 push), and the deck face backs it
+        # up hard at 0.8 — probe past both
+        ('ring pushed -0.8 to wall: rib ramp + deck stop it',
+         (mv(ring, (0, 0, -0.8)) ^ (wheels[0] + wheels[1] + plate)).volume(), True),
+        ('ring +0.1 z still free (axial float)',
+         (mv(ring, (0, 0, 0.1)) ^ (wheels[0] + wheels[1])).volume(), False),
     ]
-    # clocking sweep: the ring is free to rotate in the cradles, and the
-    # wafer undersides sweep low over the saddle footprint — every clocking
-    # must clear. 7 samples cover a full segment period (40 deg).
+    # clocking sweep: the PLATE+WHEELS must clear frame+wafers at any ring
+    # rotation. The pinion is excluded — its teeth only align at conjugate
+    # phases, which segment_stl's gated mesh sweep already covers.
     worst_c = 0.0
     for i in range(1, 7):
-        rr = (ring).rotate([0, 0, i * 40.0 / 7.0])
-        worst_c = max(worst_c, (rr ^ both).volume())
-    checks.append(('clocking sweep (7 over a sector): saddles clear wafers+frame',
+        rr = ring.rotate([0, 0, i * (360.0 / cf.N) / 7.0])
+        worst_c = max(worst_c, (plate ^ rr).volume())
+    checks.append(('clocking sweep (7 over a sector): plate clears the ring',
                    worst_c, False))
-    # install path: straight drop from above (back flush on the plates),
-    # 5 steps — the noses ride into the groove without snagging
-    worst = 0.0
-    for i in range(1, 6):
-        t = i / 5.0
-        worst = max(worst, (mv(ring, (0, 8.0 * t, 0)) ^ both).volume())
-    checks.append(('install: flush drop, up to +8, never snags', worst, False))
 
     ok = True
     print("  checks:")
@@ -204,25 +240,29 @@ def main():
         ok &= good
         print(f"    {'PASS' if good else 'FAIL':4}  {name:58} {v:10.4f}")
 
-    # plan-radius containment (scalar, from the solid's bounds)
-    bb = both.bounding_box()
+    bb = (plate + wheels[0] + wheels[1]).bounding_box()
     rmax = max(math.hypot(bb[0], bb[1]), math.hypot(bb[3], bb[4]),
                math.hypot(bb[0], bb[4]), math.hypot(bb[3], bb[1]))
     good = rmax <= 410.0
     ok &= good
     print(f"    {'PASS' if good else 'FAIL':4}  {'hidden: max plan radius':58} {rmax:10.1f}")
+    good = plate.bounding_box()[2] >= b.wall_z - 1e-6
+    ok &= good
+    print(f"    {'PASS' if good else 'FAIL':4}  {'nothing behind the wall plane':58}")
 
-    dz = -(cf.z_bot - b['plate_t'])  # wall face onto the print bed
-    outs = [('bracket_saddle.stl', [sad.translate([0, 0, dz])],
-             'print x2, wall face down, no supports'),
+    dz = -b.wall_z
+    outs = [('bracket_plate.stl', [plate.translate([0, 0, dz])],
+             'print wall-face down; M6 nut pockets from behind'),
+            ('bracket_wheel.stl', [build_wheel(b)], 'print x2, flat, no supports'),
             ('bracket_fitcheck.stl',
-             bodies + wafer_list + saddles, 'view only, hanging scene')]
+             bodies + wafer_list + [plate, wheels[0], wheels[1], pin],
+             'view only, hanging scene')]
     for fname, solids, note in outs:
-        bodies = write_stl(solids, os.path.join(a.out, fname))
-        v = report(fname, solids, bodies, note)
+        bod = write_stl(solids, os.path.join(a.out, fname))
+        v = report(fname, solids, bod, note)
         if 'fitcheck' not in fname:
             print(f"{'':24}mass  30% infill {v*1.27e-3*0.30:6.1f} g   "
-                  f"solid {v*1.27e-3:6.1f} g   (permanent part — don't starve it)")
+                  f"solid {v*1.27e-3:6.1f} g")
 
     print(f"\n{'ALL CHECKS PASS' if ok else 'CHECK FAILURES ABOVE — do not print'}")
     print(f"Wrote to {os.path.abspath(a.out)}/")

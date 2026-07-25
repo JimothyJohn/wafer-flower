@@ -38,7 +38,7 @@ from segment_stl import (PARAMS, Cfg, build_segment, build_wafer, write_stl,
                          report, wafer_cut, keyhole_z, Manifold, HAVE_MANIFOLD)
 from cure_jig_stl import (JIG, Jig, build_outboard, build_inboard,
                           build_hardware, run_checks)
-from bracket_stl import BRK, build_saddle, place as place_saddle
+from bracket_stl import BRK, Brk, build_plate, wheel_at, pinion_at_top
 
 EPS = 1e-6
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -59,6 +59,13 @@ WAFER_LIFT = 40.0     # placement drop along the wafer plane normal
 SWEEP_STEPS = 5       # positions checked across each stroke (incl. both ends)
 
 
+_BRK_CACHE = {}
+def _brk(cf):
+    if id(cf) not in _BRK_CACHE:
+        _BRK_CACHE[id(cf)] = Brk(cf)
+    return _BRK_CACHE[id(cf)]
+
+
 def build_scene(cf, j):
     """All bodies in scene coordinates, keyed by manifest part name."""
     rod, nut, washer, knob, knob_nut, _ = build_hardware(j)
@@ -72,12 +79,12 @@ def build_scene(cf, j):
         'washer':       (washer,             'rod',      0x6A7078),
         'knob':         (knob,               'rod',      0xD97742),
         'knob_nut':     (knob_nut,           'rod',      0x4A5058),
-        # static wall bracket saddles, placed in the hanging orientation
-        # (gravity -y): shown by the viewers only in ring/halo contexts
-        'saddle_l':     (place_saddle(build_saddle(cf, dict(BRK)), 220.0),
-                         'bracket', 0xB86038),
-        'saddle_r':     (place_saddle(build_saddle(cf, dict(BRK)), 320.0),
-                         'bracket', 0xB86038),
+        # top idler bracket in the hanging orientation (gravity -y):
+        # shown by the viewers only in ring/halo contexts
+        'bracket_plate': (build_plate(_brk(cf)), 'bracket', 0xB86038),
+        'wheel_l':      (wheel_at(_brk(cf), 0),  'bracket', 0x6A7078),
+        'wheel_r':      (wheel_at(_brk(cf), 1),  'bracket', 0x6A7078),
+        'drive_pinion': (pinion_at_top(cf, _brk(cf)), 'bracket', 0xC2497B),
     }
 
 
