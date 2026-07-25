@@ -180,8 +180,8 @@ def build_outboard(j):
     exposed from z1 up to the land). Pegs and the drivetrain are unchanged.
     Capture pegs only: X/Y held, gravity owns Z (see build_inboard)."""
     cf = j.cf
-    tip_front = cf.g_tip * (cf.g_pitch + cf.tmin) / cf.g_pitch
-    xf = tip_front + 4.0                    # feet start beyond the tooth tips
+    tip_max = cf.g_tip * (cf.g_pitch + cf.gear_F) / cf.g_pitch  # big end (wall)
+    xf = tip_max + 4.0                      # feet start beyond the tooth tips
     x1 = j.x_out + 10.0
     deck_lo, deck_hi = cf.z1 + 0.8, -3.5    # over the teeth, under the wafer
     f  = box(cf.Ro, x1, -j.w2, j.w2, deck_lo, deck_hi)                      # deck
