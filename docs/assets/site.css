@@ -56,7 +56,7 @@ footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);font-fa
 
 /* ---- parametric calculator (engineering page) ---- */
 .calc{border:1px solid var(--line);border-radius:4px;background:var(--card);overflow:hidden}
-#viz{width:100%;height:440px;display:block;background:#EEF1F4;cursor:grab;touch-action:none}
+#cviz{width:100%;height:440px;display:block;background:#EEF1F4;cursor:grab;touch-action:none}
 .presets{display:flex;flex-wrap:wrap;gap:7px;padding:11px 20px;border-top:1px solid var(--line);align-items:center}
 .viewbar{border-top:none;border-bottom:1px solid var(--line);justify-content:space-between}
 .viewbar .grp{display:flex;flex-wrap:wrap;gap:7px;align-items:center}

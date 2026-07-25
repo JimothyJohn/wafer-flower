@@ -1,0 +1,517 @@
+// Wafer Halo — live parametric calculator + statics solver + STL export.
+// Shared by index.html (hub, "design on the fly") and engineering.html.
+// Expects the calculator markup block: canvas#cviz, #alert, #viewnote,
+// the i_*/o_* sliders, r_*/s_* readouts, and the STL bar (#b_stl, #cadcmd,
+// #b_copy). Self-contained (no fetch) — works under file:// as-is.
+'use strict';
+(function(){
+// ---- units: mm, N, MPa, g(mass), K ----
+const G_ACC=9.81;                      // m/s^2
+const SI ={rho:2.329e-3, E:130000, cte:2.6e-6};   // g/mm3, MPa, /K
+const PET={rho:1.270e-3, E:2000, allow:20, cte:60e-6};
+const CLR=3;                           // neighbor clearance, mm
+const DT_W=16, PLATE=0.922;            // dovetail wide width; plate stiffening (1-nu^2)
+const HOLE_D=6.5, GEAR_M=2, GEAR_FW=8;  // M6 keyhole bore; gear module; slot band width
+
+// FACE gear (2026-07-24): the teeth are axial SLOTS in the flange's wall
+// face, so the spur pinion drives on a radial axis behind the ring (motor
+// flat against the wall). The flange is a plain annulus, tmin thick, from
+// fi = pitch - fw/2 - 2 out to Ri. Tooth count MUST still divide by N or
+// the slot pattern breaks at the joints.
+function gearSpec(){
+  const target=P.Ri-5;                                   // pitch sits just inboard of the band
+  const tps=Math.max(8,Math.round(2*target/GEAR_M/P.N)); // slots per segment, integer
+  const T=tps*P.N, rp=T*GEAR_M/2;
+  return {tps:tps, T:T, rp:rp, band_i:rp-GEAR_FW/2, band_o:rp+GEAR_FW/2,
+          fi:rp-GEAR_FW/2-2, m:GEAR_M};
+}
+
+const canvas=document.getElementById('cviz');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0xEEF1F4);
+const camera=new THREE.PerspectiveCamera(40,2,1,8000);
+scene.add(new THREE.AmbientLight(0xffffff,0.55));
+const key=new THREE.DirectionalLight(0xffffff,0.7); key.position.set(400,600,800); scene.add(key);
+const fill=new THREE.DirectionalLight(0xffffff,0.3); fill.position.set(-500,-200,400); scene.add(fill);
+
+let az=0.6, pol=1.05, dist=1500, group=new THREE.Group(); scene.add(group);
+let view='assembly', autoDist=true;   // autoDist stops honouring the fit once you zoom by hand
+function placeCam(){
+  camera.position.set(dist*Math.sin(pol)*Math.cos(az), dist*Math.sin(pol)*Math.sin(az), dist*Math.cos(pol));
+  camera.up.set(0,0,1); camera.lookAt(0,0,0);
+}
+let drag=false,px=0,py=0;
+canvas.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-px)*0.008;pol=Math.min(2.6,Math.max(0.3,pol-(e.clientY-py)*0.008));px=e.clientX;py=e.clientY;placeCam();});
+canvas.addEventListener('pointerup',()=>drag=false);
+canvas.addEventListener('wheel',e=>{e.preventDefault();autoDist=false;dist=Math.min(5000,Math.max(120,dist*(1+e.deltaY*0.001)));placeCam();},{passive:false});
+
+const P={D:300,wt:0.775,N:9,tilt:10,R:350,Ri:248,bw:55,tmin:6,bond:1.1,G:0.06,dT:20,dens:45};
+const WR=()=>P.D/2, SEG=()=>2*Math.PI/P.N, HALF=()=>Math.PI/P.N;
+
+// z of wafer k's MID-plane at global (x,y): plane through the pitch point, tilted th about its radial axis
+function planeZ(x,y,k,th){
+  const a=k*SEG(), tl=-Math.sin(a)*(x-P.R*Math.cos(a))+Math.cos(a)*(y-P.R*Math.sin(a));
+  return tl*Math.tan(th);
+}
+function inFootprint(x,y,k,th){                 // inside wafer k's projected ellipse
+  const a=k*SEG(), c=Math.cos(a), s=Math.sin(a);
+  const xr=c*x+s*y-P.R, yt=(-s*x+c*y)/Math.cos(th);
+  return (xr*xr+yt*yt)<=WR()*WR();
+}
+function hideWindow(th){                        // radial coverage range at the joint meridian
+  const m=HALF(), b=WR()*Math.cos(th);
+  const f=p=>Math.pow((p*Math.cos(m)-P.R)/WR(),2)+Math.pow(p*Math.sin(m)/b,2)-1;
+  const bis=(lo,hi)=>{for(let i=0;i<60;i++){const md=(lo+hi)/2;(f(lo)*f(md)<=0)?hi=md:lo=md;}return (lo+hi)/2;};
+  return [bis(Math.max(1,P.R-WR()),P.R), bis(P.R,P.R+WR())];
+}
+
+// ---- land patch: area, centroid, section modulus, farthest bond point ----
+// Integrated on the same rule the mesh uses, so the clearance cut is reflected in the statics.
+function landStats(th,zBot){
+  const Ro=P.Ri+P.bw, H=HALF(), NR=48, NA=120;
+  const drho=P.bw/NR, da=2*H/NA, cells=[];
+  let A=0,Su=0,Sv=0;
+  for(let i=0;i<NR;i++)for(let j=0;j<NA;j++){
+    const rho=P.Ri+drho*(i+0.5), a=-H+da*(j+0.5);
+    const x=rho*Math.cos(a), y=rho*Math.sin(a);
+    if(!inFootprint(x,y,0,th)) continue;
+    const zOwn=planeZ(x,y,0,th)-P.wt/2-P.bond;
+    if(inFootprint(x,y,1,th) && planeZ(x,y,1,th)-P.wt/2-CLR < zOwn) continue;  // clearance cut kills it
+    if(zOwn<=zBot+1.001) continue;                                            // no material under it
+    const dA=rho*drho*da;
+    const u=x-P.R, v=y/Math.cos(th);   // in the wafer plane, origin at the wafer centre
+    A+=dA; Su+=u*dA; Sv+=v*dA; cells.push([u,v,dA]);
+  }
+  if(A<=0) return null;
+  const cu=Su/A, cv=Sv/A, d=Math.hypot(cu,cv);
+  const ex=d>1e-9?-cu/d:1, ey=d>1e-9?-cv/d:0;   // toward the wafer CG; peel axis is perpendicular
+  let I=0,cmax=0,Lmax=0;
+  for(const c of cells){
+    const s=(c[0]-cu)*ex+(c[1]-cv)*ey;
+    I+=s*s*c[2]; if(Math.abs(s)>cmax)cmax=Math.abs(s);
+    const L=Math.hypot(c[0]-cu,c[1]-cv); if(L>Lmax)Lmax=L;
+  }
+  return {A:A,cu:cu,cv:cv,d:d,S:cmax>0?I/cmax:1e-9,Lmax:Lmax,rc:Math.hypot(P.R+cu,cv)};
+}
+
+// Shared with the STL export: the segment's top surface rule and base plane.
+function geoCtx(){
+  const th=P.tilt*Math.PI/180, Ro=P.Ri+P.bw, H=HALF();
+  const yMax=Ro*Math.sin(H);
+  const zBot=-(yMax*Math.tan(th)+P.bond+P.tmin);
+  const topZ=(x,y)=>{
+    if(!inFootprint(x,y,0,th)) return zBot+2;
+    let z=planeZ(x,y,0,th)-P.wt/2-P.bond;
+    if(inFootprint(x,y,1,th)) z=Math.min(z, planeZ(x,y,1,th)-P.wt/2-CLR);
+    return Math.max(z,zBot+1);
+  };
+  return {th,Ro,H,yMax,zBot,topZ};
+}
+
+function buildScene(){
+  while(group.children.length) group.remove(group.children[0]);
+  const {th,Ro,H,yMax,zBot,topZ}=geoCtx(), N=P.N;
+  // ---- segment mesh ----
+  // Top vertices are colour-coded so the "Frame only" view shows where the land
+  // actually survives: teal = bondable, clay = removed by the neighbour-clearance cut.
+  const NR=24, NA=96, pos=[], idx=[], col=[];
+  const hx=(P.Ri+Ro)/2, hr=HOLE_D/2;   // jig screw bore, mid-band on the segment centreline
+  const C_LAND=[0.078,0.490,0.455], C_CUT=[0.62,0.30,0.26], C_BODY=[0.200,0.220,0.240];
+  const classify=(x,y)=>{
+    if(!inFootprint(x,y,0,th)) return C_BODY;
+    const zOwn=planeZ(x,y,0,th)-P.wt/2-P.bond;
+    if(inFootprint(x,y,1,th) && planeZ(x,y,1,th)-P.wt/2-CLR < zOwn) return C_CUT;
+    if(zOwn<=zBot+1.001) return C_BODY;
+    return C_LAND;
+  };
+  const segMat=new THREE.MeshPhongMaterial({color:0xffffff,vertexColors:true,shininess:12,side:THREE.DoubleSide});
+  for(let i=0;i<=NR;i++)for(let j=0;j<=NA;j++){
+    const rho=P.Ri+P.bw*i/NR, a=-H+2*H*j/NA;
+    const x=rho*Math.cos(a), y=rho*Math.sin(a);
+    pos.push(x,y,topZ(x,y)); col.push(...classify(x,y));
+  }
+  const base=pos.length/3;
+  for(let i=0;i<=NR;i++)for(let j=0;j<=NA;j++){
+    const rho=P.Ri+P.bw*i/NR, a=-H+2*H*j/NA;
+    pos.push(rho*Math.cos(a),rho*Math.sin(a),zBot); col.push(...C_BODY);
+  }
+  const quad=(a,b,c,d)=>{idx.push(a,b,c,a,c,d);};
+  for(let i=0;i<NR;i++)for(let j=0;j<NA;j++){
+    const rho=P.Ri+P.bw*(i+0.5)/NR, aa=-H+2*H*(j+0.5)/NA;
+    if(Math.hypot(rho*Math.cos(aa)-hx, rho*Math.sin(aa))<hr) continue;   // open the jig bore
+    const A=i*(NA+1)+j;
+    quad(A,A+1,A+NA+2,A+NA+1);
+    const B=base+A; quad(B+NA+1,B+NA+2,B+1,B);
+  }
+  for(let j=0;j<NA;j++){
+    const A=j,B=base+j; quad(B,B+1,A+1,A);
+    const C=NR*(NA+1)+j,D=base+NR*(NA+1)+j; quad(C,C+1,D+1,D);
+  }
+  for(let i=0;i<NR;i++){
+    const A=i*(NA+1),B=base+i*(NA+1); quad(A,A+NA+1,B+NA+1,B);
+    const C=i*(NA+1)+NA,D=base+i*(NA+1)+NA; quad(D,D+NA+1,C+NA+1,C);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  g.setIndex(idx); g.computeVertexNormals();
+  // ---- jig screw bore wall ----
+  const boreTop=topZ(hx,0), boreH=Math.max(1,boreTop-zBot);
+  const boreGeo=new THREE.CylinderGeometry(hr,hr,boreH,20,1,true);
+  const boreMat=new THREE.MeshPhongMaterial({color:0x1A1D20,shininess:4,side:THREE.DoubleSide});
+
+  // ---- face-gear flange: plain annulus, tmin thick (slots live in the
+  // wall face and are invisible from the front -- not modelled here) ----
+  const G=gearSpec();
+  const fPos=[], fIdx=[], NF=Math.max(64,G.tps*4);
+  for(let j=0;j<=NF;j++){
+    const a=-H+2*H*j/NF, ri=G.fi, ro=P.Ri;
+    const c=Math.cos(a), s=Math.sin(a);
+    fPos.push(ri*c,ri*s,zBot+P.tmin, ro*c,ro*s,zBot+P.tmin,
+              ri*c,ri*s,zBot,         ro*c,ro*s,zBot);
+  }
+  const fq=(a,b,c,d)=>{fIdx.push(a,b,c,a,c,d);};
+  for(let j=0;j<NF;j++){
+    const A=j*4, B=(j+1)*4;
+    fq(A,A+1,B+1,B);           // top
+    fq(A+3,A+2,B+2,B+3);       // bottom
+    fq(A+2,A,B,B+2);           // inner wall
+    fq(A+1,A+3,B+3,B+1);       // outer wall
+  }
+  const fGeo=new THREE.BufferGeometry();
+  fGeo.setAttribute('position',new THREE.Float32BufferAttribute(fPos,3));
+  fGeo.setIndex(fIdx); fGeo.computeVertexNormals();
+  const fMat=new THREE.MeshPhongMaterial({color:0x4A5560,shininess:30,side:THREE.DoubleSide});
+
+  // ---- place per view ----
+  const nSeg = (view==='assembly') ? N : 1;
+  const nWaf = (view==='assembly') ? N : (view==='station' ? 1 : 0);
+  for(let k=0;k<nSeg;k++){
+    const m=new THREE.Mesh(g,segMat); m.rotation.z=k*SEG(); group.add(m);
+    const fl=new THREE.Mesh(fGeo,fMat); fl.rotation.z=k*SEG(); group.add(fl);
+    const bo=new THREE.Mesh(boreGeo,boreMat); bo.rotation.x=Math.PI/2;
+    const bp=new THREE.Group(); bp.add(bo); bp.position.set(hx,0,zBot+boreH/2);
+    const bq=new THREE.Group(); bq.add(bp); bq.rotation.z=k*SEG(); group.add(bq);
+  }
+  const wg=new THREE.CylinderGeometry(WR(),WR(),P.wt,72);
+  const wm=new THREE.MeshPhongMaterial({color:0xA8B2BB,shininess:95,specular:0x8899AA});
+  for(let k=0;k<nWaf;k++){
+    const w=new THREE.Mesh(wg,wm); w.rotation.x=Math.PI/2;
+    const p=new THREE.Group(); p.add(w); p.position.set(P.R,0,0); p.rotation.x=th;
+    const q=new THREE.Group(); q.add(p); q.rotation.z=k*SEG();
+    group.add(q);
+  }
+  frameView(th,zBot,Ro,H);
+  viewNote();
+  readouts(th,zBot,Ro,yMax,topZ);
+  document.getElementById('cadcmd').textContent=cadCmd();
+}
+
+// Recentre the group on whatever the current view is showing and pick a sane
+// camera distance. Orbit angles are preserved across view changes.
+function frameView(th,zBot,Ro,H){
+  const r=WR(); let cx=0,cz=0,extent;
+  if(view==='assembly'){
+    extent=P.R+r*Math.cos(th);
+  }else if(view==='station'){
+    cx=P.R; cz=0; extent=r*1.15;
+  }else{
+    cx=(P.Ri+Ro)/2; cz=zBot/2;
+    extent=Math.max(P.bw, 2*Ro*Math.sin(H))*0.72;
+  }
+  group.position.set(-cx,0,-cz);
+  if(autoDist){
+    dist=extent/Math.tan(camera.fov*Math.PI/360)*1.25;
+    placeCam();
+  }
+}
+
+function readouts(th,zBot,Ro,yMax,topZ){
+  const H=HALF(), N=P.N, r=WR(), set=(id,v,cls)=>{const e=document.getElementById(id);e.textContent=v;e.className='v'+(cls?' '+cls:'');};
+  const alerts=[];
+  // ---------- geometry ----------
+  const hw=hideWindow(th), hi=hw[0], ho=hw[1];
+  const chord=2*P.R*Math.sin(H);
+  const bandOK=(P.Ri>=hi-0.5)&&(Ro<=ho+0.5);
+  const overlap=2*r*Math.cos(th)-chord;
+  let lead=H;
+  for(let a=0;a<=H;a+=0.002){
+    const rho=(P.Ri+Ro)/2, x=rho*Math.cos(a), y=rho*Math.sin(a);
+    if(inFootprint(x,y,1,th)){lead=a;break;}
+  }
+  set('r_od',(2*(P.R+r*Math.cos(th))).toFixed(0)+' mm');
+  set('r_depth',(2*r*Math.sin(th)+P.wt).toFixed(1)+' mm');
+  set('r_swing','±'+(r*Math.sin(th)).toFixed(1)+' mm');
+  set('r_hide',hi.toFixed(0)+' – '+ho.toFixed(0)+' mm');
+  set('r_bandok',bandOK?'HIDDEN ✓':'FRAME VISIBLE ✗',bandOK?'ok':'bad');
+  set('r_ovl',overlap.toFixed(1)+' mm',overlap>5?'ok':'bad');
+  set('r_gap',(2*hi*Math.sin(H)*Math.tan(th)).toFixed(1)+' mm');
+  set('r_tmax',(P.tmin+2*yMax*Math.tan(th)+P.bond).toFixed(1)+' mm');
+  set('r_land',((H+lead)*180/Math.PI).toFixed(0)+'° of '+(360/N).toFixed(0)+'°');
+  const G=gearSpec(), gearHidden=G.fi>=hi;
+  set('r_gear',G.tps+'×'+N+' = '+G.T+' slots, Ø'+(2*G.rp).toFixed(0)+' band '+G.band_i.toFixed(0)+'–'+G.band_o.toFixed(0));
+  set('r_gearok',(gearHidden?'HIDDEN ✓ +':'VISIBLE ✗ ')+(G.fi-hi).toFixed(0)+' mm',gearHidden?'ok':'bad');
+  if(!gearHidden) alerts.push('⚠ Flange inner edge at r='+G.fi.toFixed(0)+' falls inside the hide window ('+hi.toFixed(0)+') — it will show through the centre. Raise Ri or use a finer module.');
+  if(!bandOK) alerts.push('⚠ Band ['+P.Ri.toFixed(0)+'–'+Ro.toFixed(0)+'] exits hide window ['+hi.toFixed(0)+'–'+ho.toFixed(0)+'] — frame shows at the joints.');
+  if(overlap<=0) alerts.push('⚠ No neighbor overlap ('+overlap.toFixed(1)+' mm): wafers do not swirl. Reduce R or N, or raise Ø.');
+
+  // ---------- statics ----------
+  const L=landStats(th,zBot);
+  const m_w=SI.rho*Math.PI*r*r*P.wt;                       // g
+  const W_w=m_w*G_ACC/1000;                                // N
+  // printed segment mass: integrate (top - bottom) over the sector
+  let vol=0; { const NRv=40,NAv=80,drho=P.bw/NRv,da=2*H/NAv;
+    for(let i=0;i<NRv;i++)for(let j=0;j<NAv;j++){
+      const rho=P.Ri+drho*(i+0.5), a=-H+da*(j+0.5);
+      vol+=(topZ(rho*Math.cos(a),rho*Math.sin(a))-zBot)*rho*drho*da;
+    } }
+  // the jig bore removes material; the gear flange adds it
+  const hxv=(P.Ri+Ro)/2;
+  vol-=Math.PI*Math.pow(HOLE_D/2,2)*Math.max(0,topZ(hxv,0)-zBot);
+  // face-gear flange: annulus fi..Ri, tmin thick, minus the tooth slots
+  // (tps trapezoid slots, avg section ~4.2*m^2, length fw+4)
+  const Gv=gearSpec();
+  const aFlange=0.5*(P.Ri*P.Ri-Gv.fi*Gv.fi)*2*H;
+  vol+=aFlange*P.tmin - Gv.tps*4.2*GEAR_M*GEAR_M*(GEAR_FW+4);
+  const rin=Gv.fi;
+  // Printed mass, slicer-calibrated (OrcaSlicer 0.20mm Standard, 4 walls,
+  // Generic PETG): a solid skin ~T_SKIN mm thick over the part surface plus
+  // sparse infill at K_INF x the nominal density. NOT rho*V*density — that
+  // uniform model misses the solid shells and under-reads every segment in
+  // this design's size range. Constants fitted to sliced segments and
+  // held to +/-3% against slicer output over 35-425 cm3 (scripts/slice.py).
+  const T_SKIN=1.05, K_INF=0.92;
+  const aFoot=0.5*(Ro*Ro-P.Ri*P.Ri)*2*H+aFlange;
+  const perim=2*H*(Ro+rin)+2*(Ro-rin);
+  const aEst=2*aFoot+perim*(vol/aFoot);
+  const vSkin=Math.min(vol,T_SKIN*aEst);
+  const m_f=PET.rho*(vSkin+K_INF*(P.dens/100)*(vol-vSkin));
+  const m_tot=N*(m_w+m_f), W_tot=m_tot*G_ACC/1000;
+
+  set('s_wm',m_w.toFixed(1)+' g / '+W_w.toFixed(2)+' N');
+  set('s_fm',m_f.toFixed(0)+' g');
+  set('s_tot',(m_tot/1000).toFixed(2)+' kg / '+W_tot.toFixed(1)+' N');
+
+  if(!L){
+    ['r_area','s_off','s_tau','s_peel','s_th','s_gam','s_ovh','s_droop','s_sig'].forEach(id=>set(id,'no land','bad'));
+    alerts.push('⚠ Bond land is empty — the clearance cut removed all of it. Move the band inboard or reduce θ.');
+  } else {
+    const W_n=W_w*Math.sin(th), W_s=W_w*Math.cos(th);
+    const tau=W_s/L.A*1000;                                // kPa
+    const peel=(W_n*L.d)/L.S*1000;                         // kPa
+    const slip=(PET.cte-SI.cte)*P.dT*L.Lmax;               // mm
+    const gam=slip/P.bond;
+    const tau_th=P.G*gam*1000;                             // kPa
+    set('r_area',(L.A/100).toFixed(0)+' cm²');
+    set('s_off',L.d.toFixed(0)+' mm (land r='+L.rc.toFixed(0)+')', L.d<15?'ok':(L.d<60?'warn':'bad'));
+    set('s_tau',tau.toFixed(2)+' kPa','ok');
+    set('s_peel',peel.toFixed(2)+' kPa',peel<10?'ok':(peel<40?'warn':'bad'));
+    set('s_th',tau_th.toFixed(1)+' kPa',tau_th<20?'ok':(tau_th<80?'warn':'bad'));
+    set('s_gam',(gam*100).toFixed(1)+' %',gam<0.15?'ok':(gam<0.3?'warn':'bad'));
+    if(tau_th>80) alerts.push('⚠ Thermal shear '+tau_th.toFixed(0)+' kPa — bondline too thin or too stiff for this land size. Thicker/softer bond, or shrink the land.');
+    // wafer overhang, outboard of the land's outer edge
+    const Lo=Math.max(0,(P.R+r)-Ro);
+    const q=SI.rho*P.wt*G_ACC*1e-3;                        // N/mm2 at 1 g
+    const Sm=P.wt*P.wt/6, Im=Math.pow(P.wt,3)/12;
+    const sigFlat=q*Lo*Lo/2/Sm, sigHung=sigFlat*Math.sin(th);
+    const dFlat=q*Math.pow(Lo,4)/(8*SI.E*Im)*PLATE, dHung=dFlat*Math.sin(th);
+    set('s_ovh',Lo.toFixed(0)+' mm');
+    set('s_droop',dHung.toFixed(2)+' / '+dFlat.toFixed(2)+' mm',dHung<CLR/3?'ok':'warn');
+    set('s_sig',sigHung.toFixed(2)+' / '+sigFlat.toFixed(2)+' MPa',sigFlat<10?'ok':'warn');
+    if(dHung>CLR/3) alerts.push('⚠ Tip droop '+dHung.toFixed(2)+' mm eats >1/3 of the '+CLR+' mm neighbor clearance. Move the band outboard.');
+  }
+  // ring hang: conservative curved-cantilever bound, single top anchor
+  const M_j=W_tot*P.R/Math.PI;                             // N·mm
+  const S_j=P.tmin*DT_W*DT_W/6;
+  const sig_j=M_j/S_j, marg=PET.allow/sig_j;
+  set('s_mj',(M_j/1000).toFixed(2)+' N·m');
+  set('s_dt',sig_j.toFixed(1)+' MPa / '+marg.toFixed(1)+'×',marg>4?'ok':(marg>2?'warn':'bad'));
+  if(marg<2) alerts.push('⚠ Dovetail margin '+marg.toFixed(1)+'× on a single-point hang — use two dovetails per face or two hang points.');
+  // out-of-plane CG (frame centroid sits below the wafer plane)
+  const zcg=(N*m_f*(zBot/2)+N*m_w*(-P.wt/2))/(m_tot||1);
+  set('s_zcg',zcg.toFixed(1)+' mm / '+(W_tot*Math.abs(zcg)/1000).toFixed(2)+' N·m');
+
+  const al=document.getElementById('alert');
+  if(alerts.length){al.style.display='block';al.innerHTML=alerts.map(a=>'<div>'+a+'</div>').join('');}
+  else al.style.display='none';
+}
+
+// ---- STL generation from the current values -----------------------------
+// The authoritative CAD command, mirroring the sliders onto segment_stl.py's
+// flags (every PARAMS entry there is a CLI flag).
+function cadCmd(){
+  const f=v=>String(+(+v).toFixed(3));
+  return 'python scripts/segment_stl.py --N '+P.N+' --wafer_D '+f(P.D)+
+    ' --wafer_T '+f(P.wt)+' --theta '+f(P.tilt)+' --R '+f(P.R)+' --Ri '+f(P.Ri)+
+    ' --bw '+f(P.bw)+' --tmin '+f(P.tmin)+' --bond '+f(P.bond);
+}
+// Preview solid: the same sector grid the scene renders, but with the bore
+// quads kept (closed top/bottom), plus the gear flange overlapped 2 mm into
+// the band so slicers union the two shells. No dovetails/keyhole/pocket —
+// those only exist in the manifold3d CAD.
+function exportBodies(){
+  const {H,zBot,topZ}=geoCtx();
+  const NR=32, NA=128, pos=[], idx=[];
+  for(let pass=0;pass<2;pass++)
+    for(let i=0;i<=NR;i++)for(let j=0;j<=NA;j++){
+      const rho=P.Ri+P.bw*i/NR, a=-H+2*H*j/NA;
+      const x=rho*Math.cos(a), y=rho*Math.sin(a);
+      pos.push(x,y,pass?zBot:topZ(x,y));
+    }
+  const base=(NR+1)*(NA+1);
+  const quad=(a,b,c,d)=>{idx.push(a,b,c,a,c,d);};
+  for(let i=0;i<NR;i++)for(let j=0;j<NA;j++){
+    const A=i*(NA+1)+j;
+    quad(A,A+1,A+NA+2,A+NA+1);
+    const B=base+A; quad(B+NA+1,B+NA+2,B+1,B);
+  }
+  for(let j=0;j<NA;j++){
+    const A=j,B=base+j; quad(B,B+1,A+1,A);
+    const C=NR*(NA+1)+j,D=base+NR*(NA+1)+j; quad(C,C+1,D+1,D);
+  }
+  for(let i=0;i<NR;i++){
+    const A=i*(NA+1),B=base+i*(NA+1); quad(A,A+NA+1,B+NA+1,B);
+    const C=i*(NA+1)+NA,D=base+i*(NA+1)+NA; quad(D,D+NA+1,C+NA+1,C);
+  }
+  const G=gearSpec(), fPos=[], fIdx=[], NF=Math.max(64,G.tps*4);
+  const ro=Math.min(P.Ri+2,P.Ri+P.bw);          // overlap into the band
+  for(let j=0;j<=NF;j++){
+    const a=-H+2*H*j/NF, ri=G.fi;
+    const c=Math.cos(a), s=Math.sin(a);
+    fPos.push(ri*c,ri*s,zBot+P.tmin, ro*c,ro*s,zBot+P.tmin,
+              ri*c,ri*s,zBot,         ro*c,ro*s,zBot);
+  }
+  const fq=(a,b,c,d)=>{fIdx.push(a,b,c,a,c,d);};
+  for(let j=0;j<NF;j++){
+    const A=j*4, B=(j+1)*4;
+    fq(A,A+1,B+1,B); fq(A+3,A+2,B+2,B+3); fq(A+2,A,B,B+2); fq(A+1,A+3,B+3,B+1);
+  }
+  return [{pos,idx},{pos:fPos,idx:fIdx}];
+}
+// Orient a closed shell outward: consistent winding + positive signed volume.
+function orient(body){
+  let v6=0; const p=body.pos, ix=body.idx;
+  for(let i=0;i<ix.length;i+=3){
+    const a=ix[i]*3,b=ix[i+1]*3,c=ix[i+2]*3;
+    v6+=p[a]*(p[b+1]*p[c+2]-p[b+2]*p[c+1])
+       -p[a+1]*(p[b]*p[c+2]-p[b+2]*p[c])
+       +p[a+2]*(p[b]*p[c+1]-p[b+1]*p[c]);
+  }
+  if(v6<0) for(let i=0;i<ix.length;i+=3){const t=ix[i+1];ix[i+1]=ix[i+2];ix[i+2]=t;}
+}
+function downloadSTL(){
+  const bodies=exportBodies(); bodies.forEach(orient);
+  const tris=bodies.reduce((n,b)=>n+b.idx.length/3,0);
+  const buf=new ArrayBuffer(84+50*tris), dv=new DataView(buf);
+  const hdr='Wafer Halo segment preview '+cadCmd().slice(7,86);
+  for(let i=0;i<Math.min(80,hdr.length);i++) dv.setUint8(i,hdr.charCodeAt(i)&0x7F);
+  dv.setUint32(80,tris,true);
+  let o=84;
+  for(const b of bodies){
+    const p=b.pos, ix=b.idx;
+    for(let i=0;i<ix.length;i+=3){
+      const a=ix[i]*3,c2=ix[i+1]*3,c3=ix[i+2]*3;
+      const ux=p[c2]-p[a],uy=p[c2+1]-p[a+1],uz=p[c2+2]-p[a+2];
+      const vx=p[c3]-p[a],vy=p[c3+1]-p[a+1],vz=p[c3+2]-p[a+2];
+      let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+      const l=Math.hypot(nx,ny,nz)||1; nx/=l;ny/=l;nz/=l;
+      dv.setFloat32(o,nx,true);dv.setFloat32(o+4,ny,true);dv.setFloat32(o+8,nz,true);
+      for(let v=0;v<3;v++){const q=[a,c2,c3][v];
+        dv.setFloat32(o+12+v*12,p[q],true);
+        dv.setFloat32(o+16+v*12,p[q+1],true);
+        dv.setFloat32(o+20+v*12,p[q+2],true);}
+      dv.setUint16(o+48,0,true); o+=50;
+    }
+  }
+  const blob=new Blob([buf],{type:'model/stl'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='halo_segment_preview_N'+P.N+'_th'+P.tilt+'_Ri'+P.Ri+'_bw'+P.bw+'_tmin'+P.tmin+'.stl';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+document.getElementById('b_stl').addEventListener('click',downloadSTL);
+document.getElementById('b_copy').addEventListener('click',()=>{
+  const btn=document.getElementById('b_copy');
+  const done=()=>{btn.textContent='Copied ✓';setTimeout(()=>btn.textContent='Copy',1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(cadCmd()).then(done,()=>{});
+  else{const r=document.createRange();r.selectNode(document.getElementById('cadcmd'));
+    const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');
+    s.removeAllRanges();done();}
+});
+
+// ---- controls ----
+const FMT={N:v=>v,tilt:v=>v+'°',R:v=>v,Ri:v=>v,bw:v=>v,tmin:v=>v,bond:v=>v.toFixed(1),G:v=>v.toFixed(2),dT:v=>v+' K',dens:v=>v+'%'};
+const IDS=['N','tilt','R','Ri','bw','tmin','bond','G','dT','dens'];
+IDS.forEach(k=>{
+  const el=document.getElementById('i_'+k);
+  el.addEventListener('input',()=>{P[k]=parseFloat(el.value);document.getElementById('o_'+k).textContent=FMT[k](P[k]);buildScene();});
+});
+function sync(){
+  IDS.forEach(k=>{const el=document.getElementById('i_'+k);el.value=P[k];document.getElementById('o_'+k).textContent=FMT[k](P[k]);});
+}
+function rescaleRanges(){
+  const r=WR();
+  const iR=document.getElementById('i_R'); iR.min=Math.round(r*0.6); iR.max=Math.round(r*2.2);
+  const iRi=document.getElementById('i_Ri'); iRi.min=Math.round(r*0.3); iRi.max=Math.round(r*2.5);
+  const ibw=document.getElementById('i_bw'); ibw.max=Math.round(r*0.6);
+}
+document.querySelectorAll('button.pz[data-d]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('button.pz[data-d]').forEach(x=>x.classList.remove('act'));
+    b.classList.add('act');
+    P.D=parseFloat(b.dataset.d); P.wt=parseFloat(b.dataset.t);
+    const th=P.tilt*Math.PI/180;
+    P.R=Math.round(0.81*WR()*Math.cos(th)/Math.sin(HALF())/5)*5;   // 81% of the max-overlap radius
+    rescaleRanges(); fitHide(); sync(); buildScene();
+  });
+});
+function fitHide(){
+  const th=P.tilt*Math.PI/180, hw=hideWindow(th);
+  P.Ri=Math.round(hw[0]+8);
+  P.bw=Math.max(25,Math.round((hw[1]-hw[0])*0.32/5)*5);
+}
+function fitBalanced(){                          // centre the band under the wafer CG
+  const th=P.tilt*Math.PI/180, hw=hideWindow(th);
+  P.bw=Math.max(25,Math.min(Math.round((hw[1]-hw[0])*0.32/5)*5, Math.round((hw[1]-hw[0])*0.9/5)*5));
+  P.Ri=Math.round(Math.min(Math.max(P.R-P.bw/2,hw[0]+2),hw[1]-P.bw-2));
+}
+document.querySelectorAll('button.pz[data-view]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('button.pz[data-view]').forEach(x=>x.classList.remove('act'));
+    b.classList.add('act');
+    view=b.dataset.view; autoDist=true; buildScene();
+  });
+});
+function viewNote(){
+  const el=document.getElementById('viewnote'), r=WR(), Ro=P.Ri+P.bw;
+  const sw=c=>'<span class="swatch" style="background:'+c+'"></span>';
+  if(view==='assembly')
+    el.innerHTML='All '+P.N+' segments and wafers as assembled. Each wafer is bonded to one identical segment.';
+  else if(view==='station')
+    el.innerHTML='One segment with its wafer — the unit you bond on the bench. <b>'+
+      Math.max(0,(P.R+r)-Ro).toFixed(0)+' mm</b> of wafer overhangs the band outboard, and <b>'+
+      Math.max(0,P.Ri-(P.R-r)).toFixed(0)+' mm</b> inboard.';
+  else
+    el.innerHTML=sw('#147D74')+'bondable land &nbsp; '+sw('#9E4D42')+
+      'removed by the neighbour-clearance cut &nbsp; '+sw('#33383D')+'structure';
+}
+document.getElementById('b_hide').addEventListener('click',()=>{fitHide();rescaleRanges();sync();buildScene();});
+document.getElementById('b_bal').addEventListener('click',()=>{fitBalanced();rescaleRanges();sync();buildScene();});
+// The shipped Rev B.3 parameter set (scripts/segment_stl.py defaults).
+document.getElementById('b_b3').addEventListener('click',()=>{
+  P.D=300; P.wt=0.775; P.N=9; P.tilt=5; P.R=350; P.Ri=255; P.bw=30; P.tmin=10; P.bond=1.1;
+  document.querySelectorAll('button.pz[data-d]').forEach(x=>x.classList.toggle('act',x.dataset.d==='300'));
+  rescaleRanges(); sync(); buildScene();
+});
+
+function resize(){
+  const w=canvas.clientWidth,h=canvas.clientHeight;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize',resize);
+rescaleRanges(); sync(); resize(); placeCam(); buildScene();
+(function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);})();
+})();
