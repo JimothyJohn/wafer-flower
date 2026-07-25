@@ -42,7 +42,7 @@
    "name": "segment",
    "group": "segment",
    "color": "#B9A87E",
-   "volume_cm3": 94.97
+   "volume_cm3": 95.509
   },
   {
    "file": "wafer.stl",
@@ -238,7 +238,7 @@
   {
    "group": "assembly",
    "name": "segments butt at the joint (0.1 deg nudge contacts)",
-   "value_mm3": 90.1007,
+   "value_mm3": 108.024,
    "pass": true
   }
  ]
