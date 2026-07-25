@@ -16,8 +16,9 @@ assembly examination — Nick asked for it 2026-07-22).
 
 Outputs (stl/step/):
     segment.stp  wafer.stp  pinion.stp  bracket_saddle.stp
-    halo_static_assembly.stp  — 9 segments + 9 wafers + 2 bracket saddles,
-                                every body named, in scene coords
+    (no assembly file since the generated bevel teeth — nine 24k-triangle
+    segments exceed GitHub's 100 MB limit as planar-face STEP; compose from
+    the parts: segments at k*40 deg about Z, saddles at 270 +/- sad_ang)
 
 Verification: --verify round-trips every emitted file through gmsh's
 OpenCASCADE STEP reader and compares solid count and per-solid volume
@@ -421,11 +422,11 @@ def build_everything(cf, b):
         ('pinion.stp',         [('pinion', pin)]),
         ('bracket_saddle.stp', [('bracket_saddle', sad)]),
     ]
-    assembly = [(f'segment_{k+1}', s) for k, s in enumerate(build_ring(cf))]
-    assembly += [(f'wafer_{k+1}', build_wafer(cf, k)) for k in range(cf.N)]
-    assembly += [(f'saddle_{i+1}', place(sad, q))
-                 for i, q in enumerate((270.0 - b['sad_ang'], 270.0 + b['sad_ang']))]
-    return singles + [('halo_static_assembly.stp', assembly)]
+    # NO assembly export since the generated bevel teeth (2026-07-25): nine
+    # 24k-triangle segments make a ~143 MB planar-face STEP, over GitHub's
+    # 100 MB limit. Compose the assembly in CAD from the per-part files
+    # (segments at k*40 deg about Z, saddles at 270 +/- sad_ang).
+    return singles
 
 
 def verify(outputs, outdir):

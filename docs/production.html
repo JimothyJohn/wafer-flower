@@ -103,7 +103,7 @@
 
       <tr class="grp"><td colspan="5">E — Mounting <span class="dim">(static bracket, 2026-07-24)</span></td></tr>
       <tr><td class="ref">E1</td><td><b>Printed bracket saddle</b> — <span class="mono">stl/bracket_saddle.stl</span> from <span class="mono">scripts/bracket_stl.py</span> (12 boolean self-checks vs the full ring + wafers). Mounted at ±50° from bottom; lip nose rides the segments' retention groove.</td><td class="mono">2</td><td>Print, 23 g / 47 min each, wall face down</td><td>Cradling the ring puts it in compression and retires the single-point-hang dovetail case. Drop-in install, lift ~5 mm to remove; ring stays hand-rotatable for clocking.</td></tr>
-      <tr><td class="ref">E2</td><td>#10-24 pan head screws into stud or ≥95 N rated anchors, through the saddles' keyhole slots (44 mm apart per saddle)</td><td class="mono">4</td><td>Hardware aisle</td><td>&gt;10× on the 17.5 N assembly. M5 pans also fit the keyholes.</td></tr>
+      <tr><td class="ref">E2</td><td>#10-24 pan head screws into stud or ≥95 N rated anchors, through the saddles' keyhole slots (44 mm apart per saddle)</td><td class="mono">4</td><td>Hardware aisle</td><td>&gt;10× on the 16.8 N assembly. M5 pans also fit the keyholes.</td></tr>
       <tr><td class="ref">E3</td><td>Bubble or digital level</td><td class="mono">1</td><td>—</td><td>Level the two saddles or the swirl visibly reads crooked.</td></tr>
 
       <tr class="grp"><td colspan="5">F — Consumables</td></tr>
@@ -124,7 +124,7 @@
       <tr class="grp"><td colspan="5">H — Optional: motion drive <span class="dim">(PARKED 2026-07-24 — the face gear is cut into every segment, so this stays a bracket-swap away)</span></td></tr>
       <tr><td class="ref">H1</td><td>Stepper, 28BYJ-48 + ULN2003 driver, or NEMA 14 — or the N20-class micro worm gearmotor the drive module (<span class="mono">scripts/gearmotor_stl.py</span>) is built around</td><td class="mono">1</td><td>Electronics vendor</td><td>Needs ~3.3 mN·m at the pinion. A 28BYJ-48 has 10× that; the worm self-holds unpowered.</td></tr>
       <tr><td class="ref">H2</td><td>V-groove bearings, 623/608 with V-groove outer</td><td class="mono">3</td><td>Bearing vendor</td><td>These carry the 23.0 N. The pinion supplies torque only — a tooth mesh cannot be the hanger.</td></tr>
-      <tr><td class="ref">H3</td><td>Printed pinion, 28 T module 2, Ø56</td><td class="mono">1</td><td>Print</td><td>Meshes <b>inside</b> the 252 T internal ring gear on the flange = 9:1 exactly. Pinion axis at r=224, inside the central hole, so the drive is invisible.</td></tr>
+      <tr><td class="ref">H3</td><td>Printed pinion, 28 T coned 45°, module-matched (Ø~72 big end) — <span class="mono">stl/pinion.stl</span></td><td class="mono">1</td><td>Print</td><td>The tool that generated the ring teeth, thinned 0.6 for running. Radial axis 23.6 mm behind the wall face = 9:1 exactly, fully hidden.</td></tr>
       <tr><td class="ref">H4</td><td>5 V / 12 V supply + microcontroller</td><td class="mono">1</td><td>—</td><td>0.3 rpm is one revolution per 3.3 min — the right speed for wall art.</td></tr>
     </tbody>
   </table>

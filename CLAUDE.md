@@ -73,27 +73,29 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   the worst clocking (wafers dip to 6.8 mm above the wall face over the
   saddle footprint). Clear of the keyhole (4.6 below its bore), dovetails,
   and the cure-jig fence nose (checked). grv_d=0 deletes it.
-- FACE GEAR (2026-07-24, was internal spur) on the planar flange (tmin
-  thick) sitting on the flat bottom, extending inward from Ri to r=246:
-  the 252 teeth are AXIAL SLOTS in the WALL FACE (band r248–256, 4.5 deep,
-  rack-form flanks + 1.6 mm mouth flare for the pinion tip trochoids),
-  meshing the plain 28T spur pinion on a RADIAL axis 26 mm behind the wall
-  face — motor flat against the wall, perpendicular to the halo axis. WHY
-  NOT the 45/45 bevel Nick first asked for: at 9:1 with 90° shafts a true
-  bevel needs 83.7/6.3 cones, and a forced 45° internal cone MEASURES
-  276–386 mm³ of curvature interference against any perpendicular 45°
-  pinion (concave internal ring × crossed-axis pinion wrap digs into the
-  root wings ±14 mm around contact — not tunable, geometric). The face
-  gear is that bevel at its 90° limit; the mesh sweep measures 0.002 mm³
-  at gear_bl=0.6 (now the default; the sweep GATES segment_stl's exit).
-  WHY ON THE FACE AT ALL: neither the inner nor outer edge of the segment
-  is planar — both follow the tilted land and swing ±15 mm out of the ring
-  plane per sector; the flat bottom is the segment's ONLY planar face.
+- BEVEL45 GEAR (2026-07-25, Nick's call — replaced the one-day face-slot
+  drive): the 252 teeth live on a 45° CONE, tips r250 at the WAFER side
+  dropping radially outward to r260 at the wall face, band outer overlap
+  to r266, slab inner boundary r264. They are GENERATED, not drawn: ideal
+  involutes on 45/45 cones at 9:1 with 90° shafts bind (true bevel needs
+  83.7/6.3; forcing 45 measured 276–386 mm³ of wing interference), so the
+  module-matched 45° coned pinion (profile ×1.198, m_eff 2.397 at the cone
+  mid, face 10) is swept through the meshing motion in CSG (61 positions,
+  ±2 tooth pitches) and subtracted — the runner (same shape thinned by
+  gear_bl=0.6) cannot interfere with what its own shape cut. Mesh sweep
+  measures 0.034 mm³ of scallop; it GATES segment_stl's exit (≤0.05).
+  Pinion axis RADIAL, 23.6 mm behind the wall face — motor flat against
+  the wall, perpendicular to the halo axis. WHY teeth at the flat-bottom
+  level at all: neither the inner nor outer edge of the segment is planar
+  — both follow the tilted land and swing ±15 mm out of the ring plane per
+  sector. gear_drive='spur' keeps the legacy internal ring (the parked
+  gearmotor pins it).
 - GEAR TOOTH COUNT MUST DIVIDE BY N or the pitch breaks at every joint.
-  Module 2, N=9: 28 slots/segment = 252 (pitch Ø504, band 248–256) needs
+  Module 2, N=9: 28T/segment = 252 (pitch Ø504, cone tips r250→260) needs
   Ri≈255 — every joint lands mid-slot and the pattern tiles seamlessly.
-  Calculator flags the fit live (r_gearok; it still renders the legacy
-  internal-tooth look). 28T pinion → exactly 9:1, radial axis.
+  Calculator flags the fit live (r_gearok, hide check on the cone's front
+  tips) and renders the coned tooth band schematically. 28T coned pinion →
+  exactly 9:1, radial axis.
 - DESIGN FORK RESOLVED (user's call): keep the one-piece wedge and add the
   gear flange. Rejected: two-piece planar-ring + bolted-saddle split (would
   have cut 124→67 g and raised joint margin to 2.7×, but adds a screw per
@@ -155,9 +157,10 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   allowable — press over the LAND CENTROID only.
 - ASSEMBLY (slicer-measured masses): θ=10 traveler build 2.35 kg / 23.0 N
   (9× 128 g Si + 9× 132.8 g PETG at 45% infill, gear flange included);
-  current face-gear build 1.78 kg / 17.5 N (70.3 g PETG — the face flange
-  annulus outweighs the old spur teeth; 65.5 g at the M6-keyhole spur, 66.0
-  pre-M6). The old uniform-45% figures (2.29 / 1.64 kg) under-read the PETG.
+  current bevel45 build 1.71 kg / 16.8 N (61.8 g PETG — the coned tooth
+  band is the lightest gear yet: 70.3 g face-slot, 65.5 g spur at the M6
+  keyhole, 66.0 pre-M6). The old uniform-45% figures (2.29 / 1.64 kg)
+  under-read the PETG.
 - TIGHTEST MARGIN IN THE BUILD: single centred dovetail on a one-point
   hang. M ≈ W·R/π = 2.6 N·m, S_joint = 6×16²/6 = 256 mm³ → 10.0 MPa vs
   ~20 MPa printed-PETG allowable = 2.0×. Everything else is 47–4000×.
@@ -227,10 +230,12 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 
 ## Repo contents
 - docs/ split by ROLE (2026-07-24, PR #6 — the old single-page traveler is
-  gone): index.html is a hub with the real-STL viewer front and centre plus
-  role cards AND the live parametric calculator (Nick's ask 2026-07-24:
-  design on the fly stays front and centre); engineering.html carries the
-  same calculator plus OP 010 CAD steps, OP 015 §1–5, and motion analysis.
+  gone): index.html is a hub whose MAIN VISUAL IS the live parametric
+  calculator (Nick 2026-07-25: one diagram, driven by the sliders, showing
+  segments + wafers + coned gear band + retention groove + cure jig +
+  bracket saddles — the static real-STL widget lives only on viewer.html
+  now); engineering.html carries the same calculator plus OP 010 CAD
+  steps, OP 015 §1–5, and motion analysis.
   The calculator (sliders → live geometry/statics/mass readouts, in-browser
   preview-STL download, live segment_stl.py command line; face-gear-aware,
   its mass model lands within 0.5% of the sliced 70.3 g) is SHARED code:
@@ -256,10 +261,16 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   (segment / pair / frame / assembly / pinion) + DXF sketch profiles in
   stl/dxf/ for OnShape. Needs `pip install manifold3d`. Every PARAMS entry is
   also a CLI flag. Run it before trusting any dimension. gear_drive =
-  'face' (default) | 'spur' (legacy); the 3D mesh sweep GATES the exit code
-  (>0.05 mm³ fails). The face-slot cutter must OVERSHOOT the flange bore
-  by 2 mm — ending it on the bore face is the cap-to-cap coplanar-seam
-  gotcha and reads as OPEN after the float32 weld.
+  'bevel45' (default) | 'spur' (legacy); the 3D mesh sweep AND a
+  stray-shard decompose() count GATE the exit code (>0.05 mm³ or >1
+  component fails). Generation traps encoded in gear_teeth_bevel45's
+  docstring and comments: pattern phase is k*pitch from the joint (not
+  k+0.5 — half off reads as ~156 mm³), tps+1 copies clipped to the sector
+  (unclipped wedge overhang lands 232 mm³ inside the neighbour), the
+  blank needs a front-inner relief chamfer (the cutter severs a 348 mm³
+  top rim ring otherwise), and the mesh-check backing annulus must extend
+  OUTWARD from the band (Ri+6 < g_fi puts a phantom ring in the pinion's
+  path — 9.4 mm³).
 - scripts/bracket_stl.py — STATIC WALL BRACKET (2026-07-24): two identical
   saddles at ±50° from bottom cradle the band OD (V-block, ring in
   compression → retires the single-point-hang dovetail case); lip nose
@@ -312,10 +323,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   the solid skins dominate. Sliced mass is exactly linear in infill %:
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
   35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted). CURRENT B.3
-  build: 70.3 g/segment (65.5 at the spur gear; book estimate 54), 2h34m
-  each, assembly 1.78 kg / 17.5 N, M = 1.95 N·m, dovetail 4.4× (book said
-  4.8× at 1.64 kg) — and the static bracket cradles retire that hang case
-  anyway. Traveler
+  build: 61.8 g/segment (70.3 face-slot, 65.5 spur; book estimate 54),
+  2h14m each, assembly 1.71 kg / 16.8 N, M = 1.87 N·m, dovetail 4.6× (book
+  said 4.8× at 1.64 kg) — and the static bracket cradles retire that hang
+  case anyway. Traveler
   standard θ=10 build: 132.8 g/segment, 2.35 kg / 23.0 N, M = 2.6 N·m,
   dovetail 2.0×. The traveler solver + spec sheet now carry this calibrated
   model (T_SKIN=1.05 on the solver's cruder area estimate, K_INF=0.92) and

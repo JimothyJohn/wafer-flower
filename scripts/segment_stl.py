@@ -53,20 +53,24 @@ PARAMS = dict(
                         # face-drive tune: the mesh sweep measures 0.002 mm3
                         # residual at 0.6 vs 0.83 at 0.4 (straight radial
                         # slots are only exact at the pitch radius).
-    gear_drive = 'face',# 'face' (2026-07-24) or 'spur' (the pre-face legacy).
-                        # 'face': the 252 teeth are AXIAL SLOTS in the flange's
-                        # wall face (a face/crown gear) so the mating pinion is
-                        # the plain 28T spur on a RADIAL axis — motor lies flat
-                        # behind the ring, perpendicular to the halo axis.
-                        # Why not the 45/45 bevel look: at 9:1 with 90-deg
-                        # shafts a true bevel pair needs 83.7/6.3 cones, and a
-                        # forced 45-deg internal cone measures 276-386 mm3 of
-                        # curvature interference against ANY perpendicular
-                        # 45-deg pinion (the pinion wrap digs into the concave
-                        # root wings, +/-14 mm either side of contact). The
-                        # face gear IS that bevel taken to its 90-deg limit,
-                        # and it meshes — check_mesh() measures it.
-    gear_fw  = 8.0,     # face-tooth band, radial, centred on the pitch radius
+    gear_drive = 'bevel45', # 'bevel45' (2026-07-24, Nick's call) or 'spur'.
+                        # bevel45: the 252 teeth live on a 45-deg CONE — they
+                        # start at the wafer side (r = g_tip at the flange
+                        # front) and drop radially outward toward the mounting
+                        # wall (g_tip + tmin at the wall face) — and mesh a
+                        # module-matched 45-deg coned pinion on a RADIAL axis
+                        # (motor flat against the wall, perpendicular to the
+                        # halo axis). Ideal involutes on these cones would
+                        # bind (a true 90-deg 9:1 bevel needs 83.7/6.3 cones;
+                        # forcing 45 measured 276-386 mm3 of wing
+                        # interference), so the teeth are GENERATED: the
+                        # pinion itself is swept through the meshing motion in
+                        # CSG and subtracted, which makes interference
+                        # impossible by construction — check_mesh measures
+                        # ~0.03 mm3 of discretisation scallop against the
+                        # 0.6 mm backlash. (The interim 'face' slot drive was
+                        # removed when Nick called for the coned look.)
+    gear_pf  = 10.0,    # pinion face width (also sets the generated band)
     grv_z0   = 2.5,     # bracket retention groove in the OUTER arc face
     grv_h    = 1.5,     # (2026-07-24): starts grv_z0 above the flat bottom,
     grv_d    = 2.0,     # straight for grv_h, then a 45-deg chamfer roof for
@@ -119,12 +123,13 @@ class Cfg:
         self.g_tip   = self.g_pitch - self.gear_m
         self.g_root  = self.g_pitch + 1.25 * self.gear_m
         self.g_base  = self.g_pitch * math.cos(math.radians(self.gear_pa))
-        # face drive: slot band g_pitch +/- fw/2 in the wall face; the flange
-        # keeps a 2 mm margin inside the band. 'spur' keeps the old internal
-        # teeth, whose innermost extent is g_tip.
-        self.g_face  = (self.gear_drive == 'face')
-        self.g_slot_d= 2.25 * self.gear_m          # slot depth into the face
-        self.g_fi    = (self.g_pitch - self.gear_fw / 2.0 - 2.0 if self.g_face
+        # bevel45: tooth tip cone runs g_tip (front, wafer side) to
+        # g_tip + tmin (wall face); roots reach ~g_root + tmin at the wall.
+        # The slab's straight inner boundary sits just inside the toothed
+        # band's outer overlap. 'spur' keeps the legacy internal teeth.
+        self.g_bev   = (self.gear_drive == 'bevel45')
+        self.g_band_o= self.g_tip + 16.0           # toothed band outer overlap
+        self.g_fi    = (self.g_band_o - 2.0 if self.g_bev
                         else self.g_root)          # slab inner boundary radius
         self.tall    = 4 * self.r
 
@@ -203,9 +208,10 @@ def band_poly(cf, na=160):
 
 def slab_poly(cf, na=160):
     """Band + inner flange annulus + male dovetail. Socket is subtracted
-    later. 'face' drive: the inner boundary is a plain circle at g_fi and the
-    teeth are SLOTS cut from the wall face (face_slots). 'spur': the boundary
-    stops at the root circle and gear_teeth unions the internal teeth on."""
+    later. 'bevel45': the inner boundary is a plain circle at g_fi and the
+    generated coned teeth (gear_teeth_bevel45) union on, overlapping 2 mm.
+    'spur': the boundary stops at the root circle and gear_teeth unions the
+    legacy internal teeth on."""
     dtn, dtt, dtd = cf.dt_neck / 2, cf.dt_tip / 2, cf.dt_depth
     ri = cf.g_fi
     p  = [face_pt(-cf.half, ri, 0.0), face_pt(-cf.half, cf.Ro, 0.0)]
@@ -231,50 +237,97 @@ def gear_teeth(cf, z0=0.0):
     return Manifold.extrude(CrossSection([poly]), cf.tmin).translate([0.0, 0.0, z0])
 
 
-def slot_trapezoid(cf):
-    """Face-tooth slot cross-section in (tangent u, height above the wall
-    face). Rack form: pitch line one module up, width there = half the
-    circular pitch + backlash, flanks at the pressure angle, wider at the
-    root (deep end) — self-supporting when printed face-down (the slot
-    ceiling bridges ~5 mm, fine). The MOUTH gets a 0.7 mm flare over the
-    first 1.6 mm: the pinion's tip corners sweep trochoids that stand
-    outside the straight flank near the face plane (measured 9.5 mm3 of
-    symmetric tip-corner interference without it, 0 with)."""
-    m, bl = cf.gear_m, cf.gear_bl
-    tpa = math.tan(math.radians(cf.gear_pa))
-    wp = (math.pi * m / 2.0 + bl) / 2.0        # half-width at the pitch line
-    z_pl, dep = m, cf.g_slot_d
-    w0, w1 = wp - z_pl * tpa, wp + (dep - z_pl) * tpa
-    zf, f = 1.6, 1.0                           # mouth-flare height / extra width
-    wf = wp + (zf - z_pl) * tpa                # nominal flank half-width at zf
-    return [(-w0 - f, -0.3), (w0 + f, -0.3), (wf, zf), (w1, dep),
-            (-w1, dep), (-wf, zf)]
+def bevel_geom(cf):
+    """Shared placement numbers for the generated 45-deg crossed pair, in the
+    MESH FRAME (wall face at z=0, teeth big-end down). The pinion is module-
+    matched at the cone's mid-height: pitch there = ring_mid / ratio."""
+    F = cf.tmin
+    ratio = cf.teeth / cf.tps
+    ring_mid = cf.g_pitch + F / 2.0            # cone pitch radius, mid-height
+    pin_mid = ring_mid / ratio
+    face = cf.gear_pf
+    rp0 = cf.tps * cf.gear_m / 2.0
+    s_prof = (pin_mid + face / 2.0) / rp0      # profile scale (module match)
+    apex = rp0 * s_prof                        # 45 deg: apex one pitch-radius up
+    return dict(F=F, ratio=ratio, ring_mid=ring_mid, pin_mid=pin_mid,
+                face=face, s_prof=s_prof, apex=apex,
+                x0=ring_mid - face / 2.0, z_p=F / 2.0 - pin_mid)
 
 
-def face_slots(cf, z0):
-    """28 radial tooth slots per segment, cut UP into the wall face (z0) over
-    the band g_pitch +/- fw/2. Slot centres sit at k * pitch from the joint
-    face, so every joint lands mid-slot and the 252-slot pattern tiles the
-    ring seamlessly (same phasing rule as the old internal teeth: count must
-    divide by N). Straight radial slots are the printed approximation of a
-    generated face gear — the spacing they present to the pinion is exact
-    only at the pitch radius (2*pi*rho/252 elsewhere, +/-1.6% across an 8 mm
-    band), which check_mesh sweeps rather than assumes."""
-    trap = slot_trapezoid(cf)
-    # the cutter overshoots the flange bore inward by 2 mm: ending it exactly
-    # on the bore face is the cap-to-cap coplanar-seam gotcha (sliver faces
-    # that read as OPEN after the float32 weld). Outward it stays buried.
-    L = cf.gear_fw + 6.0
-    r_in = cf.g_fi - 2.0
-    one = (prism(trap, 0.0, L)
-           .rotate([90.0, 0.0, 0.0]).rotate([0.0, 0.0, 90.0])
-           .translate([r_in, 0.0, z0]))
-    pitch_ang = cf.sector / cf.tps
-    cuts = None
-    for k in range(cf.tps):
-        s = one.rotate([0.0, 0.0, math.degrees(-cf.half + k * pitch_ang)])
-        cuts = s if cuts is None else cuts + s
-    return cuts
+def bevel_pinion(cf, backlash=None):
+    """45-deg coned pinion, big end at local z=0, apex up. backlash=0 is the
+    GENERATING cutter; the running pinion keeps gear_bl (thinner teeth), so
+    running clearance = gear_bl by construction."""
+    bg = bevel_geom(cf)
+    pts, g = pinion_profile(cf, cf.tps, backlash=backlash)
+    pts = [(x * bg['s_prof'], y * bg['s_prof']) for x, y in pts]
+    if signed_area(pts) < 0:
+        pts = pts[::-1]
+    p = Manifold.extrude(CrossSection([pts]), bg['face'],
+                         scale_top=((bg['apex'] - bg['face']) / bg['apex'],) * 2)
+    g = {k: (v * bg['s_prof'] if k != 'T' else v) for k, v in g.items()}
+    return p, g
+
+
+def bevel_pinion_at(cf, pin, d):
+    """Place a bevel pinion into the mesh frame at ring roll angle d: spin
+    about its own axis (local z -> global +x after the rotate), radial axis
+    behind the wall face. Top-of-pinion contact runs opposite the ring."""
+    bg = bevel_geom(cf)
+    return (pin.rotate([0.0, 0.0, -math.degrees(d * bg['ratio'])])
+               .rotate([0.0, 90.0, 0.0])
+               .translate([bg['x0'], 0.0, bg['z_p']]))
+
+
+def gear_teeth_bevel45(cf, z0=0.0, steps=61, span_pitches=4.0):
+    """The 45-deg coned ring teeth, GENERATED: sweep the zero-backlash cutter
+    pinion through the meshing motion (in the ring frame), subtract it from a
+    coned blank, extract one tooth pitch, and pattern it 28x with slots at
+    k * pitch from the joint face (joints land mid-slot; the 252 pattern
+    tiles the ring). Generation makes runner interference impossible up to
+    the sweep discretisation (~0.03 mm3, inside the 0.6 backlash).
+    Two traps this construction dodges: the one-pitch wedge is oversized
+    0.02 deg so patterned copies overlap instead of meeting cap-to-cap, and
+    the pattern phase is k*pitch (slot at angle 0), NOT (k+0.5)*pitch —
+    half a pitch off reads as ~156 mm3 of tooth-on-tooth."""
+    F = cf.tmin
+    blank = prism(arc(cf.g_band_o, -cf.half, cf.half, 200) +
+                  arc(cf.g_tip, cf.half, -cf.half, 200), 0.0, F)
+    cone = (Manifold.cylinder(F + 0.2, cf.g_tip + F + 0.1, cf.g_tip - 0.1, 512)
+            .translate([0.0, 0.0, -0.1]))
+    blank = blank - cone
+    # front-inner relief: the cutter pierces the band's front near the
+    # contact meridian, and without this chamfer it severs a 2 mm top-inner
+    # rim ring (physically unattached scrap — showed up as a 348 mm3 second
+    # component spanning the whole segment arc)
+    blank = blank - (Manifold.cylinder(2.9, cf.g_tip + 2.7, cf.g_tip + 2.7, 256)
+                     .translate([0.0, 0.0, F - 2.7]))
+    cutter_pin, _ = bevel_pinion(cf, backlash=0.0)
+    span = span_pitches * (2.0 * math.pi / cf.teeth)
+    cut = None
+    for i in range(steps):
+        d = -span / 2.0 + span * i / (steps - 1)
+        c = bevel_pinion_at(cf, cutter_pin, d).rotate([0, 0, -math.degrees(d)])
+        cut = c if cut is None else cut + c
+    gen = blank - cut
+    pitch = 360.0 / cf.teeth
+    wedge = prism([(0.0, 0.0)] + arc(cf.g_band_o + 100.0,
+                                     math.radians(-pitch / 2 - 0.02),
+                                     math.radians(pitch / 2 + 0.02), 16),
+                  -1.0, F + 2.0)
+    one = gen ^ wedge
+    teeth = None
+    # tps+1 copies then clip to the sector: each one-pitch wedge is centred
+    # on its slot, so the k=0 and k=tps copies overhang the joint faces by
+    # half a pitch — unclipped, that overhang lands INSIDE the neighbour
+    # segment (measured as 232 mm3 of joint interference in the ring).
+    for k in range(cf.tps + 1):
+        w = one.rotate([0.0, 0.0, -math.degrees(cf.half) + k * pitch])
+        teeth = w if teeth is None else teeth + w
+    sector = prism([(0.0, 0.0)] + arc(cf.g_band_o + 100.0, -cf.half, cf.half, 64),
+                   -1.0, F + 2.0)
+    teeth = teeth ^ sector
+    return teeth.translate([0.0, 0.0, z0])
 
 
 def pocket_poly(cf, na=120):
@@ -323,7 +376,7 @@ def prism(poly, z0, h):
     return Manifold.extrude(CrossSection([poly]), h).translate([0.0, 0.0, z0])
 
 
-def wafer_cut(cf, k, offset, height):
+def wafer_cut(cf, k, offset, height, extra_r=0.0):
     """Disc-shaped solid standing `offset` from wafer k's mid-plane, extending +n.
 
     A disc and not a half-space: the neighbour's wafer is 300 mm across, so a
@@ -335,7 +388,7 @@ def wafer_cut(cf, k, offset, height):
     on the wafer itself.
     """
     M, c, n = cf.wafer_frame(k)
-    rad = cf.r + cf.clr_edge
+    rad = cf.r + cf.clr_edge + extra_r
     cyl = Manifold.cylinder(height, rad, rad, cf.facets)
     t = [c[i] + offset * n[i] for i in range(3)]
     return cyl.transform([[M[0][0], M[0][1], M[0][2], t[0]],
@@ -351,8 +404,13 @@ def build_segment(cf):
     # 3. bottom slab (band + flange + male dovetail); gear per gear_drive —
     #    face slots cut INTO the wall face, or the legacy internal spur teeth
     seg = seg + prism(slab_poly(cf), cf.z_bot, cf.tmin)
-    if cf.g_face:
-        seg = seg - face_slots(cf, cf.z_bot)
+    if cf.g_bev:
+        t = gear_teeth_bevel45(cf, cf.z_bot)
+        # clearance-cut the teeth with a deeper, oversized disc: the ~5-deg
+        # cut surface meets the 45-deg tooth lean at a shallow angle and can
+        # strand a tip crumb right at the disc wall (masquerades as wrong
+        # genus); the +0.2 depth / +0.5 radius swallows it
+        seg = seg + (t - wafer_cut(cf, 1, -cf.clrOff - 0.2, cf.tall, extra_r=0.5))
     else:
         seg = seg + gear_teeth(cf, cf.z_bot)
     # 4. neighbour clearance cut
@@ -529,11 +587,13 @@ def main():
 
     print(f"Wafer Halo Rev B  ·  N={cf.N}  Ø{cf.wafer_D:.0f}×{cf.wafer_T}  θ={cf.theta}°  "
           f"band {cf.Ri:.0f}–{cf.Ro:.0f}")
-    if cf.g_face:
-        print(f"  gear    FACE drive: {cf.tps} slots/seg × {cf.N} = {cf.teeth} in the "
-              f"wall face, module {cf.gear_m}, pitch Ø{2*cf.g_pitch:.0f}, band "
-              f"r{cf.g_pitch - cf.gear_fw/2:.0f}–{cf.g_pitch + cf.gear_fw/2:.0f}, "
-              f"slots {cf.g_slot_d:.1f} deep, flange inner r{cf.g_fi:.0f}")
+    if cf.g_bev:
+        bg = bevel_geom(cf)
+        print(f"  gear    BEVEL45 drive (generated): {cf.tps}T/seg × {cf.N} = "
+              f"{cf.teeth}T on a 45° cone, tips r{cf.g_tip:.0f} (wafer side) → "
+              f"r{cf.g_tip + cf.tmin:.0f} (wall), pinion {cf.tps}T coned, "
+              f"module-matched {bg['s_prof']*cf.gear_m:.3f} at mid-cone, "
+              f"radial axis {-bg['z_p']:.1f} behind the wall face")
     else:
         print(f"  gear    {cf.tps}T/seg × {cf.N} = {cf.teeth}T  module {cf.gear_m}  "
               f"pitch Ø{2*cf.g_pitch:.0f}  tip r{cf.g_tip:.1f}  root r{cf.g_root:.1f}")
@@ -565,9 +625,8 @@ def main():
               f"tooth pitch {mesh['worst_overlap']:.5f} mm3\n")
     else:
         print(f"{'':24}pinion axis {mesh['axis']}, {mesh['z_axis_behind_wall_face']:.1f} mm "
-              f"behind the wall face, tips reach {cf.gear_m - g['rp'] + mesh['ra']:.1f} "
-              f"into the slots; worst overlap over a full tooth pitch "
-              f"{mesh['worst_overlap']:.5f} mm3\n")
+              f"behind the wall face; worst overlap over a full tooth pitch "
+              f"{mesh['worst_overlap']:.5f} mm3 (generated teeth — scallop only)\n")
 
     # ---- DXF sketch profiles for OnShape ----
     dxf = os.path.join(a.out, 'dxf'); os.makedirs(dxf, exist_ok=True)
@@ -576,11 +635,12 @@ def main():
         ('02_slab.dxf',      [slab_poly(cf)],                        f'extrude {cf.tmin} mm up from the flat bottom'),
         ('03_socket.dxf',    [socket_poly(cf)],                      f'cut {cf.tmin} mm from the flat bottom'),
         ('04_pocket.dxf',    [pocket_poly(cf)],                      f'cut {cf.pocket_d} mm down from the land plane'),
-        (('05_face_slot.dxf', [slot_trapezoid(cf)],
-          f'ONE slot section (tangent x height): sweep radially '
-          f'r{cf.g_pitch - cf.gear_fw/2 - 2:.0f}-{cf.g_pitch + cf.gear_fw/2 + 2:.0f}, '
-          f'pattern {cf.tps}x at {360/cf.teeth:.4f} deg from the joint face')
-         if cf.g_face else
+        (('05_bevel_cutter.dxf',
+          [[(x * bevel_geom(cf)['s_prof'], y * bevel_geom(cf)['s_prof'])
+            for x, y in pinion_profile(cf, cf.tps, backlash=0.0)[0]]],
+          f'GENERATED teeth have no 2D sketch — this is the cutter pinion '
+          f'big-end profile; sweep it per segment_stl.gear_teeth_bevel45')
+         if cf.g_bev else
          ('05_ring_teeth.dxf', [[(r*math.cos(t), r*math.sin(t)) for r, t in tooth_profile(cf)]],
           f'{cf.tps}T of the {cf.teeth}T internal ring')),
         ('06_pinion.dxf',    [pinion_profile(cf, cf.tps)[0]],        f'{cf.tps}T pinion, extrude {cf.tmin} mm'),
@@ -591,6 +651,13 @@ def main():
         print(f"    dxf/{fn:20} {n:5,d} pts   {note}")
 
     print(f"\nWrote to {os.path.abspath(a.out)}/")
+    # stray-shard guard: a disconnected crumb cancels the keyhole handle in
+    # the Euler count and masquerades as genus 0 — count components instead
+    ncomp = len(build_segment(cf).decompose())
+    if ncomp != 1:
+        print(f"FAIL: segment is {ncomp} components — orphaned crumb(s), "
+              f"see the clearance-cut note in build_segment")
+        return 1
     # the mesh sweep is a gate, not a printout: CI runs this script
     if mesh['worst_overlap'] > 0.05:
         print(f"FAIL: gear mesh overlap {mesh['worst_overlap']:.3f} mm3 > 0.05 "
@@ -633,13 +700,17 @@ def pinion_profile(cf, T, backlash=None):
 
 
 def build_pinion(cf, T=None, face=None, bore=5.0, flat=0.5, backlash=None):
-    """Straight spur pinion. T = teeth/segment gives ratio N:1. The same part
-    serves both drives: axis parallel to the halo axis for the legacy
-    internal spur ring, RADIAL (perpendicular) for the face drive."""
+    """The mating pinion. bevel45 (default): the 45-deg coned, module-matched
+    pinion on a RADIAL (perpendicular) axis. 'spur' legacy: straight spur,
+    axis parallel to the halo axis. T = teeth/segment gives ratio N:1."""
     T = T or cf.tps
-    face = face or cf.tmin
-    pts, g = pinion_profile(cf, T, backlash=backlash)
-    p = prism(pts, 0.0, face)
+    if cf.g_bev and (T == cf.tps):
+        p, g = bevel_pinion(cf, backlash=backlash)
+        face = cf.gear_pf
+    else:
+        face = face or cf.tmin
+        pts, g = pinion_profile(cf, T, backlash=backlash)
+        p = prism(pts, 0.0, face)
     if bore:
         p = p - Manifold.cylinder(face * 3, bore / 2, bore / 2, 64).translate([0, 0, -face])
         if flat:                          # D-flat for a set screw / D-shaft
@@ -661,7 +732,7 @@ def check_mesh(cf, T=None, steps=24, backlash=None):
     T = T or cf.tps
     F = cf.tmin
     ratio = cf.teeth / T
-    if not cf.g_face:
+    if not cf.g_bev:
         ring = gear_teeth(cf, 0.0) + prism(
             arc(cf.g_root + 1.0, -cf.half, cf.half, 120) +
             arc(cf.Ri + 6.0, cf.half, -cf.half, 120), 0.0, F)
@@ -675,28 +746,25 @@ def check_mesh(cf, T=None, steps=24, backlash=None):
             p2 = pin.rotate([0, 0, math.degrees(pr)]).translate([centre, 0, 0])
             worst = max(worst, (r2 ^ p2).volume())
         return dict(centre=centre, ratio=ratio, worst_overlap=worst, axis='parallel', **g)
-    # face drive: flange annulus with the slots, wall face at z=0
-    ring = prism(arc(cf.g_fi, -cf.half, cf.half, 160) +
-                 arc(cf.Ro - 10.0, cf.half, -cf.half, 160), 0.0, F) \
-           - face_slots(cf, 0.0)
-    pin, g = build_pinion(cf, T, face=cf.gear_fw + 2.0, bore=0.0, flat=0.0,
-                          backlash=backlash)
-    # rack pitch line sits one module above the wall face, pinion axis one
-    # pitch radius below that; pinion face straddles the slot band radially
-    z_axis = cf.gear_m - g['rp']
-    x0 = cf.g_pitch - (cf.gear_fw + 2.0) / 2.0
+    # bevel45: roll the RUNNING pinion (gear_bl-thinned) against the
+    # GENERATED teeth — generation bounds this at the sweep discretisation.
+    # Backing annulus extends OUTWARD from the band (g_fi..g_fi+12): the
+    # bevel band sits inboard of Ri, so the spur-branch habit of closing at
+    # Ri+6 would put an accidental ring right where the pinion's small end
+    # runs (261 < g_fi=264 — measured as 9.4 mm3 of phantom interference).
+    ring = gear_teeth_bevel45(cf, 0.0) + prism(
+        arc(cf.g_fi, -cf.half, cf.half, 160) +
+        arc(cf.g_fi + 12.0, cf.half, -cf.half, 160), 0.0, F)
+    pin, g = bevel_pinion(cf, backlash=backlash)
+    bg = bevel_geom(cf)
     worst = 0.0
     for i in range(steps):
         d = (2 * math.pi / cf.teeth) * i / steps
         r2 = ring.rotate([0, 0, math.degrees(d)])
-        # spin about the pinion's own axis (local z -> global +x); top-of-
-        # pinion teeth run opposite to the ring surface above them
-        p2 = (pin.rotate([0, 0, -math.degrees(d * ratio)])
-                 .rotate([0, 90, 0])
-                 .translate([x0, 0.0, z_axis]))
+        p2 = bevel_pinion_at(cf, pin, d)
         worst = max(worst, (r2 ^ p2).volume())
     return dict(ratio=ratio, worst_overlap=worst, axis='perpendicular (radial)',
-                z_axis_behind_wall_face=-z_axis, **g)
+                z_axis_behind_wall_face=-bg['z_p'], **g)
 
 
 if __name__ == '__main__':

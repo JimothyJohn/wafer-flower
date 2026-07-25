@@ -14,8 +14,8 @@
   "gear_m": 2.0,
   "gear_pa": 20.0,
   "gear_bl": 0.6,
-  "gear_drive": "face",
-  "gear_fw": 8.0,
+  "gear_drive": "bevel45",
+  "gear_pf": 10.0,
   "grv_z0": 2.5,
   "grv_h": 1.5,
   "grv_d": 2.0,
@@ -39,7 +39,7 @@
    "name": "segment",
    "group": "segment",
    "color": "#B9A87E",
-   "volume_cm3": 97.624
+   "volume_cm3": 88.645
   },
   {
    "file": "wafer.stl",
@@ -201,13 +201,13 @@
   {
    "group": "assembly",
    "name": "clearance cut present (material within 3.05 mm)",
-   "value_mm3": 39.0925,
+   "value_mm3": 34.6296,
    "pass": true
   },
   {
    "group": "assembly",
    "name": "segments butt at the joint (0.1 deg nudge contacts)",
-   "value_mm3": 111.6223,
+   "value_mm3": 99.5639,
    "pass": true
   }
  ]
