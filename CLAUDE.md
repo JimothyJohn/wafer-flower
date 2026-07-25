@@ -228,14 +228,18 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 ## Repo contents
 - docs/ split by ROLE (2026-07-24, PR #6 — the old single-page traveler is
   gone): index.html is a hub with the real-STL viewer front and centre plus
-  role cards; engineering.html carries the three.js parametric calculator +
-  live statics solver (OP 015 §1–5), OP 010 CAD steps, motion analysis, AND
-  in-browser STL export (preview mesh from the sliders + a live
-  segment_stl.py command line mirroring them); design.html has the θ/knob
-  decision content (old §6–§7); production.html has gates T1–T7, OP 020
-  bond, the full BOM. Shared chrome in docs/assets/site.css, the STL viewer
-  widget in docs/assets/viewer.js (used by index.html + viewer.html). All
-  need CDN for three.js r128.
+  role cards AND the live parametric calculator (Nick's ask 2026-07-24:
+  design on the fly stays front and centre); engineering.html carries the
+  same calculator plus OP 010 CAD steps, OP 015 §1–5, and motion analysis.
+  The calculator (sliders → live geometry/statics/mass readouts, in-browser
+  preview-STL download, live segment_stl.py command line; face-gear-aware,
+  its mass model lands within 0.5% of the sliced 70.3 g) is SHARED code:
+  docs/assets/calc.js, mounted on both pages via canvas#cviz (the viewer
+  keeps canvas#viz — ids must not collide on the hub). design.html has the
+  θ/knob decision content (old §6–§7); production.html has gates T1–T7,
+  OP 020 bond, the full BOM. Shared chrome in docs/assets/site.css, the STL
+  viewer widget in docs/assets/viewer.js (used by index.html +
+  viewer.html). All need CDN for three.js r128.
 - docs/spec-sheet.html — customer-facing capability & care spec.
 - docs/cure-jig.html — plain-language illustrated OP 012 instructions: 8
   bonding steps + one-time setup, each with a render; 3 embedded MP4s
