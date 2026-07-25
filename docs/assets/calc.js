@@ -55,6 +55,11 @@ const fill=new THREE.DirectionalLight(0xffffff,0.3); fill.position.set(-500,-200
 
 let az=0.6, pol=1.05, dist=1500, group=new THREE.Group(); scene.add(group);
 let view='assembly', autoDist=true;   // autoDist stops honouring the fit once you zoom by hand
+// Drive-view animation state: ANIM.ring is the rotating sub-group holding
+// segments+wafers; ANIM.spin holds {g, rate} pivots (pinion, idler wheels)
+// that turn at their true kinematic ratios off the ring angle.
+const ANIM={ring:null, spin:[]};
+const DRIVE_W=0.10;                   // ring rad/s in the drive view (~1 rpm)
 function placeCam(){
   camera.position.set(dist*Math.sin(pol)*Math.cos(az), dist*Math.sin(pol)*Math.sin(az), dist*Math.cos(pol));
   camera.up.set(0,0,1); camera.lookAt(0,0,0);
@@ -208,25 +213,59 @@ function realMesh(name){
 
 function buildScene(){
   while(group.children.length) group.remove(group.children[0]);
+  ANIM.ring=null; ANIM.spin=[];
   const {th,Ro,H,yMax,zBot,topZ}=geoCtx(), N=P.N;
   if(REAL && atB3()){
     // ---- SHIPPED CAD: exact stl/ solids ----
-    const nSeg=(view==='assembly')?N:1;
-    const nWaf=(view==='assembly')?N:(view!=='frame'?1:0);
+    const full=(view==='assembly'||view==='drive');
+    const nSeg=full?N:1;
+    const nWaf=full?N:(view!=='frame'?1:0);
+    const rg=new THREE.Group(); group.add(rg);   // the rotating ring
     for(let k=0;k<nSeg;k++){
-      const m=realMesh('segment'); m.rotation.z=k*REAL.sector; group.add(m);
+      const m=realMesh('segment'); m.rotation.z=k*REAL.sector; rg.add(m);
     }
     for(let k=0;k<nWaf;k++){
-      const w=realMesh('wafer'); w.rotation.z=k*REAL.sector; group.add(w);
+      const w=realMesh('wafer'); w.rotation.z=k*REAL.sector; rg.add(w);
     }
     if(view==='jig')
       for(const n of ['jig_outboard','jig_inboard','rod','hex_nut','washer','knob','knob_nut']){
         const m=realMesh(n); if(m)group.add(m);
       }
-    if(view==='assembly')
-      for(const n of ['bracket_plate','wheel_l','wheel_r','drive_pinion']){
-        const m=realMesh(n); if(m)group.add(m);
+    if(full){
+      // pivot helper: wrap a scene-coordinate mesh so it can spin about
+      // its own (axial) axis at (cx,cy)
+      const pivot=(m,cx,cy)=>{const g=new THREE.Group();
+        g.position.set(cx,cy,0); m.position.set(-cx,-cy,0); g.add(m);
+        group.add(g); return g;};
+      // B.3 drivetrain geometry (mirrors segment_stl/bracket_stl):
+      // flush module 5.384, C = ring_mid+pin_mid; wheels tangent to the
+      // bore, spun up by rolling contact Ri/wheel_R
+      const G3=gearSpec(), C=(G3.rp+GEAR_F/2)*(10/9);   // ring_mid+pin_mid
+      const WAZ=[115,65].map(a=>a*Math.PI/180), DC=P.Ri-24;
+      const plate=realMesh('bracket_plate');
+      if(plate&&view==='drive'){plate.material.transparent=true;plate.material.opacity=0.30;}
+      if(plate)group.add(plate);
+      const pin=realMesh('drive_pinion');
+      if(pin){const g=pivot(pin,0,C); ANIM.spin.push({g:g,rate:-9});}
+      ['wheel_l','wheel_r'].forEach((n,i)=>{
+        const m=realMesh(n); if(!m)return;
+        const g=pivot(m,DC*Math.cos(WAZ[i]),DC*Math.sin(WAZ[i]));
+        ANIM.spin.push({g:g,rate:P.Ri/24});
+      });
+      if(view==='drive'){
+        // schematic N20 gearmotor behind the pinion hub (real envelope is
+        // parametric in bracket_stl — MEASURE the purchased unit)
+        const mot=new THREE.Mesh(new THREE.CylinderGeometry(6.25,6.25,26,32),
+          new THREE.MeshPhongMaterial({color:0x707880,shininess:60}));
+        mot.rotation.x=Math.PI/2; mot.position.set(0,C,zBot-5.5-13);
+        group.add(mot);
+        const shaft=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,6,16),
+          new THREE.MeshPhongMaterial({color:0xB8BEC4,shininess:80}));
+        shaft.rotation.x=Math.PI/2; shaft.position.set(0,C,zBot-3);
+        group.add(shaft);
+        ANIM.ring=rg;
       }
+    }
     frameView(th,zBot,Ro,H);
     viewNote();
     readouts(th,zBot,Ro,yMax,topZ);
@@ -307,14 +346,17 @@ function buildScene(){
   const fMat=new THREE.MeshPhongMaterial({color:0x4A5560,shininess:30,side:THREE.DoubleSide});
 
   // ---- place per view ----
-  const nSeg = (view==='assembly') ? N : 1;
-  const nWaf = (view==='assembly') ? N : (view!=='frame' ? 1 : 0);
+  const full=(view==='assembly'||view==='drive');
+  const nSeg = full ? N : 1;
+  const nWaf = full ? N : (view!=='frame' ? 1 : 0);
+  const rg=new THREE.Group(); group.add(rg);
+  if(view==='drive') ANIM.ring=rg;   // parametric fallback still rotates
   for(let k=0;k<nSeg;k++){
-    const m=new THREE.Mesh(g,segMat); m.rotation.z=k*SEG(); group.add(m);
-    const fl=new THREE.Mesh(fGeo,fMat); fl.rotation.z=k*SEG(); group.add(fl);
+    const m=new THREE.Mesh(g,segMat); m.rotation.z=k*SEG(); rg.add(m);
+    const fl=new THREE.Mesh(fGeo,fMat); fl.rotation.z=k*SEG(); rg.add(fl);
     const bo=new THREE.Mesh(boreGeo,boreMat); bo.rotation.x=Math.PI/2;
     const bp=new THREE.Group(); bp.add(bo); bp.position.set(hx,0,zBot+boreH/2);
-    const bq=new THREE.Group(); bq.add(bp); bq.rotation.z=k*SEG(); group.add(bq);
+    const bq=new THREE.Group(); bq.add(bp); bq.rotation.z=k*SEG(); rg.add(bq);
   }
   const wg=new THREE.CylinderGeometry(WR(),WR(),P.wt,72);
   const wm=new THREE.MeshPhongMaterial({color:0xA8B2BB,shininess:95,specular:0x8899AA});
@@ -322,10 +364,10 @@ function buildScene(){
     const w=new THREE.Mesh(wg,wm); w.rotation.x=Math.PI/2;
     const p=new THREE.Group(); p.add(w); p.position.set(P.R,0,0); p.rotation.x=th;
     const q=new THREE.Group(); q.add(p); q.rotation.z=k*SEG();
-    group.add(q);
+    rg.add(q);
   }
   // groove recess on every placed segment's outer face
-  for(let k=0;k<nSeg;k++) group.add(grooveStrip(zBot,Ro,H,k));
+  for(let k=0;k<nSeg;k++) rg.add(grooveStrip(zBot,Ro,H,k));
   frameView(th,zBot,Ro,H);
   viewNote();
   readouts(th,zBot,Ro,yMax,topZ);
@@ -335,16 +377,20 @@ function buildScene(){
 // Recentre the group on whatever the current view is showing and pick a sane
 // camera distance. Orbit angles are preserved across view changes.
 function frameView(th,zBot,Ro,H){
-  const r=WR(); let cx=0,cz=0,extent;
+  const r=WR(); let cx=0,cy=0,cz=0,extent;
   if(view==='assembly'){
     extent=P.R+r*Math.cos(th)+40;
+  }else if(view==='drive'){
+    // centre between the halo axis and the 12-o'clock drive cluster so the
+    // motor/pinion/wheels stay prominent while the whole ring turns
+    cy=P.R*0.38; extent=(P.R+r*Math.cos(th)+40)*0.72;
   }else if(view==='station'||view==='jig'){
     cx=P.R; cz=0; extent=r*(view==='jig'?1.35:1.15);
   }else{
     cx=(P.Ri+Ro)/2; cz=zBot/2;
     extent=Math.max(P.bw, 2*Ro*Math.sin(H))*0.72;
   }
-  group.position.set(-cx,0,-cz);
+  group.position.set(-cx,-cy,-cz);
   if(autoDist){
     dist=extent/Math.tan(camera.fov*Math.PI/360)*1.25;
     placeCam();
@@ -613,7 +659,8 @@ document.querySelectorAll('button.pz[data-view]').forEach(b=>{
     b.classList.add('act');
     view=b.dataset.view; autoDist=true;
     if(view==='jig'){az=0.7; pol=1.25;}       // bench-style angle: the front
-    buildScene();                             // view hides all behind wafers
+    if(view==='drive'){az=1.25; pol=1.95;}    // behind-top: the wafers hide
+    buildScene();                             // the drivetrain from the front
   });
 });
 function viewNote(){
@@ -628,6 +675,9 @@ function viewNote(){
   else if(view==='jig')
     el.innerHTML=real?tag+'OP 012 cure jig, seated: two fences on one M6 rod through the keyhole; the wafer floats edge-captured with zero clamp load.'
       :'The cure jig is CAD at the shipped parameters only — press <b>Rev B.3 build</b> to see the real fences, or regenerate them for these values via the command line below.';
+  else if(view==='drive')
+    el.innerHTML=real?tag+'Drivetrain, live: the N20 + 12T beveloid pinion drive the ring from the top (9:1, counter-rotating) while it rides the two grooved idler wheels below on the bore (rolling spin-up ~10.6×). The bracket plate is ghosted so the motor shows; the real N20 envelope is parametric — measure the purchased unit.'
+      :'The drivetrain is CAD at the shipped parameters only — press <b>Rev B.3 build</b> to watch the real ring run.';
   else if(view==='station')
     el.innerHTML=tag+'One segment with its wafer — the unit you bond on the bench. <b>'+
       Math.max(0,(P.R+r)-Ro).toFixed(0)+' mm</b> of wafer overhangs the band outboard, and <b>'+
@@ -653,5 +703,17 @@ function resize(){
 }
 window.addEventListener('resize',resize);
 rescaleRanges(); sync(); resize(); placeCam(); buildScene();
-(function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);})();
+let _tPrev=0, _ringA=0;
+(function loop(t){
+  requestAnimationFrame(loop);
+  if(view==='drive'&&ANIM.ring){
+    const dt=Math.min(t-_tPrev,100)/1000;
+    _ringA+=dt*DRIVE_W;
+    ANIM.ring.rotation.z=_ringA;
+    for(const s of ANIM.spin) s.g.rotation.z=_ringA*s.rate;
+    window.__ringAngle=_ringA;       // probed by the test suite
+  }
+  _tPrev=t;
+  renderer.render(scene,camera);
+})(0);
 })();
