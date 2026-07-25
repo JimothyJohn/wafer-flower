@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wafer Halo — Design · Picking the look</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<div class="page">
+
+<nav class="topnav">
+  <a href="index.html">Overview</a>
+  <a class="here" href="design.html">Design</a>
+  <a href="engineering.html">Engineering</a>
+  <a href="production.html">Production</a>
+  <span class="sep">·</span>
+  <a href="viewer.html">CAD viewer</a>
+  <a href="spec-sheet.html">Spec sheet</a>
+</nav>
+
+<header class="traveler">
+  <div class="oxide-rule"></div>
+  <div class="head-main">
+    <div class="eyebrow">Design · Rev B — the choices that are yours to make</div>
+    <h1>Wafer Halo</h1>
+    <div class="head-meta">
+      <span>YOURS <b>tilt θ · wafer Ø · N · band placement</b></span>
+      <span>NOT YOURS <b>the clearance cut, the bond physics, the gear rules</b></span>
+      <span>TOOL <b><a href="engineering.html" style="color:inherit">the live calculator</a></b></span>
+    </div>
+  </div>
+</header>
+
+<section class="op">
+  <div class="op-head"><span class="op-chip">LOOK</span><h2>What the design actually controls</h2></div>
+  <p>The piece is nine identical stations: a Ø300 silicon wafer bonded to a hidden printed segment, arranged in an overlapping swirl. Three things set how it reads on the wall:</p>
+  <ol class="steps">
+    <li><b>Tilt θ</b> — how far the swirl stands off the wall and how three-dimensional it reads. This is the big one, and it's settled physics that it's <em>aesthetic</em>: even θ=5° gives a 14.3 mm neighbor gap against a 3 mm requirement, and droop is ~0.01 mm either way. θ buys <b>depth</b> — 26.9 mm at 5°, 52.9 at 10°, 78.4 at 15° — at ~4 % assembly mass and ~5 % dovetail margin per degree.</li>
+    <li><b>The hide window</b> — the frame must be invisible from the front. Every wafer's footprint projects as an ellipse; at the joint meridian the neighbors' ellipses overlap over a radial range (≈ 240–416 mm at θ=10°), and the band plus the gear tips must stay inside it. The calculator flags violations live; the closed form is on the <a href="onshape-variables.html">OnShape variables page</a>.</li>
+    <li><b>Wafer size and count</b> — Ø300 at N=9 is the standard build (995 mm halo OD at θ=10°). Smaller wafers scale the whole piece down; N sets how tight the swirl winds and how much each wafer overlaps its neighbor.</li>
+  </ol>
+  <div class="note"><span class="tag">Where Rev B.3 landed</span><br>
+  Current build: <b>θ=5°, N=9, R=350, band 255–285, t_min=10</b>. θ=5 wasn't picked purely on looks — it's <b>forced by the user-set 30 mm part-thickness cap</b> at N=9 (θ=7.5° needs 32.1 mm, θ=10° needs 39.6). If the deeper θ=10 look is wanted back, <b>N=12 allows it at 27.9 mm</b> — the swirl winds tighter and the segments shrink. The cap also fixed the build's worst structural margin: dovetail 2.0× → 4.5×.</div>
+</section>
+
+<section class="op">
+  <div class="op-head"><span class="op-chip">θ</span><h2>Settling θ = 5 vs 10</h2></div>
+  <p>This was the open question, and the statics answer it cleanly: <b>θ is an aesthetic choice, and every structural metric prefers the smaller one.</b> Ø300, N=9, band centered under the wafer CG:</p>
+  <table>
+    <thead><tr><th>θ</th><th>Envelope depth</th><th>Neighbor z-gap</th><th>Droop (hung)</th><th>Assembly mass</th><th>Dovetail margin</th></tr></thead>
+    <tbody>
+      <tr><td class="num">5°</td><td class="num">26.9 mm</td><td class="num">14.3 mm</td><td class="num">0.01 mm</td><td class="num">2.31 kg</td><td class="num">2.0×</td></tr>
+      <tr><td class="num">7.5°</td><td class="num">39.9 mm</td><td class="num">21.5 mm</td><td class="num">0.01 mm</td><td class="num">2.60 kg</td><td class="num">1.8×</td></tr>
+      <tr><td class="num">10°</td><td class="num">52.9 mm</td><td class="num">28.9 mm</td><td class="num">0.02 mm</td><td class="num">2.90 kg</td><td class="num">1.6×</td></tr>
+      <tr><td class="num">15°</td><td class="num">78.4 mm</td><td class="num">44.2 mm</td><td class="num">0.02 mm</td><td class="num">3.48 kg</td><td class="num">1.3×</td></tr>
+    </tbody>
+  </table>
+  <p>The z-gap argument for a larger θ evaporates: even θ=5 gives 14.3 mm of neighbor gap against a 3 mm requirement, and droop is ~0.01 mm either way. What θ actually buys is <b>depth</b> — how far the piece stands off the wall and how much the swirl reads as three-dimensional — at a cost of ~4 % assembly mass and ~5 % joint margin per degree (slicer-calibrated masses — the solid shells dilute the old uniform-density trade). Land arc is 36° of 40° at every θ in this range, so bond area isn't in the trade either.</p>
+  <p><b>Recommendation from the numbers:</b> keep Ø300 — mass is a non-issue (2–3 kg) and it's the look you want. <b>Pick θ purely on how deep you want the piece to sit</b>; θ=10 is a fine choice and costs ~26 % more mass than θ=5, but nothing structural forces it. Move the band outboard toward the wafer CG only in the same revision that fixes the joint. And <b>fix the dovetail first</b> — it is the only number in this document under 40×, and every other improvement makes it worse.</p>
+</section>
+
+<section class="op">
+  <div class="op-head"><span class="op-chip">KNOBS</span><h2>What each knob drives</h2></div>
+  <p>Every readout named below is live in the <a href="engineering.html">calculator</a> — drag the slider and watch the number move. This table is the map of which readout answers which question.</p>
+  <table>
+    <thead><tr><th>Knob</th><th>What it drives</th><th>Read it there</th></tr></thead>
+    <tbody>
+      <tr><td><b>Wafer Ø</b></td><td>mass ∝ D²t (27.8 / 53.0 / 127.6 g), halo OD ∝ D (498 / 667 / 995 mm at N=9, θ=10°), droop ∝ D⁴/t². Does <em>not</em> drive bond stress.</td><td>Wafer mass, Halo OD, Tip droop</td></tr>
+      <tr><td><b>N</b></td><td>overlap and hide window. More segments = more overlap at the same R, smaller sector, more joints (more dovetails to fail).</td><td>Neighbor overlap, Joint moment</td></tr>
+      <tr><td><b>θ</b></td><td>depth of the piece, the neighbor z-gap, and the whole peel term. Low θ = flatter, less clearance to work with; high θ = deep taper, thick segments, more mass.</td><td>Envelope depth, Min z-gap, Peel</td></tr>
+      <tr><td><b>R</b></td><td>overlap (must satisfy R &lt; r·cosθ/sin(180/N) for the wafers to overlap at all) and total mass moment.</td><td>Neighbor overlap, Joint moment</td></tr>
+      <tr><td><b>Band Ri / width</b></td><td>staying inside the hide window keeps the frame invisible; moving outboard toward the wafer CG trades <em>mass, thermal stress and joint margin</em> for droop and peel arm. A real trade, not a free lunch — see OP 015 §2 on the engineering page.</td><td>CG offset, Tip droop, Land area, Dovetail</td></tr>
+      <tr><td><b>Bondline / G</b></td><td>the actual design load. Thick + compliant wins; every bit of stiffness you add multiplies straight into τ_th.</td><td>Thermal shear, strain</td></tr>
+    </tbody>
+  </table>
+  <div class="flag"><span class="tag">The one rule design cannot bend</span><br>
+  Gear tooth count must divide by N or the ring-gear pitch breaks at every joint, and at module 2 / N=9 the clean 252-tooth fit pins <span class="mono">Ri ≈ 255</span>. Band moves are negotiated with that constraint — the calculator's <b>Gear tips vs hide window</b> readout referees.</div>
+  <p class="dim">Once the look is picked: the <a href="engineering.html">engineering page</a> generates the STL from those exact values, and the <a href="production.html">production page</a> takes it from there.</p>
+</section>
+
+<footer>
+  <span>HALO-001 · REV B · design — θ, wafer size, band placement</span>
+  <span>θ is aesthetic · the hide window is law · pick on looks</span>
+</footer>
+</div>
+</body>
+</html>
