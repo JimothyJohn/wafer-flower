@@ -698,7 +698,11 @@ def main():
     ap = argparse.ArgumentParser(description='KISELRING IKEA-style manual')
     ap.add_argument('-o', '--out', default=OUT)
     a = ap.parse_args()
-    cf = Cfg(facets=256)
+    # PARKED (2026-07-24): this manual documents the MOTORISED concept and
+    # renders against the legacy spur ring it was designed with. The drive
+    # train is filed away; the shipped segment is the face-gear + static-
+    # bracket build (bracket_stl.py). A static-mount manual is TODO.
+    cf = Cfg(facets=256, gear_drive='spur')
     d = Drive(cf)
     pages = [page_cover, page_warnings, page_parts, page_motor,
              page_pinion_hang, page_ring, page_mount_mesh, page_spin,
