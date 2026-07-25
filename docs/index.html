@@ -28,77 +28,23 @@
     <h1>Wafer Halo</h1>
     <div class="head-meta">
       <span>WHAT <b>9× Ø300 mm silicon wafers in an overlapping swirl, each bonded to one printed segment</b></span>
-      <span>DRIVE <b>252T face gear, 28T pinion, 9:1 (parked)</b></span>
+      <span>DRIVE <b>252T 45° bevel gear (generated), 28T pinion, 9:1 (parked)</b></span>
       <span>HARDWARE <b>zero on the frame — all fixturing in a reusable bench jig</b></span>
     </div>
   </div>
 </header>
 
-<!-- ============ THE CAD, front and center ============ -->
-<div class="viewer">
-  <div class="wrap">
-    <div>
-      <canvas id="viz"></canvas>
-      <div id="status">loading models…</div>
-    </div>
-    <div class="panel">
-      <div class="card">
-        <h3>Configuration</h3>
-        <div class="presets" id="presets">
-          <button class="pz" data-p="bare">Bare segment</button>
-          <button class="pz" data-p="jigopen">Jig open</button>
-          <button class="pz" data-p="place">Wafer placed</button>
-          <button class="pz act" data-p="curing">Jig closed · curing</button>
-          <button class="pz" data-p="pair">Glued pair</button>
-          <button class="pz" data-p="halo">Full halo</button>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Controls</h3>
-        <div class="row"><label>Jig</label>
-          <input type="checkbox" id="jig" checked><span class="val" id="jigv">on</span></div>
-        <div class="row"><label>Wafers</label>
-          <input type="checkbox" id="waf" checked><span class="val" id="wafv">on</span></div>
-        <div class="row" id="onshaperow" style="display:none"><label>OnShape</label>
-          <input type="checkbox" id="onshape"><span class="val" id="onshapev">off</span></div>
-        <div class="row"><label>Open ↔ seat</label>
-          <input type="range" id="stroke" min="0" max="1" step="0.001" value="1">
-          <span class="val" id="strokev">seated</span></div>
-        <div class="row"><label>Wafer</label>
-          <input type="range" id="lift" min="0" max="1" step="0.001" value="0">
-          <span class="val" id="liftv">placed</span></div>
-        <div class="row"><label>Stations</label>
-          <input type="range" id="stations" min="1" max="9" step="1" value="1">
-          <span class="val" id="stationsv">1</span></div>
-        <div class="row"><label>Section</label>
-          <input type="range" id="section" min="0" max="1" step="0.001" value="1">
-          <span class="val" id="sectionv">off</span></div>
-        <div class="note">Drag to orbit · scroll to zoom. These are the real
-          exported STLs, not a re-derivation. The jig is a bench fixture — it
-          hides once more than one station is connected.</div>
-      </div>
-      <div class="card">
-        <h3>Interference checks <span id="checksum"></span></h3>
-        <div class="checks" id="checks"></div>
-        <div class="note spaced">Booleans run on these exact solids by
-          <span class="mono">scripts/viewer_export.py</span> — the open/close
-          stroke, the wafer drop, and the glued ring are each swept and gated
-          in CI before the models land here.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ============ CALCULATOR ============ -->
 <section class="op" style="max-width:940px;margin-left:auto;margin-right:auto">
   <div class="op-head"><span class="op-chip">DESIGN LIVE</span><h2>Tweak it — parametric calculator with STL export</h2></div>
-  <p>Design on the fly: drag any slider and the geometry, the load path, and the printed masses all re-derive live — halo OD, standoff depth, hide window, bond stresses, assembly weight, dovetail margin. When it looks right, <b>Download STL</b> grabs the preview solid at those exact values and the command line below it regenerates the full CI-checked CAD. The viewer above shows the shipped design; this is where the next one gets found. Full engineering context (CAD recipe, statics narrative) lives on the <a href="engineering.html">engineering page</a>.</p>
+  <p>Drag any slider and the whole picture re-derives live — segments, wafers, the 45° bevel gear band, the retention groove, the cure jig, and the bracket saddles, along with every readout: halo OD, standoff depth, hide window, bond stresses, assembly weight, dovetail margin. When it looks right, <b>Download STL</b> grabs the preview solid at those exact values and the command line regenerates the full CI-checked CAD. The <a href="viewer.html"><b>CAD viewer</b></a> shows the shipped STLs with their CI interference checks; full engineering context is on the <a href="engineering.html">engineering page</a>.</p>
   <div class="calc">
     <div class="presets viewbar">
       <div class="grp">
         <span class="lbl">View</span>
         <button class="pz act" data-view="assembly">Full halo</button>
         <button class="pz" data-view="station">One station</button>
+        <button class="pz" data-view="jig">Cure jig</button>
         <button class="pz" data-view="frame">Frame only</button>
       </div>
       <div id="viewnote"></div>
@@ -147,8 +93,8 @@
         <div class="read"><span class="k">Segment max thickness (taper)</span><span class="v" id="r_tmax">—</span></div>
         <div class="read"><span class="k">Bondable land arc</span><span class="v" id="r_land">—</span></div>
         <div class="read"><span class="k">Bond land area</span><span class="v" id="r_area">—</span></div>
-        <div class="read"><span class="k">Face gear (m=2, wall face)</span><span class="v" id="r_gear">—</span></div>
-        <div class="read"><span class="k">Flange vs hide window</span><span class="v" id="r_gearok">—</span></div>
+        <div class="read"><span class="k">Bevel gear 45° (m=2, generated)</span><span class="v" id="r_gear">—</span></div>
+        <div class="read"><span class="k">Gear vs hide window</span><span class="v" id="r_gearok">—</span></div>
       </div>
       <div class="reads">
         <h4>Statics</h4>
@@ -207,11 +153,11 @@
 <!-- ============ current build at a glance ============ -->
 <div class="keynums">
   <div class="kn"><div class="v">θ=5° · N=9</div><div class="k">Rev B.3 params</div></div>
-  <div class="kn"><div class="v">1.78 kg / 17.5 N</div><div class="k">assembly, sliced masses</div></div>
-  <div class="kn"><div class="v">70.3 g · 2h34m</div><div class="k">per segment @45%</div></div>
+  <div class="kn"><div class="v">1.71 kg / 16.8 N</div><div class="k">assembly, sliced masses</div></div>
+  <div class="kn"><div class="v">61.8 g · 2h14m</div><div class="k">per segment @45%</div></div>
   <div class="kn"><div class="v">4.5×</div><div class="k">dovetail margin (tightest)</div></div>
   <div class="kn"><div class="v">6.0 kPa</div><div class="k">thermal — the governing load</div></div>
-  <div class="kn"><div class="v">252T : 28T</div><div class="k">face gear, exactly 9:1</div></div>
+  <div class="kn"><div class="v">252T : 28T</div><div class="k">45° bevel gear, exactly 9:1</div></div>
 </div>
 
 <footer>
@@ -221,7 +167,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="assets/viewer.js"></script>
 <script src="assets/calc.js"></script>
 </body>
 </html>
