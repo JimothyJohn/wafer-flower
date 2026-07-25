@@ -65,7 +65,7 @@ a{color:var(--teal)}
       <span>parts <b>2 printed fences + knob + 1 rod</b></span>
       <span>tools <b>none while bonding</b></span>
       <span>force on wafer <b>zero</b></span>
-      <span>centring <b>±0.15 / ±0.30 mm</b></span>
+      <span>centring <b>±0.15 / ±0.40 mm</b></span>
       <span>source <b class="mono">scripts/cure_jig_stl.py</b></span>
     </div>
   </div>
@@ -75,7 +75,7 @@ a{color:var(--teal)}
 Two printed fences slide toward each other on one threaded rod that passes straight
 through the segment's keyhole — the same axis that runs under the centre of the wafer.
 Tighten one knob and both fences seat against the <em>segment</em>, never the wafer:
-the wafer just floats in two curved slots, caught on all sides, squeezed by nothing.</p>
+the wafer just floats between four pegs — X and Y held, Z left to gravity — squeezed by nothing.</p>
 
 <figure class="vidwrap">
   <video src="media/turntable.mp4" autoplay loop muted playsinline></video>
@@ -92,8 +92,8 @@ the wafer just floats in two curved slots, caught on all sides, squeezed by noth
 
   <table>
     <tr><th>Part</th><th>Where</th><th>Notes</th></tr>
-    <tr><td>Outboard fence</td><td class="mono">stl/cure_jig_outboard.stl</td><td class="dim">56 g · 1 h 47 m at 15 % infill — no real load path, don't print it dense</td></tr>
-    <tr><td>Inboard fence</td><td class="mono">stl/cure_jig_inboard.stl</td><td class="dim">34 g · 1 h 10 m at 15 %</td></tr>
+    <tr><td>Outboard fence</td><td class="mono">stl/cure_jig_outboard.stl</td><td class="dim">48 g · 1 h 36 m at 15 % infill — no real load path, don't print it dense</td></tr>
+    <tr><td>Inboard fence</td><td class="mono">stl/cure_jig_inboard.stl</td><td class="dim">29 g · 1 h 04 m at 15 %</td></tr>
     <tr><td>M6 × 1.0 threaded rod, cut to <b>350&nbsp;mm</b></td><td>Home Depot, 36" / 1 m stick</td><td class="dim">hacksaw + deburr the cut end so it threads. The one piece you must buy.</td></tr>
     <tr><td>M6 hex nut ×2</td><td>Home Depot</td><td class="dim">one lives inside the inboard fence — you'll never touch it again; one seats in the printed knob</td></tr>
     <tr><td>M6 washer + printed knob <span class="mono">stl/cure_jig_knob.stl</span></td><td>washer: Home Depot</td><td class="dim">the knob (2.5 g, 23 m) IS the closure — an M6 wing nut swings ~15 mm and hits the bench, don't buy one</td></tr>
@@ -159,7 +159,7 @@ the wafer just floats in two curved slots, caught on all sides, squeezed by noth
   <div class="step"><div class="txt">
     <div class="n">04</div><h3>Slide in the outer fence</h3>
     <p>From outside, on the keyhole axis, until its nose <b>stops hard against the segment</b>.
-    The wafer edge slips into the curved slot as it arrives.</p>
+    The two chamfered pegs arrive just past the wafer edge.</p>
   </div><figure style="margin:0"><img src="media/step4_outboard.png" alt="Step 4"></figure></div>
 
   <div class="step"><div class="txt">
@@ -197,22 +197,25 @@ the wafer just floats in two curved slots, caught on all sides, squeezed by noth
   <div class="op-head"><span class="op-chip">D</span><h2>Why it centres itself</h2></div>
 
   <p>The keyhole sits on the <b>wafer-centre meridian</b>, so the rod runs directly beneath the
-  centre of the wafer, and both slot walls are arcs drawn about that same centre. When the fences
-  hit their stops, the pocket they form <em>is</em> the nominal wafer position: <b>±0.15&nbsp;mm
-  radially, about ±0.30&nbsp;mm sideways</b> (the wings wrap 30° of rim on each side), and the lips
-  block any lift at 1.6&nbsp;mm. Gravity settles it against the same walls every time.</p>
+  centre of the wafer, and the four peg flanks sit at projected-rim + 0.15&nbsp;mm about that same
+  centre. When the fences hit their stops, the peg pocket <em>is</em> the nominal wafer position:
+  <b>±0.15&nbsp;mm radially, about ±0.40&nbsp;mm sideways</b> — and because the land is tilted,
+  gravity settles the wafer downhill onto the same two down-slope pegs every time. That two-point
+  seat is the centring: X and Y constrained, Z free (nothing overhangs the wafer), never
+  overconstrained, and every dimension re-derives from the wafer Ø and tilt.</p>
 
   <figure><img src="media/sec_drivetrain.png" alt="Cross-section through the drivetrain">
   <figcaption>Straight down the middle: nut — fence — keyhole — fence — washer — knob, one axis under the wafer centre.</figcaption></figure>
 
   <figure><img src="media/sec_capture.png" alt="Close-up of the rim slot">
-  <figcaption>The slot, up close. The rim never touches anything unless it tries to leave.</figcaption></figure>
+  <figcaption>The capture zone, up close. The rim never touches anything unless it tries to leave.</figcaption></figure>
 
   <div class="note"><span class="tag">Zero force, on purpose</span><br>
   Tightening the knob pulls both fences onto the <em>segment</em> — the force loop closes
   through printed plastic and never enters the silicon. The wafer sits in 0.15&nbsp;mm of air on
-  every side. Every clearance and every capture direction is boolean-checked by
-  <span class="mono">scripts/cure_jig_stl.py</span> (19 checks) each time it's regenerated.</div>
+  every side, held in X/Y by the pegs while gravity owns Z. Every clearance and every capture
+  direction is boolean-checked by <span class="mono">scripts/cure_jig_stl.py</span> (18 checks)
+  each time it's regenerated.</div>
 
   <p class="dim" style="margin-top:22px">Back to the <a href="index.html">overview</a> ·
   <a href="production.html">production</a> · <a href="engineering.html">engineering</a> ·

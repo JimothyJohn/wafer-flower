@@ -165,7 +165,7 @@ def build_all(cf, j):
                             scene['jig_inboard'][0], scene['rod'][0],
                             scene['hex_nut'][0], scene['washer'][0],
                             scene['knob'][0], scene['knob_nut'][0])
-    checks = [('nominal', 'cure-jig drivetrain + capture suite (19 checks)',
+    checks = [('nominal', 'cure-jig drivetrain + capture suite (18 checks)',
                0.0 if nominal_ok else 1.0, nominal_ok)]
     checks += sweep_checks(cf, scene, vecs)
     checks += assembly_checks(cf, seg, waf)
