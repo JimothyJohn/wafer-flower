@@ -54,14 +54,14 @@
    "name": "jig_outboard",
    "group": "out",
    "color": "#D97742",
-   "volume_cm3": 106.72
+   "volume_cm3": 93.672
   },
   {
    "file": "jig_inboard.stl",
    "name": "jig_inboard",
    "group": "inboard",
    "color": "#3E7CB1",
-   "volume_cm3": 75.711
+   "volume_cm3": 63.554
   },
   {
    "file": "rod.stl",
@@ -155,7 +155,7 @@
  "checks": [
   {
    "group": "nominal",
-   "name": "cure-jig drivetrain + capture suite (19 checks)",
+   "name": "cure-jig drivetrain + capture suite (18 checks)",
    "value_mm3": 0.0,
    "pass": true
   },

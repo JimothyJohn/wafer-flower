@@ -5,30 +5,31 @@ land while the adhesive cures (the SMP / PL Premium path; tape needs no cure
 hold). Bench use, one segment at a time, flat on its bottom.
 
 Two printed fences slide toward each other along ONE threaded rod that passes
-RADIALLY THROUGH the segment's Ø5 keyhole:
+RADIALLY THROUGH the segment's Ø6.5 keyhole:
 
-  wing nut > [outboard fence]===(keyhole)===[inboard fence] < captive hex nut
-                    nose butts r=Ro          prong butts r=Ri
+  knob > [outboard fence]===(keyhole)===[inboard fence] < captive hex nut
+              nose butts r=Ro          prong butts r=Ri
 
-Tightening the wing nut draws BOTH fences onto the segment, so the closed
-force loop is jig<->segment only. The wafer floats between the two slot walls
-with `slack` per side and carries ZERO clamp load — edges only, never flex.
+Tightening the knob draws BOTH fences onto the segment, so the closed force
+loop is jig<->segment only. The wafer floats between four capture PEGS with
+`slack` per side and carries ZERO clamp load — edges only, never flex.
 
 ALIGNED WITH THE WAFER CENTRE, by construction and by check: the keyhole
 meridian (a=0) is the wafer-centre meridian, so the rod axis lies in the
-vertical plane through the wafer centre (R, 0) and crosses directly beneath
-it. Both slot walls are arcs about (R, 0), so the captured position IS the
-nominal wafer centre. The script verifies the plane-through-centre condition
-numerically along with everything else.
+vertical plane through the wafer centre (R, 0), and the four peg flanks sit
+at projected-rim + slack about that same centre — the captured position IS
+the nominal wafer centre. The script verifies it numerically.
 
-Capture, not clamp (theta=5 defaults):
-  x (radial):  +/-0.15 mm — wall faces at R +/- (r + slack)
-  y (tangent): ~ +/- slack/sin(asin(wing_w2/r)) = 0.30 mm — full-height
-               centring WINGS carry the wall arcs out to y=+/-75, wrapping
-               32 deg of rim per side; gravity seats the wafer downhill
-               against the same arcs every time
-  z (lift):    slot lips overhang the rim 1.5 mm; ceiling 1.6 mm above the
-               wafer top, floor ledge 1.6 below — it cannot walk out
+Capture, not clamp — PEGS ONLY (2026-07-25, Nick's call: constrain X/Y,
+let gravity own Z, keep the jig part-agnostic and never overconstrained):
+  x (radial):  +/-slack (0.15) — two pegs per fence, flanks at rim + slack
+  y (tangent): ~ +/-slack/sin(peg_az) = 0.40 — pegs sit +/-22 deg off the
+               radial meridian; on the tilted land the wafer settles
+               DOWNHILL onto the two down-slope pegs (one per fence), and
+               that two-point gravity seat IS the centring
+  z (lift):    FREE. Nothing overhangs the wafer, nothing to snag on the
+               way in or out — set it down between the peg chamfers, lift
+               it straight off after cure
 
 The ENTIRE drivetrain is modelled as solids and checked, not assumed: rod at
 thread OD, captive hex nut on its pocket floor, M6 washer, and the printed
@@ -36,11 +37,6 @@ knob with its embedded hex nut. A wing nut is NOT usable at M6: it swings
 ~15 mm off the axis and the axis is only 13.35 above the bench (raising it
 further would break the bore into the adhesive pocket). The knob (Ø20,
 10 mm swing) or a plain hex nut + wrench both clear.
-
-The slot is cut with a wafer-COPLANAR disc, not a straight groove: across an
-80 mm fence the tilted rim swings +/-3.5 mm in z, so a straight slot would
-need a 9+ mm opening and give up all lift capture. Coplanar, the clearance is
-a uniform 1.6 mm all round.
 
 Hardware (Home Depot): M6x1.0 threaded rod (Ø6.0 — slides through the Ø6.5
 keyhole as printed, no reaming), cut to ~350 mm from a 36" / 1 m stick, two
@@ -58,9 +54,10 @@ redrilled to match, the fences don't care structurally).
 Use: bond one segment flat on the bench; wet SMP beads in the pocket; set the
 wafer by eye (+/-1 mm); slide the outboard fence in until its nose butts the
 outer arc face, then the inboard fence; push the rod through from outboard,
-thread it into the captive nut, spin the wing nut finger tight. The walls
-nudge the wafer onto centre as they seat. Leave until cured, back the rod
-out, slide the fences apart radially.
+thread it into the captive nut, spin the knob finger tight. The wafer
+settles downhill onto the two down-slope pegs as everything seats. Leave
+until cured, back the rod out, slide the fences apart radially — the wafer
+lifts straight out, nothing overhangs it.
 
     pip install manifold3d
     python3 scripts/cure_jig_stl.py            # -> stl/
@@ -81,18 +78,17 @@ JIG = dict(
     nut_clr  = 0.45,   # pocket oversize on the across-flats
     nut_t    = 5.2,    # M6 hex nut thickness (ISO 4032)
     nut_deep = 9.0,    # hex pocket depth (nut is 5.2 thick; extra is rod room)
-    slack    = 0.15,   # wall standoff per side from the nominal rim
-    slot_h   = 4.0,    # slot opening, centred on the wafer mid-plane, coplanar
-    lip_over = 1.5,    # lip / floor overhang inboard of the nominal rim
-    fence_w  = 60.0,   # tangential width of the fence cores (was 80 — narrowed
-                       # 2026-07-24; capture lives in the wings, not the core)
-    wing_w2  = 75.0,   # centring wings reach to y=+/-wing_w2 (32 deg of rim
-                       # per side); capped by the gear tooth tips at r=250
-                       # on the inboard side
+    slack    = 0.15,   # peg standoff per side from the nominal rim
+    peg_D    = 8.0,    # capture peg diameter (2026-07-25, Nick: pegs, not
+                       # wall cutouts — X/Y only, gravity owns Z, and the
+                       # jig stops caring what wafer/tilt it holds)
+    peg_az   = 22.0,   # peg azimuth, deg either side of the radial meridian
+                       # (per fence). Sets the tangential capture window:
+                       # y ~ +/- slack / sin(peg_az) = 0.40 at defaults
+    peg_c    = 3.0,    # peg rise above the local rim top
+    fence_w  = 60.0,   # tangential width of the fence cores
     clr_und  = 2.0,    # min clearance to the wafer underside (covers 0.6 droop)
     boss_w   = 12.0,   # rib that roofs the rod bore under the wafer overhang
-    band_t   = 7.0,    # wing wall thickness: wings keep only the arc band
-                       # r_lip..r_lip+band_t (1.65 lip + ~5.3 behind the slot)
 )
 
 
@@ -108,12 +104,29 @@ class Jig:
         self.w2     = self.fence_w / 2.0
         self.x_in   = cf.R - cf.r              # nominal rim, inboard / outboard
         self.x_out  = cf.R + cf.r
-        self.r_wall = cf.r + self.slack        # radial stop = slot back face
-        self.r_lip  = cf.r - self.lip_over     # lip & floor-ledge face
+        az = math.radians(self.peg_az)
+        # peg centres sit slack + peg radius outside the PROJECTED rim at
+        # their own azimuth. The tilted wafer's plan rim is an ELLIPSE
+        # (y semi-axis r*cos(theta), 0.57 mm shy of r at theta=5) — pegs on
+        # a plain r+slack circle would gap 0.23 instead of 0.15 at 22 deg
+        # and the capture window would drift with tilt. Deriving from the
+        # ellipse keeps the flank gap = slack at every peg, any wafer, any
+        # tilt. Only the peg FLANKS ever touch the wafer — X/Y only.
+        r_ell = lambda phi: cf.r * math.hypot(math.cos(phi),
+                                              math.cos(cf.th) * math.sin(phi))
+        self.peg_rho = r_ell(az) + self.slack + self.peg_D / 2.0
+        self.pegs_out = [(cf.R + self.peg_rho * math.cos(s_ * az),
+                          self.peg_rho * math.sin(s_ * az)) for s_ in (1, -1)]
+        self.pegs_in = [(cf.R - self.peg_rho * math.cos(s_ * az),
+                         self.peg_rho * math.sin(s_ * az)) for s_ in (1, -1)]
+        # pegs top out peg_c above the UPHILL rim top; z stays free above
+        self.peg_top = cf.r * math.sin(az) * tn + cf.wafer_T / 2 + self.peg_c
         swing = self.w2 * tn                   # rim z swing across the fence core
         self.under_top = -(cf.wafer_T / 2 + swing + self.clr_und)   # rail/base top
-        self.wall_top  = swing + self.slot_h / 2 + 3.0              # lip roof
-        self.wing_top  = self.wing_w2 * tn + self.slot_h / 2 + 3.0  # wing lip roof
+        # peg support arms pass under the rim: clear the wafer underside at
+        # the arm's worst in-footprint point (the rim itself, y = r sin az)
+        self.arm_top = -(cf.wafer_T / 2 + cf.r * math.sin(az) * tn + self.clr_und)
+        self.wall_top = swing + 5.0            # nut tower height (was lip roof)
         # 0.8 roof over the bore (was 1.5): the M6 axis sits 0.75 higher and
         # the wafer-underside clearance assert below is the hard ceiling.
         self.boss_top  = self.zc + self.bore_r + 0.8
@@ -138,28 +151,14 @@ def xcyl(r, x0, x1, z, fn=96):
             .rotate([0.0, 90.0, 0.0]).translate([x0, 0.0, z]))
 
 
-def coplanar(cf, solid_z, offset):
-    """Place a +z-extruded solid parallel to wafer 0's plane at `offset`."""
-    M, c, n = cf.wafer_frame(0)
-    t = [c[i] + offset * n[i] for i in range(3)]
-    return solid_z.transform([[M[0][0], M[0][1], M[0][2], t[0]],
-                              [M[1][0], M[1][1], M[1][2], t[1]],
-                              [M[2][0], M[2][1], M[2][2], t[2]]])
-
-
-def slot_cuts(j):
-    """One coplanar cutter serves both fences: the slot (back face = the
-    radial stop at r_wall) plus a 45-degree bevel on the lip underside so a
-    high-riding rim wedges in instead of jamming during the slide."""
-    cf = j.cf
-    slot = coplanar(cf, Manifold.cylinder(j.slot_h, j.r_wall, j.r_wall, cf.facets),
-                    -j.slot_h / 2)
-    # The cone starts 1 mm INSIDE the slot void, not exactly on the ceiling
-    # plane: two cutters meeting cap-to-cap on the same plane leave a folded
-    # seam in the union (74 duplicated mesh edges), overlap dissolves cleanly.
-    bev = coplanar(cf, Manifold.cylinder(2.2, j.r_wall + 1.0, j.r_wall - 1.2, cf.facets),
-                   +j.slot_h / 2 - 1.0)
-    return slot + bev
+def peg(j, px, py):
+    """One capture peg: a vertical post from the bench to peg_top with a
+    cone-chamfered tip (drop-in lead). The wafer rim can only ever touch
+    its FLANK — in-plane (X/Y) constraint, nothing above the rim."""
+    p = vcyl(j.peg_D / 2.0, j.cf.z_bot, j.peg_top - j.cf.z_bot, px, py, fn=64)
+    tip = (Manifold.cylinder(3.0, j.peg_D / 2.0, j.peg_D / 2.0 - 2.0, 64)
+           .translate([px, py, j.peg_top]))
+    return p + tip
 
 
 def hex_pocket(j, x0):
@@ -173,60 +172,52 @@ def hex_pocket(j, x0):
 # ---- the two fences ---------------------------------------------------------
 def build_outboard(j):
     """Rail on the bench under the wafer overhang, nose butting the outer arc
-    face, slot wall just past the rim, wing-nut face at the back."""
+    face, TWO capture pegs just past the rim, knob face at the back. Pegs
+    only (2026-07-25): the wafer is constrained in X/Y by peg flanks at
+    rim + slack; gravity owns Z. No walls, no slot, no lips — part-agnostic
+    (any wafer Ø / tilt re-derives the peg circle) and never overconstrained:
+    on the tilted land the wafer settles downhill onto the two down-slope
+    pegs, one per fence, and that IS the centring."""
     cf = j.cf
     x0, x1 = cf.Ro - 2.0, j.x_out + 10.0
-    # Rail slimmed to what actually works (2026-07-24): a nose foot butting
-    # the arc face, a rear block under the walls/wings, and the bore-roof
-    # spine tying them. The full-width slab between was ~180 mm of dead
-    # material — nothing bears on it (the wafer floats clr_und above).
     f  = box(x0, x0 + 14.0, -j.w2, j.w2, cf.z_bot, j.under_top)             # nose foot
     f += box(j.x_out - 30.0, x1, -j.w2, j.w2, cf.z_bot, j.under_top)        # rear block
     f += box(x0, x1, -j.boss_w / 2, j.boss_w / 2, cf.z_bot, j.boss_top)     # spine + bore roof
-    walls = box(j.x_out - 8.0, x1, -j.w2, j.w2, j.under_top - 2.0, j.wall_top)
-    # centring wings: dumb boxes, kept only where they matter — the inner
-    # lip-cylinder subtraction below carves everything plan-inside the rim
-    # ring, and the outer keeper (^ band) trims the box corners that used to
-    # run ~45 mm past the arc. What survives is a band_t-thick wall band
-    # following the rim arc out to +/-wing_w2, standing on the bench.
-    band = vcyl(j.r_lip + j.band_t, cf.z_bot - 1.0, 60.0, cf.R, 0.0)
-    for s in (1.0, -1.0):
-        walls += box(j.x_out - 28.0, x1, s * (j.w2 - 2.0), s * j.wing_w2,
-                     cf.z_bot, j.wing_top) ^ band
-    f += walls - vcyl(j.r_lip, cf.z_bot - 1.0, 60.0, cf.R, 0.0)
+    for px, py in j.pegs_out:
+        sy = 1.0 if py > 0 else -1.0
+        f += box(px - 8.0, px + 8.0, sy * (j.w2 - 2.0), py + sy * 8.0,
+                 cf.z_bot, j.arm_top)                                       # peg arm
+        f += peg(j, px, py)
     # nose: butts the outer arc face. +0.05 standoff so the different chord
     # phases of this 512-gon and the segment's 160-point arc don't overlap.
     f -= vcyl(cf.Ro + 0.05, cf.z_bot - 1.0, 60.0)
-    f -= slot_cuts(j)
     f -= xcyl(j.bore_r, x0 - 2.0, x1 + 2.0, j.zc)
     return f
 
 
 def build_inboard(j):
-    """Sits in the central hole: nut tower at the back, slot wall just inside
-    the rim, low prong butting the band's inner face above the gear flange."""
+    """Sits in the central hole: nut tower at the back, TWO capture pegs
+    just inside the rim (see build_outboard for the peg philosophy), low
+    prong butting the band's inner face above the gear flange. Peg plan
+    radius from the HALO axis is ~215 — the wings this replaces used to
+    graze the gear teeth by 6 mm; the pegs clear the m5.6 spiral tips
+    (r246) by ~30."""
     cf = j.cf
     x1 = j.x_in + 2.0
     x0 = j.x_in - 28.0                                                      # back face
     f  = box(x0, x1, -j.w2, j.w2, cf.z_bot, j.under_top)                    # base
     f += box(x0, x0 + 18.0, -j.w2, j.w2, cf.z_bot, j.wall_top)              # nut tower
-    walls = box(j.x_in - 14.0, x1, -j.w2, j.w2, j.under_top - 2.0, j.wall_top)
-    # centring wings, as on the outboard fence: boxes trimmed to the
-    # band_t arc band by the outer keeper (^ band). Reach inward stops at
-    # x_in + 32: the far corner sits at r=244 from the halo axis, 6 mm clear
-    # of the gear tooth tips (r=250).
-    band = vcyl(j.r_lip + j.band_t, cf.z_bot - 1.0, 60.0, cf.R, 0.0)
-    for s in (1.0, -1.0):
-        walls += box(x0, j.x_in + 32.0, s * (j.w2 - 2.0), s * j.wing_w2,
-                     cf.z_bot, j.wing_top) ^ band
-    f += walls - vcyl(j.r_lip, cf.z_bot - 1.0, 60.0, cf.R, 0.0)
+    for px, py in j.pegs_in:
+        sy = 1.0 if py > 0 else -1.0
+        f += box(px - 8.0, px + 8.0, sy * (j.w2 - 2.0), py + sy * 8.0,
+                 cf.z_bot, j.arm_top)                                       # peg arm
+        f += peg(j, px, py)
     # datum prong: butts the band inner face (r=Ri) between gear flange and
     # land. The rod bore breaks 0.6 mm out of its underside over the last
     # stretch (prong floor is capped by the flange top) — an open guide
     # groove there is fine, the full round bore in the body does the guiding.
     prong = box(x0 + 6.0, cf.Ri + 2.0, -14.0, 14.0, j.prong_bot, j.prong_top)
     f += prong ^ vcyl(cf.Ri - 0.05, cf.z_bot - 1.0, 60.0)   # 0.05 datum standoff
-    f -= slot_cuts(j)
     f -= xcyl(j.bore_r, x0 - 2.0, cf.Ri + 4.0, j.zc)
     f -= hex_pocket(j, x0 - 0.5)
     return f
@@ -305,11 +296,11 @@ def run_checks(j, seg, waf, fout, fin, rod, nut, washer, knob, knob_nut):
         ('wafer +0.30 x meets outboard stop', (waf.translate([0.30, 0, 0]) ^ fout).volume(), True),
         ('wafer +0.10 x still free',          (waf.translate([0.10, 0, 0]) ^ fout).volume(), False),
         ('wafer -0.30 x meets inboard stop',  (waf.translate([-0.30, 0, 0]) ^ fin).volume(), True),
-        ('wafer +0.60 y meets the wings',     (waf.translate([0, 0.60, 0]) ^ fences).volume(), True),
+        ('wafer +0.60 y meets the pegs',      (waf.translate([0, 0.60, 0]) ^ fences).volume(), True),
         ('wafer +0.20 y still free',          (waf.translate([0, 0.20, 0]) ^ fences).volume(), False),
-        ('wafer -0.60 y meets the wings',     (waf.translate([0, -0.60, 0]) ^ fences).volume(), True),
-        ('wafer +3.0 z meets the lips',       (waf.translate([0, 0, 3.0]) ^ fences).volume(), True),
-        ('wafer +1.0 z still free',           (waf.translate([0, 0, 1.0]) ^ fences).volume(), False),
+        ('wafer -0.60 y meets the pegs',      (waf.translate([0, -0.60, 0]) ^ fences).volume(), True),
+        ('wafer +5.0 z lifts FREE (Z is gravity-held, by design)',
+         (waf.translate([0, 0, 5.0]) ^ fences).volume(), False),
     ]
     ok = True
     print("  interference (must all be 0 mm3):")
@@ -339,17 +330,17 @@ def main():
         print(f"WARNING: hole_dep {cf.hole_dep} < bw {cf.bw}: keyhole is BLIND, "
               f"the rod cannot reach the inboard fence. Regenerate the segment.")
 
-    ys = j.slack / (j.wing_w2 / j.r_wall)     # sin(arc half-angle) ~ wing_w2/r
+    ys = j.slack / math.sin(math.radians(j.peg_az))
     print(f"Cure jig OP 012  ·  theta={cf.theta}  keyhole z={j.zc:.2f} "
           f"({j.zc - cf.z_bot:.1f} above the bench)")
     print(f"  centre  rod axis lies in the wafer-centre plane (a=0 meridian): "
           f"crosses ({cf.R:.0f}, 0) at z={j.zc:.2f}, {abs(j.zc):.1f} below the "
-          f"wafer mid-plane; both slot walls are arcs about ({cf.R:.0f}, 0)")
-    print(f"  walls   x = {cf.R - j.r_wall:.2f} / {cf.R + j.r_wall:.2f}  "
-          f"(rim {j.x_in:.0f}/{j.x_out:.0f} + {j.slack} slack), wings wrap "
-          f"{math.degrees(math.asin(j.wing_w2 / j.r_wall)):.0f} deg of rim per side")
-    print(f"  capture x +/-{j.slack:.2f}  y ~+/-{ys:.2f} (gravity-seated)  "
-          f"lift blocked at +{j.slot_h/2 - cf.wafer_T/2:.1f}")
+          f"wafer mid-plane; all four peg flanks sit at rim + {j.slack}")
+    print(f"  pegs    Ø{j.peg_D:.0f} at ±{j.peg_az:.0f}° per fence, tops at "
+          f"z={j.peg_top:.1f} — X/Y only, Z is gravity's job (part-agnostic: "
+          f"everything re-derives from wafer Ø/tilt)")
+    print(f"  capture x ±{j.slack:.2f}  y ~±{ys:.2f} (settles downhill onto "
+          f"the two down-slope pegs)  lift FREE")
     print(f"  swing   clearance over the bench for rotating hardware: "
           f"{j.zc - cf.z_bot:.1f} mm (M6 nut needs 5.8, knob 10 — an M6 "
           f"wing nut needs ~15 and does NOT clear)\n")

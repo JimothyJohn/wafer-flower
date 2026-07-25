@@ -123,32 +123,32 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   keyhole. Outboard fence nose butts the outer arc face, inboard fence
   prong butts the inner face above the gear flange; printed knob with a
   captive M6 nut outboard (wing nut BANNED at M6 — see keyhole bullet),
-  captive hex nut in the inboard tower. Tightening seats
-  BOTH fences on the segment — the force loop is jig↔segment only, the
-  wafer floats edge-captured between two wall arcs at rim+0.15/side with
-  ZERO clamp load on silicon. CENTRED ON THE WAFER by construction: the
-  keyhole meridian (a=0) IS the wafer-centre meridian, the rod axis lies in
-  the vertical plane through (R,0), and both slot walls are arcs about
-  (R,0) — the captured position is the nominal centre, checked numerically.
-  Capture: x ±0.15, y ~±0.30 (full-height centring WINGS carry the wall
-  arcs to y=±75, wrapping 30° of rim per side; inboard wing reach capped by
-  the gear tooth tips at r=250, corner clears by 6), lift blocked at +1.6
-  by slot lips. Wings are dumb boxes double-trimmed to a 7 mm arc band
-  (band_t): the lip-cylinder subtraction carves everything plan-inside the
-  rim ring AND an outer keeper cylinder trims the box corners that used to
-  run ~45 mm past the arc (2026-07-24 slimming — jig is temporary tooling,
-  minimum material). Outboard rail likewise slimmed to nose foot + rear
-  block + bore-roof spine (the ~180 mm full-width mid-slab was dead
-  material); fence_w 80 → 60. Fence solids 323 → 107 cm³ outboard, 167 →
-  76 cm³ inboard, all capture checks unchanged. The rim slot is cut with a
-  wafer-COPLANAR disc: across the fences the tilted rim swings ±6.6 mm in
-  z, so a straight groove is hopeless; coplanar gives a uniform 1.6 mm all
-  round. The WHOLE drivetrain is modelled as solids and checked, not
-  assumed — rod at thread OD, hex nut on its pocket floor, M6 washer,
-  printed knob + its captive nut (swing vs bench checked). 19 boolean
-  checks total, script exits nonzero on any FAIL. Sliced AT 15% (the jig
-  print setting — no real load path): outboard 55.6 g/1h47, inboard
-  34.4 g/1h10, knob 2.5 g/23m. (Old 45% figures: 211/6h18, 107/3h24.)
+  captive hex nut in the inboard tower. Tightening seats BOTH fences on
+  the segment — the force loop is jig↔segment only, the wafer floats
+  between FOUR CAPTURE PEGS (2026-07-25, Nick's call: pegs, not wall
+  cutouts — X/Y only, gravity owns Z, part-agnostic, never
+  overconstrained; the wing/slot/lip architecture is GONE). Pegs: Ø8, two
+  per fence at ±22° off the radial meridian, flanks at PROJECTED-rim +
+  0.15 — the tilted wafer's plan rim is an ELLIPSE (y semi-axis r·cosθ,
+  0.57 mm shy of r at θ=5), and pegs placed on a plain r+slack circle gap
+  0.23 instead of 0.15 and the y-window drifts with tilt; deriving each
+  peg radius from the ellipse keeps flank gap = slack at any wafer Ø or
+  tilt. Capture: x ±0.15, y ~±slack/sin(22°) = ±0.40; on the tilted land
+  the wafer settles DOWNHILL onto the two down-slope pegs — that
+  two-point gravity seat IS the centring. Lift is FREE by design (nothing
+  overhangs the wafer; set down between the chamfered peg tips, lift
+  straight out). Inboard pegs sit ~215 from the halo axis — the wings
+  they replaced grazed the gear by 6 mm; pegs clear the spiral tips
+  (r246) by ~30. CENTRED ON THE WAFER by construction: the keyhole
+  meridian (a=0) IS the wafer-centre meridian, checked numerically. The
+  WHOLE drivetrain is modelled as solids and checked, not assumed — rod
+  at thread OD, hex nut on its pocket floor, M6 washer, printed knob +
+  its captive nut (swing vs bench checked). 18 boolean checks total
+  (incl. an explicit 'wafer +5 z lifts FREE' probe documenting the
+  z-by-gravity intent), script exits nonzero on any FAIL. Fence solids 94
+  cm³ outboard / 64 inboard (from 107/76 with wings). Sliced at 15% (the
+  jig print setting — no real load path): outboard 48.1 g/1h36, inboard
+  28.7 g/1h04, knob 2.5 g/23m.
 - Bond sequence: one segment at a time flat on bench, then assemble ring.
 
 ## Statics (OP 015 in docs/engineering.html; solver validated against an
