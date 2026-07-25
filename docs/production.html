@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wafer Halo — Production · Gates, Bond, BOM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<div class="page">
+
+<nav class="topnav">
+  <a href="index.html">Overview</a>
+  <a href="design.html">Design</a>
+  <a href="engineering.html">Engineering</a>
+  <a class="here" href="production.html">Production</a>
+  <span class="sep">·</span>
+  <a href="cure-jig.html">Cure jig</a>
+  <a href="kiselring-manual.pdf">Manual (PDF)</a>
+</nav>
+
+<header class="traveler">
+  <div class="oxide-rule"></div>
+  <div class="head-main">
+    <div class="eyebrow">Production · Rev B — test gates, bonding, bill of materials</div>
+    <h1>Wafer Halo</h1>
+    <div class="head-meta">
+      <span>GATES <b>T1–T7 pass before printing ×9</b></span>
+      <span>BOND <b>bench, one station at a time — compliant adhesive only</b></span>
+      <span>ILLUSTRATED <b><a href="cure-jig.html" style="color:inherit">cure-jig steps</a> · <a href="kiselring-manual.pdf" style="color:inherit">assembly manual</a></b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ KEY TEST POINTS ============ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">TEST</span><h2>Key test points — pass all before printing 9</h2></div>
+  <table>
+    <thead><tr><th>#</th><th>Test</th><th>Method</th><th>Pass criteria</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">T1</td><td><b>Neighbor clearance</b></td><td>Print 2 adjacent segments, join, lay a wafer (or 300 mm printed disk) on each land</td><td>≥3 mm air between each riser and the neighboring disk, verified with a feeler or against a 3 mm shim. Include the calculated droop in the budget.</td></tr>
+      <tr><td class="mono">T2</td><td>Dovetail fit</td><td>20 mm joint coupons at 0.15 / 0.25 / 0.35 clearance</td><td>Hand-press with a click, zero rattle, survives 20 cycles</td></tr>
+      <tr><td class="mono">T3</td><td><b>Bond shear + thermal cycle</b></td><td>Bond a wafer shard or glass slide to a printed coupon with the chosen adhesive; hang 500 g from it in shear; cycle 10↔30 °C ×5 (garage day/night does this for free)</td><td>Zero creep marks at a witness line; no edge lifting or crazing after cycling</td></tr>
+      <tr><td class="mono">T4</td><td>Land flatness</td><td>Straightedge across a printed land, feeler gauge</td><td>≤0.15 mm stair-stepping; one block-sand pass allowed</td></tr>
+      <tr><td class="mono">T5</td><td>Taper minimum</td><td>Caliper the trailing edge of a printed segment</td><td>≥ #tmin; no see-through walls in the slicer preview at the thin end</td></tr>
+      <tr><td class="mono">T6</td><td>Centering repeatability</td><td>Jig a dry wafer 3× on one segment, pencil-witness the edge each time</td><td>All witness marks within 0.5 mm band</td></tr>
+      <tr><td class="mono">T7</td><td><b>Dovetail hang</b> <span class="dim">(new — OP 015 §5)</span></td><td>Two joined segments, one dovetail; hang 5 kg from the lower segment's far end so the joint sees ≥2× the calculated 2.6 N·m</td><td>No root whitening, no permanent set after 24 h under load. Fails → go to two dovetails before printing 9.</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><span class="tag">Why T3 is the gate</span><br>
+  Gravity shear on the bond is 0.13 kPa against a ~500 kPa capability — a ~4000× margin. The load case that matters is the 10–30 °C swing driving 110 µm of differential CTE slip at the land's far corner, ~47× the gravity stress and rising linearly with land size. A compliant bond absorbs it as ~10 % shear strain; a rigid bond puts it into the silicon. T3 with real thermal cycles is the only test that proves your specific adhesive on your specific print surface. Full-surface coverage is actively harmful: area was never the limit, and longer bonds see <em>more</em> end slip. The full analysis is OP 015 on the <a href="engineering.html">engineering page</a>.</div>
+</section>
+
+<!-- ============ BOND ============ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">OP 020</span><h2>Bond — bench, one station at a time</h2></div>
+  <ol class="steps">
+    <li>IPA-wipe land and wafer contact zone; let flash.</li>
+    <li><b>Tape path</b>: two 20–25 mm strips arced on the land, ≥5 mm inside its boundary, <em>as close to the land centroid as the geometry allows</em> (OP 015 §4: stress scales with distance from centroid, not with area). Roller-press. Liners off only with wafer in hand. <b>Liquid path (SMP)</b>: serpentine bead, 5 mm inside the land edge; Ø4 × #bond printed nubs (3×) set the bondline.</li>
+    <li>Rest wafer edge on the jig's downhill fence first, lower like closing a book. Confirm both fences touch <em>before</em> full contact — tape gives one attempt.</li>
+    <li>Press over the land centroid through a foam pad (tape: 15 s firm; SMP: clamp to nub contact + ¼ turn, 24 h in jig). <b>Never press the overhang</b> — 20 N at the free edge is ~35 MPa in the silicon, at the fracture allowable.</li>
+    <li>Repeat ×N, then join the ring.</li>
+  </ol>
+  <div class="note"><span class="tag">The cure jig, illustrated</span><br>
+  The SMP path holds each station in the printed cure jig for 24 h — two fences on one #10-24 rod through the segment's keyhole, wafer edge-captured with zero clamp load on silicon. Plain-language, illustrated, step-by-step: <a href="cure-jig.html"><b>cure-jig.html</b></a> (OP 012). The IKEA-style print is the <a href="kiselring-manual.pdf"><b>KISELRING assembly manual (PDF)</b></a>.</div>
+</section>
+
+<!-- ============ BILL OF MATERIALS ============ -->
+<section class="op">
+  <div class="op-head"><span class="op-chip">BOM</span><h2>Bill of materials</h2></div>
+  <p>Quantities are for the standard build — <b>WH-300-09-10</b>: nine Ø300 × 0.775 mm wafers, N=9, θ=10°, band 248–303, 1.1 mm bondline. Filament mass comes from the segment solid model through a slicer-calibrated skin+infill fit (±3 % against OrcaSlicer output, 35–425 cm³ of segment), so it moves with your parameters; re-read it off the <a href="engineering.html">calculator</a> if you change them. Groups C1 and C2 are <b>alternatives — pick one adhesive path, not both</b>.</p>
+  <div class="tscroll">
+  <table>
+    <thead><tr><th>Ref</th><th>Item &amp; specification</th><th>Qty</th><th>Source</th><th>Why this part</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="5">A — Wafers</td></tr>
+      <tr><td class="ref">A1</td><td><b>Ø300 mm silicon wafer</b>, 775 ± 25 µm, single-side or double-side polished. <b>Dummy / test / reclaim grade</b> — device-grade is a waste of money.</td><td class="mono">9<br><span class="dim">+2 spare</span></td><td>Surplus semiconductor dealers, eBay, UniversityWafer, SVM. Reclaim stock is the cheap route.</td><td>Order spares. There is no repair path for a cracked wafer, and the fracture margin during handling is the tightest in the build.</td></tr>
+      <tr><td class="ref">A2</td><td>Wafer shipping/storage cassette or coin-stack case, 300 mm</td><td class="mono">1</td><td>Usually included with A1 — confirm before ordering</td><td>Loose wafers in a box arrive chipped. Edge chips are fracture initiators.</td></tr>
+
+      <tr class="grp"><td colspan="5">B — Printed parts</td></tr>
+      <tr><td class="ref">B1</td><td><b>PETG filament</b>, 1.75 mm. PLA works but has a lower service temperature (see spec sheet §2); ASA if the piece will see sun.</td><td class="mono">2 kg</td><td>Any filament vendor</td><td><b>1195 g</b> of segments at 45 % infill (slicer-measured 133 g × 9, gear flange included), plus jig, coupons and failed prints. 2 spools is the honest number.</td></tr>
+      <tr><td class="ref">B2</td><td>Frame segment — 40° sector with integral gear flange and Ø5 jig bore, printed flat-bottom-down, 45 % infill, 4 perimeters, no supports</td><td class="mono">9</td><td>Print from the OP 010 model</td><td>133 g and ~4.5 h each (0.20 mm layers, sliced on an X1C). Perimeters matter more than infill: the dovetail is the weak link (OP 015 §5).</td></tr>
+      <tr><td class="ref">B3</td><td>Bonding jig body + 3 locating pegs + offset bar</td><td class="mono">1 set</td><td>Print</td><td>Reusable across all nine stations. Pegs at ±30–40° from the push axis; ±60° doubles the centring error.</td></tr>
+      <tr><td class="ref">B4</td><td>Dovetail test coupons, 20 mm, at 0.15 / 0.25 / 0.35 mm clearance</td><td class="mono">3</td><td>Print</td><td>Gate T2. Printers vary; do not guess the clearance.</td></tr>
+
+      <tr class="grp"><td colspan="5">C1 — Adhesive, tape path <span class="dim">(recommended)</span></td></tr>
+      <tr><td class="ref">C1.1</td><td><b>3M Scotch-Mount Extreme</b> double-sided acrylic foam tape, 1 in × 1.5 m, ~1.1 mm — or <b>3M VHB 4910</b>, ¾ in, 1.0 mm</td><td class="mono">2 rolls</td><td>Home Depot paint dept (Scotch-Mount); VHB usually ship-to-store</td><td>Two <b>13 × 13 mm</b> pads per station, separated ~20 mm radially = <b>~235 mm total</b>. That is 4× design factor on both shear and peel, and only ~3 % of the land — see the glue-area note. Buy 2 rolls anyway; the tape gives one attempt per wafer.</td></tr>
+      <tr><td class="ref">C1.2</td><td>Hard rubber seam roller or J-roller</td><td class="mono">1</td><td>Paint / wallpaper aisle</td><td>Acrylic foam needs ~100 kPa application pressure to wet out. The wafer's own weight supplies 0.13 kPa — a thousand times short.</td></tr>
+
+      <tr class="grp"><td colspan="5">C2 — Adhesive, liquid path <span class="dim">(alternative)</span></td></tr>
+      <tr><td class="ref">C2.1</td><td><b>Loctite PL Premium Max</b>, 9 oz (SMP / MS-polymer)</td><td class="mono">1 tube</td><td>Home Depot, construction adhesive aisle</td><td>20 min repositioning, 24 h cure. The only path where the jig's adjustable peg earns its keep.</td></tr>
+      <tr><td class="ref">C2.2</td><td>Caulking gun, 10 oz</td><td class="mono">1</td><td>Same aisle</td><td>—</td></tr>
+      <tr><td class="ref">C2.3</td><td>Mineral spirits, 1 qt</td><td class="mono">1</td><td>Paint dept</td><td>SMP cleanup. Uncured SMP is unpleasant to remove any other way.</td></tr>
+      <tr><td class="ref">C2.4</td><td>Printed bondline nubs, Ø4 × 1.1 mm</td><td class="mono">27</td><td>Print (3 per station)</td><td>Sets the bondline. A 0.5 mm SMP line carries ~60× the thermal stress of 1.1 mm foam (OP 015 §4) — do not let it self-thin.</td></tr>
+
+      <tr class="grp"><td colspan="5">D — Bonding jig hardware</td></tr>
+      <tr><td class="ref">D1</td><td><b>Nylon machine screw</b> — <span class="mono">McMaster 98882A118</span><br><span class="dim">Thread/length per the McMaster listing — see note below the table.</span></td><td class="mono">1</td><td><a href="https://www.mcmaster.com/98882A118/">mcmaster.com/98882A118</a></td><td>Drives the adjustable jig peg. Nylon, not steel — never put metal near a wafer edge.</td></tr>
+      <tr><td class="ref">D1b</td><td><b>Nylon square nut</b>, thread to match D1. DIN 562 (thin) or DIN 557 (normal) pattern.<br><span class="dim">M4 reference: 7 mm across flats; 2.2 mm thick DIN 562, 3.2 mm DIN 557.</span></td><td class="mono">2</td><td>McMaster <span class="mono">Plastic Nuts → nut type: square</span>; also RS, Accu, Essentra</td><td>Captured in a printed trap. Square is the right call for a printed pocket — see the note below.</td></tr>
+      <tr><td class="ref">D2</td><td>Compression spring, ~1 N/mm, 10 mm free length <span class="dim">(optional)</span></td><td class="mono">1</td><td>Hardware assortment pack</td><td>Turns the screw from a displacement source into a force source. Not required for a first prototype — light finger contact and normal thread backlash are sufficient.</td></tr>
+      <tr><td class="ref">D3</td><td>Silicone or TPU peg tips, ~5 mm</td><td class="mono">3</td><td>Print in TPU, or cut from tubing</td><td>Spreads the edge contact. Bare printed PETG on a wafer edge is a point contact on a fracture initiator.</td></tr>
+
+      <tr class="grp"><td colspan="5">E — Mounting</td></tr>
+      <tr><td class="ref">E1</td><td>Wall anchor rated ≥ 95 N (≈10 kg), stud screw or rated hollow-wall toggle</td><td class="mono">2</td><td>Hardware aisle</td><td>4× the 23.0 N assembly weight. <b>Two anchors at ±50° from top</b> drops the joint moment ~4× — the cheapest structural fix available (OP 015 §5).</td></tr>
+      <tr><td class="ref">E2</td><td>D-ring or keyhole hangers, printed or steel</td><td class="mono">2</td><td>Print or picture-framing aisle</td><td>Must resist pull-out as well as shear: the assembly CG sits 6.5 mm off the wall plane.</td></tr>
+      <tr><td class="ref">E3</td><td>Bubble or digital level</td><td class="mono">1</td><td>—</td><td>±2° or the swirl visibly reads crooked.</td></tr>
+
+      <tr class="grp"><td colspan="5">F — Consumables</td></tr>
+      <tr><td class="ref">F1</td><td>Isopropyl alcohol, 91 %+, or denatured alcohol</td><td class="mono">500 ml</td><td>Paint / pharmacy</td><td>Land and wafer prep. <b>Never acetone</b> — harmless on silicon, crazes PETG.</td></tr>
+      <tr><td class="ref">F2</td><td>Lint-free wipes / microfibre cloths</td><td class="mono">1 pack</td><td>—</td><td>Paper towel sheds fibres into the bondline.</td></tr>
+      <tr><td class="ref">F3</td><td>Nitrile gloves</td><td class="mono">1 box</td><td>—</td><td>Skin oils on the land are a bond contaminant; wafer shards are a laceration hazard.</td></tr>
+      <tr><td class="ref">F4</td><td>Closed-cell foam sheet, ~10 mm, for the press pad</td><td class="mono">1</td><td>Craft / packaging</td><td>Distributes press force over the land. Never press the unsupported wafer area.</td></tr>
+      <tr><td class="ref">F5</td><td>Painter's tape</td><td class="mono">1 roll</td><td>—</td><td>Witness marks for creep inspection, and masking during prep.</td></tr>
+
+      <tr class="grp"><td colspan="5">G — Test &amp; metrology <span class="dim">(gates T1–T7)</span></td></tr>
+      <tr><td class="ref">G1</td><td>Feeler gauge set, 0.05–1.0 mm</td><td class="mono">1</td><td>Auto parts, Harbor Freight</td><td>T1 neighbour clearance (≥3 mm shim) and T4 land flatness (≤0.15 mm).</td></tr>
+      <tr><td class="ref">G2</td><td>Digital calipers, 150 mm</td><td class="mono">1</td><td>—</td><td>T5 taper minimum at the trailing edge.</td></tr>
+      <tr><td class="ref">G3</td><td>Straightedge, 100 mm ground or a steel rule</td><td class="mono">1</td><td>—</td><td>T4, across the land.</td></tr>
+      <tr><td class="ref">G4</td><td>Ø300 printed disks or scrap wafers</td><td class="mono">2</td><td>Print</td><td>T1 — do not risk real wafers proving clearance.</td></tr>
+      <tr><td class="ref">G5</td><td>500 g weight (T3) and 5 kg weight (T7)</td><td class="mono">1 ea</td><td>Anything of known mass</td><td>T3 adhesive shear; <b>T7 dovetail hang</b> — the gate that covers the 2.0× margin.</td></tr>
+      <tr><td class="ref">G6</td><td>Indoor/outdoor thermometer or a garage shelf</td><td class="mono">1</td><td>—</td><td>T3 needs real 10↔30 °C cycles. A garage does this for free overnight.</td></tr>
+
+      <tr class="grp"><td colspan="5">H — Optional: motion drive <span class="dim">(drive module designed — rollers + bracket open)</span></td></tr>
+      <tr><td class="ref">H1</td><td>Stepper, 28BYJ-48 + ULN2003 driver, or NEMA 14 — or the N20-class micro worm gearmotor the drive module (<span class="mono">scripts/gearmotor_stl.py</span>) is built around</td><td class="mono">1</td><td>Electronics vendor</td><td>Needs ~3.3 mN·m at the pinion. A 28BYJ-48 has 10× that; the worm self-holds unpowered.</td></tr>
+      <tr><td class="ref">H2</td><td>V-groove bearings, 623/608 with V-groove outer</td><td class="mono">3</td><td>Bearing vendor</td><td>These carry the 23.0 N. The pinion supplies torque only — a tooth mesh cannot be the hanger.</td></tr>
+      <tr><td class="ref">H3</td><td>Printed pinion, 28 T module 2, Ø56</td><td class="mono">1</td><td>Print</td><td>Meshes <b>inside</b> the 252 T internal ring gear on the flange = 9:1 exactly. Pinion axis at r=224, inside the central hole, so the drive is invisible.</td></tr>
+      <tr><td class="ref">H4</td><td>5 V / 12 V supply + microcontroller</td><td class="mono">1</td><td>—</td><td>0.3 rpm is one revolution per 3.3 min — the right speed for wall art.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="flag"><span class="tag">D1 is unverified — fill this in before ordering</span><br>
+  McMaster's catalogue is fully script-rendered and blocks fetching, and <span class="mono">98882A118</span> is not indexed anywhere public, so the thread, length, drive and head style on that line are <b>blank on purpose rather than guessed</b>. Paste the one-line description from the product page and the rest of the BOM — nut thread, trap dimensions, bore fit — follows from it. The Ø5 bore in the segment is sized for an M4 clearance fit; if D1 turns out to be M3 or #8-32, that bore diameter needs to change with it.</div>
+
+  <div class="note"><span class="tag">Square nuts are the right call — and here is the trap that fits one</span><br>
+  Your preference is well founded, and the reason is bridging. A captured nut pocket is entered from a side face and printed over, so the slicer has to bridge its ceiling. A square pocket bridges a <b>constant-width flat</b>; a hex pocket's ceiling narrows across the span and its two upper flats become unsupported overhangs, which is why hex traps come out fuzzy and end up needing a reamer. Square also gives more anti-rotation purchase per millimetre of pocket depth.
+  <br><br>Trap geometry, driven off the nut you actually buy (<span class="mono">s</span> = across flats, <span class="mono">m</span> = thickness):
+  <div class="eq">pocket width   s + 0.25      (M4 DIN 562 → 7.25 mm)
+pocket depth   m + 0.20      (M4 DIN 562 → 2.40 mm, DIN 557 → 3.40 mm)
+entry slot     s + 0.25 wide, run it to a side face so the nut drops in
+ceiling        ≥ 3 solid layers over the pocket, no infill
+bore           thread + 0.4 clearance, concentric with the pocket</div>
+  Buy <b>2</b>: the first one you press in at the wrong depth is a write-off, and nylon nuts strip long before steel does.</div>
+
+  <div class="note"><span class="tag">Scaling to other configurations</span><br>
+  Filament is the only line that moves much. At N=9, θ=10°: <b>Ø150 → 236 g</b> of segments (1 spool), <b>Ø200 → 438 g</b> (1 spool), <b>Ø300 → 1195 g</b> (2 spools), all at 45 % infill, slicer-calibrated — small segments run shell-dominated, so they land <em>above</em> the old uniform-density figures. Wafer count follows N. Tape length is 50 mm per station regardless of wafer size, because pad size is set by the bond physics (OP 015 §4), not by area.</div>
+  <div class="flag"><span class="tag">Two pads, not one — and stagger them radially</span><br>
+  Two 25 × 25 mm pads give 1250 mm² per station: 18.8 N of sustained shear capacity against 1.25 N applied, a 15× margin. Area was never the constraint. But place one pad near <span class="mono">Ri</span> and one near <span class="mono">Ro</span> rather than side by side at mid-band — the peel moment (OP 015 §2) acts about the tangential axis, and radial separation is what gives the pad pair any section modulus against it. Two pads at the same radius are ~12× weaker in peel than the full land; staggered, ~6×. Both pass, but the stagger is free.</div>
+  <p class="dim">Prices intentionally omitted — wafer surplus pricing in particular swings by an order of magnitude with grade and availability. Reclaim Ø300 is the line item worth shopping hardest.</p>
+</section>
+
+<footer>
+  <span>HALO-001 · REV B · production — gates, bond, BOM</span>
+  <span>T3 is the gate · press over the land centroid · order spare wafers</span>
+</footer>
+</div>
+</body>
+</html>
