@@ -33,7 +33,8 @@ seg  = build_segment(cf)
 waf  = build_wafer(cf, 0)
 fout = build_outboard(j)
 fin  = build_inboard(j)
-rod, nut, washer, wnut, rod_len = build_hardware(j)
+rod, nut, washer, knob, knob_nut, rod_len = build_hardware(j)
+knob = knob + knob_nut          # rendered as one piece: the closure you grab
 
 # glue: two squashed beads in the adhesive pocket near the land centroid
 def bead(x):
@@ -42,11 +43,11 @@ def bead(x):
 glue = bead(262.0) + bead(279.0)
 
 C = dict(seg='#B9C0C7', waf='#8FB7E8', out='#1E9E8E', fin='#4457C4',
-         rod='#2A2E33', nut='#7A4FC0', washer='#C2497B', wnut='#C2497B',
+         rod='#2A2E33', nut='#7A4FC0', washer='#C2497B', knob='#C2497B',
          glue='#C9A227', bench='#E8ECEF')
 
 BODY = {k: tris(v) for k, v in dict(seg=seg, waf=waf, out=fout, fin=fin, rod=rod,
-                                    nut=nut, washer=washer, wnut=wnut, glue=glue).items()}
+                                    nut=nut, washer=washer, knob=knob, glue=glue).items()}
 
 # bench: grid of quads (small tiles sort better than one huge quad)
 def bench_tris():
@@ -107,7 +108,7 @@ def still(path, parts, labels=(), labels2d=(), **kw):
 
 Z = (0, 0, 0)
 ASSEMBLED = [('seg', Z), ('glue', Z), ('waf', Z), ('out', Z), ('fin', Z),
-             ('rod', Z), ('nut', Z), ('washer', Z), ('wnut', Z)]
+             ('rod', Z), ('nut', Z), ('washer', Z), ('knob', Z)]
 
 # ---- stills -----------------------------------------------------------------
 still('hero.png', ASSEMBLED)
@@ -130,21 +131,21 @@ still('step5_inboard.png',
                 ('slide in from the middle', (0.70, 0.76))], azim=-115)
 still('step6_rod.png',
       [('seg', Z), ('glue', Z), ('waf', Z), ('out', Z), ('fin', Z), ('nut', Z),
-       ('rod', (78, 0, 0)), ('washer', (95, 0, 0)), ('wnut', (108, 0, 0))],
+       ('rod', (78, 0, 0)), ('washer', (95, 0, 0)), ('knob', (108, 0, 0))],
       labels2d=[('rod goes fence-keyhole-fence,\nthen threads into the nut',
                  (0.50, 0.12))], azim=-48)
 still('step7_tighten.png', ASSEMBLED,
-      labels2d=[('wing nut: FINGER tight', (0.50, 0.84))],
+      labels2d=[('knob: FINGER tight', (0.50, 0.84))],
       box=((380, 600), (-150, 150), (-30, 60)), azim=-38)
 
 # parts overview, exploded with labels
 EXP = [('seg', Z), ('waf', (0, 0, 55)), ('out', (85, 0, 0)), ('fin', (-70, 0, 0)),
        ('rod', (150, 0, 55)), ('nut', (-70, 0, 55)),
-       ('washer', (170, 0, 55)), ('wnut', (185, 0, 55))]
+       ('washer', (170, 0, 55)), ('knob', (185, 0, 55))]
 still('parts.png', EXP,
       labels2d=[('wafer', (0.47, 0.78)), ('segment', (0.36, 0.36)),
                 ('outboard fence', (0.66, 0.30)), ('inboard fence', (0.185, 0.55)),
-                ('rod + washer + wing nut', (0.80, 0.62)), ('hex nut', (0.245, 0.70))],
+                ('rod + washer + knob', (0.80, 0.62)), ('hex nut', (0.245, 0.70))],
       box=((80, 700), (-245, 245), (-35, 120)), elev=24, azim=-62, bench=False)
 
 # ---- 2D sections (styled) ---------------------------------------------------
@@ -157,7 +158,7 @@ def section_fig(path, y, xlim, zlim, title, ann=()):
     fig, ax = plt.subplots(figsize=(11, 4.6))
     fig.patch.set_facecolor('#FAFBFC')
     for key, s in dict(seg=seg, waf=waf, out=fout, fin=fin, rod=rod, nut=nut,
-                       washer=washer, wnut=wnut).items():
+                       washer=washer, knob=knob).items():
         V, F = sec(s)
         if len(F) == 0: continue
         for f in F:
@@ -180,7 +181,7 @@ section_fig('sec_drivetrain.png', 0.0, (150, 545), (-27, 14),
             'cut straight down the middle — everything on one axis, dead under the wafer centre',
             ann=[('hex nut', (177, -11), (200, -22)),
                  ('rod through the keyhole', (330, -7.5), (300, 8)),
-                 ('washer + wing nut', (513, -12), (455, -22)),
+                 ('washer + knob', (513, -12), (455, -22)),
                  ('wafer', (400, 0.4), (420, 8))])
 section_fig('sec_capture.png', 0.0, (487, 517), (-14, 11),
             'the slot: wafer rim floats with 0.15 mm side gap, lip above, ledge below — nothing squeezes it',
@@ -216,7 +217,7 @@ def assemble_frame(ax, t):
     rx  = 95 * (1 - ease((t - 0.72) / 0.20))
     parts = [('seg', Z), ('glue', Z), ('waf', (0, 0, wz)), ('out', (ox, 0, 0)),
              ('fin', (ix, 0, 0)), ('nut', (ix, 0, 0)), ('rod', (rx, 0, 0)),
-             ('washer', (rx * 1.15, 0, 0)), ('wnut', (rx * 1.25, 0, 0))]
+             ('washer', (rx * 1.15, 0, 0)), ('knob', (rx * 1.25, 0, 0))]
     render(ax, parts)
 
 def explode_frame(ax, t):
@@ -224,7 +225,7 @@ def explode_frame(ax, t):
     parts = [('seg', Z), ('glue', Z), ('waf', (0, 0, 55 * e)), ('out', (80 * e, 0, 0)),
              ('fin', (-65 * e, 0, 0)), ('nut', (-65 * e, 0, 45 * e)),
              ('rod', (135 * e, 0, 45 * e)), ('washer', (155 * e, 0, 45 * e)),
-             ('wnut', (172 * e, 0, 45 * e))]
+             ('knob', (172 * e, 0, 45 * e))]
     render(ax, parts, box=((90, 660), (-245, 245), (-35, 115)))
 
 def turntable_frame(ax, t):

@@ -37,20 +37,26 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   female +0.25 clearance (tune via coupon), slide in Z, no tools.
 - Land plane construction: plane through radial line at (R,0), angle θ from
   Top, offset −(t_wafer/2 + bondline).
-- Ø5 JIG KEYHOLE is RADIAL and THROUGH (Rev B.3): in from the OUTER arc face
-  at a=0, hole_dep = bw+0.5 so it exits the inner face, axis RAISED to
-  z1+2.6 (12.6 mm above the flat bottom). Two reasons, both cure-jig-driven:
-  (1) the jig rod must pass through to an inboard fence; (2) at the old
-  mid-slab height the axis sat 5 mm above the bench — under a #10 nut's
-  5.5 mm corner swing, so nothing could rotate on the rod ends. At z1+2.6
-  the bore exits 0.1 mm ABOVE the gear flange (teeth untouched, mesh check
-  still 0.000), keeps a 2.4 mm web under the pocket floor, and the land
-  stays unbroken. Needs rise > 5.5ish → θ ≥ ~4°; keyhole_z() in
+- Ø6.5 (M6) JIG KEYHOLE is RADIAL and THROUGH (2026-07-24; was Ø5/#10-24):
+  in from the OUTER arc face at a=0, hole_dep = bw+0.5 so it exits the
+  inner face, axis at z1 + hole_r + 0.1 = z1+3.35 (13.35 mm above the flat
+  bottom) — keyhole_z() now DERIVES from the bore radius so the bore bottom
+  stays exactly 0.1 mm above the gear flange at any hole_D (reproduces the
+  old z1+2.6 at Ø5). Two reasons for the raised axis, both cure-jig-driven:
+  (1) the jig rod must pass through to an inboard fence; (2) rotating
+  hardware on the rod ends must swing over the bench. An M6 rod (Ø6.0)
+  slides through the printed Ø6.5 hole with NO reaming. Bore exits 0.1 mm
+  ABOVE the gear flange (teeth untouched, mesh check still 0.000); the web
+  under the pocket floor is now ~0.9 mm (was 2.4 at Ø5) — thin but
+  unloaded; genus 1 proves it unbroken. The axis CANNOT go higher (web →
+  breakout), which is why an M6 WING NUT (~15 mm swing vs 13.35 clearance)
+  is banned — closure is the printed knob (10 mm swing) or a plain M6 nut
+  (5.8). Needs rise > zoff+hole_r+1.5 → θ ≥ ~4°; keyhole_z() in
   segment_stl.py is the single source of truth. A through hole makes the
   segment genus 1 — expected, not the pocket-tunnel bug. Segments printed
-  with the old blind hole: drill through from the outer face at the NEW
-  height (old hole was 5 mm up, new is 12.6; a mis-height hole just needs
-  the jig bores redrilled to match, the fences don't care structurally).
+  with the old Ø5 (or old blind) hole: drill through from the outer face at
+  6.5 mm (a mis-height hole just needs the jig bores redrilled to match,
+  the fences don't care structurally).
 - ADHESIVE POCKET, 1 mm deep, inset into the land. It meters glue and gives a
   positive bondline stop. It CANNOT self-centre the wafer: the whole band lies
   under the wafer's interior (rim is 55 mm inboard, 215 mm outboard, closest
@@ -86,11 +92,13 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   edge rails; downhill R150.3 arc fence + push pad self-center the wafer;
   press over the LAND CENTROID, never the unsupported wafer center.
 - CURE JIG (OP 012, scripts/cure_jig_stl.py — the SMP path; tape needs no
-  cure hold): two printed fences slide toward each other on ONE #10-24 rod
-  (Ø4.83, fits the Ø5 keyhole reamed; ~350 mm cut from a 36" stick) passed
-  radially THROUGH the keyhole. Outboard fence nose butts the outer arc
-  face, inboard fence prong butts the inner face above the gear flange;
-  wing nut outboard, captive hex nut in the inboard tower. Tightening seats
+  cure hold): two printed fences slide toward each other on ONE M6x1.0 rod
+  (Ø6.0, slides through the Ø6.5 keyhole unreamed; ~350 mm cut from a
+  36"/1 m stick — the one bought fastener) passed radially THROUGH the
+  keyhole. Outboard fence nose butts the outer arc face, inboard fence
+  prong butts the inner face above the gear flange; printed knob with a
+  captive M6 nut outboard (wing nut BANNED at M6 — see keyhole bullet),
+  captive hex nut in the inboard tower. Tightening seats
   BOTH fences on the segment — the force loop is jig↔segment only, the
   wafer floats edge-captured between two wall arcs at rim+0.15/side with
   ZERO clamp load on silicon. CENTRED ON THE WAFER by construction: the
@@ -100,20 +108,25 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   Capture: x ±0.15, y ~±0.30 (full-height centring WINGS carry the wall
   arcs to y=±75, wrapping 30° of rim per side; inboard wing reach capped by
   the gear tooth tips at r=250, corner clears by 6), lift blocked at +1.6
-  by slot lips. Wings are dumb full-height boxes — the lip-cylinder
-  subtraction carves away everything plan-inside the rim ring, leaving only
-  the arc-following wall band, so they cannot collide with the wafer. The
-  rim slot is cut with a wafer-COPLANAR disc: across the fences the tilted
-  rim swings ±6.6 mm in z, so a straight groove is hopeless; coplanar gives
-  a uniform 1.6 mm all round. The WHOLE drivetrain is modelled as solids
-  and checked, not assumed — rod at thread OD, hex nut on its pocket floor,
-  #10 washer, wing nut with wings VERTICAL (worst case for the bench; 1.6
-  clear). 18 boolean checks total, script exits nonzero on any FAIL.
-  Sliced: outboard 211.0 g/6h18, inboard 106.7 g/3h24, knob 3.6 g/25m at
-  45% (structurally 15% would do — no real load path through the jig).
+  by slot lips. Wings are dumb boxes double-trimmed to a 7 mm arc band
+  (band_t): the lip-cylinder subtraction carves everything plan-inside the
+  rim ring AND an outer keeper cylinder trims the box corners that used to
+  run ~45 mm past the arc (2026-07-24 slimming — jig is temporary tooling,
+  minimum material). Outboard rail likewise slimmed to nose foot + rear
+  block + bore-roof spine (the ~180 mm full-width mid-slab was dead
+  material); fence_w 80 → 60. Fence solids 323 → 107 cm³ outboard, 167 →
+  76 cm³ inboard, all capture checks unchanged. The rim slot is cut with a
+  wafer-COPLANAR disc: across the fences the tilted rim swings ±6.6 mm in
+  z, so a straight groove is hopeless; coplanar gives a uniform 1.6 mm all
+  round. The WHOLE drivetrain is modelled as solids and checked, not
+  assumed — rod at thread OD, hex nut on its pocket floor, M6 washer,
+  printed knob + its captive nut (swing vs bench checked). 19 boolean
+  checks total, script exits nonzero on any FAIL. Sliced AT 15% (the jig
+  print setting — no real load path): outboard 55.6 g/1h47, inboard
+  34.4 g/1h10, knob 2.5 g/23m. (Old 45% figures: 211/6h18, 107/3h24.)
 - Bond sequence: one segment at a time flat on bench, then assemble ring.
 
-## Statics (OP 015 in docs/index.html; solver validated against an
+## Statics (OP 015 in docs/engineering.html; solver validated against an
 ## independent Python model, all 20 readouts matching)
 - Ø300 station: wafer 1.25 N over 96 cm² land. Gravity shear 0.13 kPa,
   peel 0.27 kPa. Both noise. Thermal (above) governs the bond.
@@ -125,7 +138,7 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   allowable — press over the LAND CENTROID only.
 - ASSEMBLY (slicer-measured masses): θ=10 traveler build 2.35 kg / 23.0 N
   (9× 128 g Si + 9× 132.8 g PETG at 45% infill, gear flange included);
-  current B.2/B.3 build 1.75 kg / 17.1 N (66.0 g PETG). The old uniform-45%
+  current B.2/B.3 build 1.74 kg / 17.1 N (65.5 g PETG at the M6 keyhole). The old uniform-45%
   figures (2.29 / 1.64 kg) under-read the PETG.
 - TIGHTEST MARGIN IN THE BUILD: single centred dovetail on a one-point
   hang. M ≈ W·R/π = 2.6 N·m, S_joint = 6×16²/6 = 256 mm³ → 10.0 MPa vs
@@ -174,18 +187,23 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   full land 6.02 kPa → two 25×25 pads 2.04 → two 10×10 pads 0.70 kPa.
 - So the land is free for interlocking/design features. Do not full-coverage.
 
-## Test gates before printing ×9 (docs/index.html)
+## Test gates before printing ×9 (docs/production.html)
 T1 neighbor clearance (2-segment print + disks, ≥3 mm), T2 dovetail coupons,
 T3 adhesive shear + 10–30 °C thermal cycling (THE gate), T4 land flatness
 ≤0.15 mm, T5 taper min thickness, T6 centering repeatability ≤0.5 mm,
 T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 
 ## Repo contents
-- docs/index.html — current traveler (Rev B): three.js parametric
-  calculator with a live statics solver (OP 015) and a 3-way view switcher
-  (full halo / one station / frame only, with the land colour-coded against
-  the clearance cut), CAD steps, test points, motion/pinion concept, and a
-  full 33-line BOM. Needs CDN for three.js r128.
+- docs/ split by ROLE (2026-07-24, PR #6 — the old single-page traveler is
+  gone): index.html is a hub with the real-STL viewer front and centre plus
+  role cards; engineering.html carries the three.js parametric calculator +
+  live statics solver (OP 015 §1–5), OP 010 CAD steps, motion analysis, AND
+  in-browser STL export (preview mesh from the sliders + a live
+  segment_stl.py command line mirroring them); design.html has the θ/knob
+  decision content (old §6–§7); production.html has gates T1–T7, OP 020
+  bond, the full BOM. Shared chrome in docs/assets/site.css, the STL viewer
+  widget in docs/assets/viewer.js (used by index.html + viewer.html). All
+  need CDN for three.js r128.
 - docs/spec-sheet.html — customer-facing capability & care spec.
 - docs/cure-jig.html — plain-language illustrated OP 012 instructions: 8
   bonding steps + one-time setup, each with a render; 3 embedded MP4s
@@ -194,7 +212,7 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   single Poly3DCollection with per-face lambert shading — separate
   collections z-sort wrongly). Regenerate with scripts/cure_jig_media.py
   (needs matplotlib + numpy + ffmpeg; --stills skips the videos, ~4 min
-  with them); linked from the traveler's OP 010 keyhole bullet.
+  with them); linked from engineering.html's OP 010 keyhole bullet.
 - docs/onshape-variables.html — 46 copy-paste OnShape variable expressions,
   live recompute. Includes the CLOSED-FORM hide window (quadratic in rho after
   normalising by r) — the traveler solves it by bisection, OnShape need not.
@@ -204,11 +222,26 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   also a CLI flag. Run it before trusting any dimension.
 - scripts/cure_jig_stl.py — OP 012 cure jig (see Frame design). Imports
   segment_stl for params/geometry, emits cure_jig_{outboard,inboard,knob}.stl
-  print-ready plus cure_jig_fitcheck.stl (segment+wafer+fences+rod, view
-  only), and self-verifies 10 interference/capture booleans — exits nonzero
-  on any FAIL. CSG gotcha it caught: two cutters unioned cap-to-cap on the
-  same plane leave a folded seam (dup mesh edges) — overlap cutters instead.
-  Homebrew python is PEP-668-managed; manifold3d lives in a venv, not brew.
+  print-ready plus cure_jig_fitcheck.stl (segment+wafer+fences+drivetrain,
+  view only), and self-verifies 19 interference/capture booleans — exits
+  nonzero on any FAIL. CSG gotcha it caught: two cutters unioned cap-to-cap
+  on the same plane leave a folded seam (dup mesh edges) — overlap cutters
+  instead. Homebrew python is PEP-668-managed; manifold3d lives in a venv,
+  not brew.
+- scripts/printed_hardware_stl.py — printable ISO metric fasteners
+  (2026-07-24): M5x0.8 and M6x1.0 knob-head screws + hex nuts, true 60°
+  single-start threads via a radius-modulated cross-section swept with
+  manifold's twist-extrude (one profile rotation per pitch). 0.25 mm radial
+  clearance default; self-checks that the nut spins on at nominal AND that
+  crests actually engage; exits nonzero on FAIL. TWO PHASE TRAPS the checks
+  caught (do not reintroduce): the nut's bore cutter must be translated by
+  a WHOLE PITCH (any other offset rotates the internal helix by offset/p
+  turns), and the fit-check nut must sit at a pitch-multiple height (a real
+  nut self-aligns in phase; arbitrary z reads as false interference —
+  passed at M6 only because 24 mm happened to be 24 pitches). M5 is the
+  FDM floor (0.24 mm crest overlap) — print vertical, chase the first fit;
+  M6 threads by hand. Sliced 100%: m6 screw 2.2 g/21m, nut 0.4 g/9m;
+  m5 screw 1.4 g/16m, nut 0.2 g/8m. NOT yet in the CI cad job.
 - STEP export was built and then dropped at the user's call: it lands in
   OnShape as one dumb non-parametric solid, so DXF + the #variables is the
   route that stays editable. Do not rebuild it without being asked.
@@ -229,8 +262,9 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   the solid skins dominate. Sliced mass is exactly linear in infill %:
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
   35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted). CURRENT B.3
-  build: 66.0 g/segment (book estimate 54), 2h26m each, assembly 1.75 kg /
-  17.1 N, M = 1.9 N·m, dovetail 4.5× (book said 4.8× at 1.64 kg). Traveler
+  build: 65.5 g/segment (book estimate 54; 66.0 pre-M6-keyhole), 2h26m
+  each, assembly 1.74 kg / 17.1 N, M = 1.9 N·m, dovetail 4.5× (book said
+  4.8× at 1.64 kg). Traveler
   standard θ=10 build: 132.8 g/segment, 2.35 kg / 23.0 N, M = 2.6 N·m,
   dovetail 2.0×. The traveler solver + spec sheet now carry this calibrated
   model (T_SKIN=1.05 on the solver's cruder area estimate, K_INF=0.92) and

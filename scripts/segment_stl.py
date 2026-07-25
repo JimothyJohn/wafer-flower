@@ -50,7 +50,9 @@ PARAMS = dict(
     gear_m   = 2.0,     # gear module
     gear_pa  = 20.0,    # pressure angle, degrees
     gear_bl  = 0.4,     # tooth thinning for printed backlash
-    hole_D   = 5.0,     # jig keyhole bore, RADIAL from the outer face
+    hole_D   = 6.5,     # jig keyhole bore, RADIAL from the outer face.
+                        # M6 clearance: an M6 rod/screw (Ø6.0) slides without
+                        # reaming. (Was 5.0 for #10-24 pre-2026-07-24.)
     hole_dep = 30.5,    # bw + 0.5: THROUGH the band, so the cure-jig rod can
                         # reach the inboard fence (was 15, blind, pre-jig)
     pocket_d = 1.0,     # adhesive pocket depth in the land
@@ -109,17 +111,20 @@ class Cfg:
 def keyhole_z(cf):
     """Keyhole axis height, shared with cure_jig_stl.py.
 
-    z1 + 2.6 rather than the old mid-slab z_bot + tmin/2: the cure-jig rod
-    carries a wing nut / captive nut at each end, and at mid-slab the axis sat
-    only tmin/2 = 5 mm above the bench -- under a #10 nut's 5.5 mm corner
-    swing, so nothing could rotate on the rod. At z1 + 2.6 the axis is
-    tmin + 2.6 above the bench (12.6 at Rev B.2), the Ø5 bore bottom stays
-    0.1 mm above the gear flange (a 4.83 rod clears the root land by 0.19),
-    and the bore roof keeps a 2.4 mm web under the adhesive pocket floor.
-    Needs rise > zoff + hole_r + ~1.5, i.e. theta >= ~4 deg at Rev B.2
-    geometry, or the bore breaks out of the band top at y=0.
+    z1 + hole_r + 0.1 rather than the old mid-slab z_bot + tmin/2: the
+    cure-jig rod carries a captive nut / knob at each end, and at mid-slab
+    the axis sat only tmin/2 = 5 mm above the bench -- under a nut's corner
+    swing, so nothing could rotate on the rod. Deriving from hole_r keeps the
+    bore bottom exactly 0.1 mm above the gear flange at any bore size (this
+    reproduces the old z1 + 2.6 at the Ø5 bore; the M6 Ø6.5 bore gives
+    z1 + 3.35, 13.35 above the bench). The rod itself clears the gear root
+    land by 0.1 + (hole_D - rod_D)/2. Raising the axis costs web under the
+    adhesive pocket floor (2.4 mm at Ø5, ~0.9 mm at Ø6.5 -- unbroken is what
+    matters; there is no load on it). Needs rise > zoff + hole_r + ~1.5,
+    i.e. theta >= ~4 deg at Rev B.2 geometry, or the bore breaks out of the
+    band top at y=0.
     """
-    return cf.z1 + 2.6
+    return cf.z1 + cf.hole_r + 0.1
 
 
 # ----------------------------------------------------------------------------

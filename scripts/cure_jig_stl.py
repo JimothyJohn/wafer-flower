@@ -31,23 +31,29 @@ Capture, not clamp (theta=5 defaults):
                wafer top, floor ledge 1.6 below — it cannot walk out
 
 The ENTIRE drivetrain is modelled as solids and checked, not assumed: rod at
-thread OD, captive hex nut on its pocket floor, #10 washer, and a wing nut
-with its wings VERTICAL — the worst orientation for bench clearance (this is
-what forced the keyhole axis up to z1+2.6 in the first place).
+thread OD, captive hex nut on its pocket floor, M6 washer, and the printed
+knob with its embedded hex nut. A wing nut is NOT usable at M6: it swings
+~15 mm off the axis and the axis is only 13.35 above the bench (raising it
+further would break the bore into the adhesive pocket). The knob (Ø20,
+10 mm swing) or a plain hex nut + wrench both clear.
 
 The slot is cut with a wafer-COPLANAR disc, not a straight groove: across an
 80 mm fence the tilted rim swings +/-3.5 mm in z, so a straight slot would
 need a 9+ mm opening and give up all lift capture. Coplanar, the clearance is
 a uniform 1.6 mm all round.
 
-Hardware (Home Depot): #10-24 threaded rod (Ø4.83 — fits the Ø5 keyhole; ream
-the printed hole with a 5 mm / 13/64" bit), cut to ~350 mm from a 36" stick,
-one hex nut (captive in the inboard tower), one wing nut + washer outboard
-(or print the included knob). M5 rod + nut also fits every bore.
+Hardware (Home Depot): M6x1.0 threaded rod (Ø6.0 — slides through the Ø6.5
+keyhole as printed, no reaming), cut to ~350 mm from a 36" / 1 m stick, two
+M6 hex nuts (one captive in the inboard tower, one embedded in the printed
+knob), one M6 washer. #10-24 or M5 rod + nuts also drop through every bore,
+loose. The rod is the one piece you must buy — it spans ~350 mm, far past
+any printable screw (printed_hardware_stl.py covers the short stuff).
 
-Needs the Rev B.3 THROUGH keyhole (segment_stl.py hole_dep >= bw). Segments
-printed with the old blind keyhole: drill on through from the outer face —
-the new axis is tmin + 2.6 mm above the flat bottom.
+Needs the Rev B.3+ M6 THROUGH keyhole (segment_stl.py hole_D 6.5,
+hole_dep >= bw). Segments printed with the old Ø5 keyhole: drill out to
+6.5 mm from the outer face — the axis is tmin + 3.35 mm above the flat
+bottom (was tmin + 2.6 at Ø5; a mis-height hole just needs the jig bores
+redrilled to match, the fences don't care structurally).
 
 Use: bond one segment flat on the bench; wet SMP beads in the pocket; set the
 wafer by eye (+/-1 mm); slide the outboard fence in until its nose butts the
@@ -69,20 +75,24 @@ from segment_stl import (PARAMS, Cfg, prism, build_segment, build_wafer,
 
 # ----------------------------------------------------------------------------
 JIG = dict(
-    rod_D    = 4.83,   # 10-24 threaded rod; M5 (4.9) also fits every bore
-    bore_clr = 0.5,    # rod bore = rod_D + bore_clr
-    nut_AF   = 9.53,   # 10-24 hex nut across flats (3/8"); M5 (8.0) drops in loose
+    rod_D    = 6.0,    # M6x1.0 threaded rod; #10-24 (4.83) / M5 also fit, loose
+    bore_clr = 0.5,    # rod bore = rod_D + bore_clr (= the segment's Ø6.5 keyhole)
+    nut_AF   = 10.0,   # M6 hex nut across flats (ISO 4032)
     nut_clr  = 0.45,   # pocket oversize on the across-flats
-    nut_deep = 7.0,    # hex pocket depth (nut is ~3.2 thick; extra is rod room)
+    nut_t    = 5.2,    # M6 hex nut thickness (ISO 4032)
+    nut_deep = 9.0,    # hex pocket depth (nut is 5.2 thick; extra is rod room)
     slack    = 0.15,   # wall standoff per side from the nominal rim
     slot_h   = 4.0,    # slot opening, centred on the wafer mid-plane, coplanar
     lip_over = 1.5,    # lip / floor overhang inboard of the nominal rim
-    fence_w  = 80.0,   # tangential width of the fence cores
+    fence_w  = 60.0,   # tangential width of the fence cores (was 80 — narrowed
+                       # 2026-07-24; capture lives in the wings, not the core)
     wing_w2  = 75.0,   # centring wings reach to y=+/-wing_w2 (32 deg of rim
                        # per side); capped by the gear tooth tips at r=250
                        # on the inboard side
     clr_und  = 2.0,    # min clearance to the wafer underside (covers 0.6 droop)
     boss_w   = 12.0,   # rib that roofs the rod bore under the wafer overhang
+    band_t   = 7.0,    # wing wall thickness: wings keep only the arc band
+                       # r_lip..r_lip+band_t (1.65 lip + ~5.3 behind the slot)
 )
 
 
@@ -104,7 +114,9 @@ class Jig:
         self.under_top = -(cf.wafer_T / 2 + swing + self.clr_und)   # rail/base top
         self.wall_top  = swing + self.slot_h / 2 + 3.0              # lip roof
         self.wing_top  = self.wing_w2 * tn + self.slot_h / 2 + 3.0  # wing lip roof
-        self.boss_top  = self.zc + self.bore_r + 1.5
+        # 0.8 roof over the bore (was 1.5): the M6 axis sits 0.75 higher and
+        # the wafer-underside clearance assert below is the hard ceiling.
+        self.boss_top  = self.zc + self.bore_r + 0.8
         self.prong_top = -(cf.wafer_T / 2 + 14.0 * tn + 2.0)
         self.prong_bot = cf.z1 + 0.5           # 0.5 above the gear flange
         # sanity: bore roofed under the wafer, rib still clear of the wafer
@@ -164,15 +176,23 @@ def build_outboard(j):
     face, slot wall just past the rim, wing-nut face at the back."""
     cf = j.cf
     x0, x1 = cf.Ro - 2.0, j.x_out + 10.0
-    f  = box(x0, x1, -j.w2, j.w2, cf.z_bot, j.under_top)                    # rail
-    f += box(x0, x1, -j.boss_w / 2, j.boss_w / 2, cf.z_bot, j.boss_top)     # bore roof
+    # Rail slimmed to what actually works (2026-07-24): a nose foot butting
+    # the arc face, a rear block under the walls/wings, and the bore-roof
+    # spine tying them. The full-width slab between was ~180 mm of dead
+    # material — nothing bears on it (the wafer floats clr_und above).
+    f  = box(x0, x0 + 14.0, -j.w2, j.w2, cf.z_bot, j.under_top)             # nose foot
+    f += box(j.x_out - 30.0, x1, -j.w2, j.w2, cf.z_bot, j.under_top)        # rear block
+    f += box(x0, x1, -j.boss_w / 2, j.boss_w / 2, cf.z_bot, j.boss_top)     # spine + bore roof
     walls = box(j.x_out - 8.0, x1, -j.w2, j.w2, j.under_top - 2.0, j.wall_top)
-    # centring wings: full-height dumb boxes are safe because the lip-cylinder
-    # subtraction below carves away everything plan-inside the rim ring — what
-    # survives is only the wall band that follows the rim arc out to +/-wing_w2
+    # centring wings: dumb boxes, kept only where they matter — the inner
+    # lip-cylinder subtraction below carves everything plan-inside the rim
+    # ring, and the outer keeper (^ band) trims the box corners that used to
+    # run ~45 mm past the arc. What survives is a band_t-thick wall band
+    # following the rim arc out to +/-wing_w2, standing on the bench.
+    band = vcyl(j.r_lip + j.band_t, cf.z_bot - 1.0, 60.0, cf.R, 0.0)
     for s in (1.0, -1.0):
         walls += box(j.x_out - 28.0, x1, s * (j.w2 - 2.0), s * j.wing_w2,
-                     cf.z_bot, j.wing_top)
+                     cf.z_bot, j.wing_top) ^ band
     f += walls - vcyl(j.r_lip, cf.z_bot - 1.0, 60.0, cf.R, 0.0)
     # nose: butts the outer arc face. +0.05 standoff so the different chord
     # phases of this 512-gon and the segment's 160-point arc don't overlap.
@@ -191,12 +211,14 @@ def build_inboard(j):
     f  = box(x0, x1, -j.w2, j.w2, cf.z_bot, j.under_top)                    # base
     f += box(x0, x0 + 18.0, -j.w2, j.w2, cf.z_bot, j.wall_top)              # nut tower
     walls = box(j.x_in - 14.0, x1, -j.w2, j.w2, j.under_top - 2.0, j.wall_top)
-    # centring wings, as on the outboard fence. Reach inward stops at
+    # centring wings, as on the outboard fence: boxes trimmed to the
+    # band_t arc band by the outer keeper (^ band). Reach inward stops at
     # x_in + 32: the far corner sits at r=244 from the halo axis, 6 mm clear
     # of the gear tooth tips (r=250).
+    band = vcyl(j.r_lip + j.band_t, cf.z_bot - 1.0, 60.0, cf.R, 0.0)
     for s in (1.0, -1.0):
         walls += box(x0, j.x_in + 32.0, s * (j.w2 - 2.0), s * j.wing_w2,
-                     cf.z_bot, j.wing_top)
+                     cf.z_bot, j.wing_top) ^ band
     f += walls - vcyl(j.r_lip, cf.z_bot - 1.0, 60.0, cf.R, 0.0)
     # datum prong: butts the band inner face (r=Ri) between gear flange and
     # land. The rod bore breaks 0.6 mm out of its underside over the last
@@ -211,33 +233,42 @@ def build_inboard(j):
 
 
 def build_hardware(j):
-    """The entire drivetrain as solids: rod at thread OD, captive hex nut
-    seated on its pocket floor, #10 washer, wing nut with the wings VERTICAL —
-    the worst orientation for bench clearance. Nut and wing-nut bores are at
-    the #10-24 tap drill (3.8), so their overlap with the rod is real thread
+    """The entire drivetrain as solids: rod at thread OD, captive M6 hex nut
+    seated on its pocket floor, M6 washer (DIN 125: Ø12 x 1.6), and the
+    printed knob with its embedded M6 nut as the outboard closure. A wing
+    nut is deliberately NOT modelled or supported at M6: its wings swing
+    ~15 mm off the axis and the axis is only 13.35 above the bench (the
+    bench-swing check would fail — correctly). Nut and knob-nut bores are at
+    the M6x1 tap drill (5.0), so their overlap with the rod is real thread
     engagement and is deliberately not an interference check."""
     cf = j.cf
     back  = j.x_out + 10.0                    # outboard fence rear face
-    floor = (j.x_in - 28.0) + 7.0             # hex pocket floor
-    rod0, rod1 = floor - 3.4, back + 1.2 + 5.5 + 3.0
+    floor = (j.x_in - 28.0) + j.nut_deep      # hex pocket floor
+    rod0, rod1 = floor - j.nut_t - 0.4, back + 1.6 + 12.0
     rod = xcyl(j.rod_D / 2, rod0, rod1, j.zc)
     R = j.nut_AF / math.sqrt(3.0)             # actual nut, no clearance
     hx = [(R * math.cos(math.radians(60 * i)), R * math.sin(math.radians(60 * i)))
           for i in range(6)]
-    nut = (prism(hx, 0.0, 3.05).rotate([0.0, 90.0, 0.0])
-           .translate([floor - 3.05, 0.0, j.zc]))
-    nut -= xcyl(1.9, floor - 4.0, floor + 1.0, j.zc)
-    washer = (xcyl(5.95, back, back + 1.2, j.zc)
-              - xcyl(2.8, back - 1.0, back + 3.0, j.zc))
-    wnut = xcyl(4.75, back + 1.2, back + 6.7, j.zc)
-    wnut += box(back + 2.2, back + 5.7, -1.5, 1.5, j.zc - 11.0, j.zc + 11.0)
-    wnut -= xcyl(1.9, back + 0.5, back + 7.5, j.zc)
-    return rod, nut, washer, wnut, rod1 - rod0
+    nut = (prism(hx, 0.0, j.nut_t).rotate([0.0, 90.0, 0.0])
+           .translate([floor - j.nut_t, 0.0, j.zc]))
+    nut -= xcyl(2.5, floor - j.nut_t - 1.0, floor + 1.0, j.zc)
+    washer = (xcyl(6.0, back, back + 1.6, j.zc)
+              - xcyl(3.2, back - 1.0, back + 3.0, j.zc))
+    # knob: printed body against the washer, hex pocket opening inboard so
+    # the embedded nut bears through the opening onto the washer.
+    knob = (build_knob(j).rotate([0.0, 90.0, 0.0])
+            .translate([back + 1.6, 0.0, j.zc]))
+    knob_nut = (prism(hx, 0.0, j.nut_t).rotate([0.0, 90.0, 0.0])
+                .translate([back + 1.8, 0.0, j.zc]))
+    knob_nut -= xcyl(2.5, back + 1.0, back + 8.0, j.zc)
+    return rod, nut, washer, knob, knob_nut, rod1 - rod0
 
 
 def build_knob(j):
-    """Optional printed thumb knob (Ø20 12-gon) if no wing nut is on hand.
-    Anything swung on the rod must clear the bench: axis is tmin+2.6 up."""
+    """Printed thumb knob (Ø20 12-gon) with a captive M6 hex nut — the
+    standard outboard closure. Anything swung on the rod must clear the
+    bench: the axis is tmin+3.35 up, so 10 mm of knob swing clears by 3.35
+    where a wing nut's ~15 would strike."""
     pts = [(10.0 * math.cos(math.radians(30 * i + 15)),
             10.0 * math.sin(math.radians(30 * i + 15))) for i in range(12)]
     R = j.nut_R
@@ -250,7 +281,7 @@ def build_knob(j):
 
 
 # ---- verification -----------------------------------------------------------
-def run_checks(j, seg, waf, fout, fin, rod, nut, washer, wnut):
+def run_checks(j, seg, waf, fout, fin, rod, nut, washer, knob, knob_nut):
     EPS = 1e-6
     cf = j.cf
     fences = fout + fin
@@ -264,10 +295,11 @@ def run_checks(j, seg, waf, fout, fin, rod, nut, washer, wnut):
         ('rod vs segment (keyhole through & clear of gear)', (rod ^ seg).volume()),
         ('rod vs fences (bores clear)', (rod ^ fences).volume()),
         ('hex nut vs its pocket walls', (nut ^ fin).volume()),
-        ('washer + wing nut vs outboard fence', ((washer + wnut) ^ fout).volume()),
-        ('wing-nut swing (wings vertical) vs bench', (wnut ^ bench).volume()),
-        ('nut/washer/wing nut vs segment & wafer',
-         (((nut + washer + wnut) ^ (seg + waf))).volume()),
+        ('knob nut vs its knob pocket', (knob_nut ^ knob).volume()),
+        ('washer + knob vs outboard fence', ((washer + knob + knob_nut) ^ fout).volume()),
+        ('knob swing vs bench', ((knob + knob_nut) ^ bench).volume()),
+        ('nut/washer/knob vs segment & wafer',
+         (((nut + washer + knob + knob_nut) ^ (seg + waf))).volume()),
     ]
     hit = [
         ('wafer +0.30 x meets outboard stop', (waf.translate([0.30, 0, 0]) ^ fout).volume(), True),
@@ -319,35 +351,38 @@ def main():
     print(f"  capture x +/-{j.slack:.2f}  y ~+/-{ys:.2f} (gravity-seated)  "
           f"lift blocked at +{j.slot_h/2 - cf.wafer_T/2:.1f}")
     print(f"  swing   clearance over the bench for rotating hardware: "
-          f"{j.zc - cf.z_bot:.1f} mm (#10 nut needs 5.5, wing nut ~11, knob 10)\n")
+          f"{j.zc - cf.z_bot:.1f} mm (M6 nut needs 5.8, knob 10 — an M6 "
+          f"wing nut needs ~15 and does NOT clear)\n")
 
     seg  = build_segment(cf)
     waf  = build_wafer(cf, 0)
     fout = build_outboard(j)
     fin  = build_inboard(j)
-    rod, nut, washer, wnut, rod_len = build_hardware(j)
+    rod, nut, washer, knob, knob_nut, rod_len = build_hardware(j)
 
-    print(f"  drivetrain (all modelled in the fitcheck): #10-24 rod cut to "
-          f"{5 * math.ceil(rod_len / 5):.0f} mm from a 36\" stick, hex nut "
-          f"captive in the inboard tower, #10 washer + wing nut outboard "
-          f"(or print the knob)\n")
+    print(f"  drivetrain (all modelled in the fitcheck): M6x1.0 rod cut to "
+          f"{5 * math.ceil(rod_len / 5):.0f} mm from a 36\"/1 m stick, hex "
+          f"nut captive in the inboard tower, M6 washer + printed knob with "
+          f"its own captive M6 nut outboard\n")
 
-    ok = run_checks(j, seg, waf, fout, fin, rod, nut, washer, wnut)
+    ok = run_checks(j, seg, waf, fout, fin, rod, nut, washer, knob, knob_nut)
     print()
 
     dz = -cf.z_bot                            # print with the bench face on the bed
     outs = [('cure_jig_outboard.stl', [fout.translate([0, 0, dz])], 'prints as-is'),
             ('cure_jig_inboard.stl',  [fin.translate([0, 0, dz])],  'prints as-is'),
-            ('cure_jig_knob.stl',     [build_knob(j)],              'optional, vs wing nut'),
+            ('cure_jig_knob.stl',     [build_knob(j)],              'outboard closure, M6 nut inside'),
             ('cure_jig_fitcheck.stl',
-             [seg, waf, fout, fin, rod, nut, washer, wnut],
+             [seg, waf, fout, fin, rod, nut, washer, knob, knob_nut],
              'view only, full drivetrain')]
     for fname, solids, note in outs:
         bodies = write_stl(solids, os.path.join(a.out, fname))
         v = report(fname, solids, bodies, note)
         if 'fitcheck' not in fname and 'knob' not in fname:
-            print(f"{'':24}mass  45% infill {v*1.27e-3*0.45:6.1f} g   "
-                  f"solid {v*1.27e-3:6.1f} g")
+            # 15% is the print setting for this jig — no real load path
+            # through it; 45% shown for comparison with old figures.
+            print(f"{'':24}mass  15% infill {v*1.27e-3*0.15:6.1f} g   "
+                  f"45% {v*1.27e-3*0.45:6.1f} g   solid {v*1.27e-3:6.1f} g")
 
     print(f"\n{'ALL CHECKS PASS' if ok else 'CHECK FAILURES ABOVE — do not print'}")
     print(f"Wrote to {os.path.abspath(a.out)}/")

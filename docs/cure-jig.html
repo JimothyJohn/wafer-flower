@@ -62,7 +62,7 @@ a{color:var(--teal)}
     <div class="eyebrow">Wafer Halo · OP 012</div>
     <h1>Cure Jig — Step by Step</h1>
     <div class="head-meta">
-      <span>parts <b>2 printed fences + 1 rod</b></span>
+      <span>parts <b>2 printed fences + knob + 1 rod</b></span>
       <span>tools <b>none while bonding</b></span>
       <span>force on wafer <b>zero</b></span>
       <span>centring <b>±0.15 / ±0.30 mm</b></span>
@@ -74,7 +74,7 @@ a{color:var(--teal)}
 <p style="max-width:74ch">This jig holds a wafer <b>dead-centred on its segment while the glue cures</b>.
 Two printed fences slide toward each other on one threaded rod that passes straight
 through the segment's keyhole — the same axis that runs under the centre of the wafer.
-Tighten one wing nut and both fences seat against the <em>segment</em>, never the wafer:
+Tighten one knob and both fences seat against the <em>segment</em>, never the wafer:
 the wafer just floats in two curved slots, caught on all sides, squeezed by nothing.</p>
 
 <figure class="vidwrap">
@@ -92,11 +92,11 @@ the wafer just floats in two curved slots, caught on all sides, squeezed by noth
 
   <table>
     <tr><th>Part</th><th>Where</th><th>Notes</th></tr>
-    <tr><td>Outboard fence</td><td class="mono">stl/cure_jig_outboard.stl</td><td class="dim">211 g · 6 h 18 m — gcode is already in <span class="mono">gcode/</span></td></tr>
-    <tr><td>Inboard fence</td><td class="mono">stl/cure_jig_inboard.stl</td><td class="dim">107 g · 3 h 24 m</td></tr>
-    <tr><td>#10-24 threaded rod, cut to <b>345&nbsp;mm</b></td><td>Home Depot, 36" stick</td><td class="dim">hacksaw + deburr the cut end so it threads</td></tr>
-    <tr><td>#10-24 hex nut ×1</td><td>Home Depot</td><td class="dim">lives inside the inboard fence — you'll never touch it again</td></tr>
-    <tr><td>#10 washer + #10-24 wing nut</td><td>Home Depot</td><td class="dim">or print <span class="mono">stl/cure_jig_knob.stl</span> instead of the wing nut</td></tr>
+    <tr><td>Outboard fence</td><td class="mono">stl/cure_jig_outboard.stl</td><td class="dim">56 g · 1 h 47 m at 15 % infill — no real load path, don't print it dense</td></tr>
+    <tr><td>Inboard fence</td><td class="mono">stl/cure_jig_inboard.stl</td><td class="dim">34 g · 1 h 10 m at 15 %</td></tr>
+    <tr><td>M6 × 1.0 threaded rod, cut to <b>350&nbsp;mm</b></td><td>Home Depot, 36" / 1 m stick</td><td class="dim">hacksaw + deburr the cut end so it threads. The one piece you must buy.</td></tr>
+    <tr><td>M6 hex nut ×2</td><td>Home Depot</td><td class="dim">one lives inside the inboard fence — you'll never touch it again; one seats in the printed knob</td></tr>
+    <tr><td>M6 washer + printed knob <span class="mono">stl/cure_jig_knob.stl</span></td><td>washer: Home Depot</td><td class="dim">the knob (2.5 g, 23 m) IS the closure — an M6 wing nut swings ~15 mm and hits the bench, don't buy one</td></tr>
     <tr><td>91% IPA or denatured alcohol</td><td>&nbsp;</td><td class="dim">cleaning. Never acetone on the print.</td></tr>
   </table>
 
@@ -111,18 +111,19 @@ the wafer just floats in two curved slots, caught on all sides, squeezed by noth
 <section class="op">
   <div class="op-head"><span class="op-chip">B</span><h2>One-time setup</h2></div>
   <div class="step"><div class="txt">
-    <div class="n">B1</div><h3>Ream the keyhole</h3>
-    <p>Run a <b>5&nbsp;mm (or 13/64") bit</b> through the segment's keyhole — printed holes
-    come out a touch small. It's the radial hole in the outer face, 12.6&nbsp;mm above the bottom,
-    and it goes all the way through.</p>
-    <p class="dim">Segments printed before Rev B.3 have a blind hole at the wrong height —
-    drill through from the outer face at the new height and they're current.</p>
+    <div class="n">B1</div><h3>Check the keyhole</h3>
+    <p>The keyhole prints at <b>Ø6.5</b> and an M6 rod slides straight through — no reaming
+    in the normal case; if yours printed snug, one pass with a <b>6.5&nbsp;mm bit</b> clears it.
+    It's the radial hole in the outer face, 13.35&nbsp;mm above the bottom, all the way through.</p>
+    <p class="dim">Segments printed before the M6 change (Ø5 hole, or the old blind hole) —
+    drill through from the outer face at 6.5&nbsp;mm and they're current.</p>
   </div><figure style="margin:0"><img src="media/step1_segment.png" alt="Segment alone on the bench"></figure></div>
 
   <div class="step"><div class="txt">
     <div class="n">B2</div><h3>Cut the rod, drop in the nut</h3>
-    <p>Cut the rod to <b>345&nbsp;mm</b>. Push the hex nut into the six-sided pocket in the back of the
-    inboard fence. Flats are vertical, it only goes in one way, and the rod will hold it captive forever.</p>
+    <p>Cut the rod to <b>350&nbsp;mm</b>. Push one hex nut into the six-sided pocket in the back of the
+    inboard fence — flats vertical, it only goes in one way, and the rod holds it captive forever.
+    Press the second nut into the printed knob.</p>
     <p class="dim">Dry-run the whole assembly once without a wafer so the first real bond is boring.</p>
   </div><figure style="margin:0"><img src="media/step5_inboard.png" alt="Nut and inboard fence"></figure></div>
 </section>
@@ -173,8 +174,8 @@ the wafer just floats in two curved slots, caught on all sides, squeezed by noth
   </div><figure style="margin:0"><img src="media/step6_rod.png" alt="Step 6"></figure></div>
 
   <div class="step"><div class="txt">
-    <div class="n">07</div><h3>Washer, wing nut, finger-tight</h3>
-    <p>Washer on, wing nut on, and stop at <b>finger-tight</b>. You are seating two plastic noses
+    <div class="n">07</div><h3>Washer, knob, finger-tight</h3>
+    <p>Washer on, knob on, and stop at <b>finger-tight</b>. You are seating two plastic noses
     against a plastic segment — there is nothing to torque.</p>
   </div><figure style="margin:0"><img src="media/step7_tighten.png" alt="Step 7"></figure></div>
 
@@ -202,16 +203,16 @@ the wafer just floats in two curved slots, caught on all sides, squeezed by noth
   block any lift at 1.6&nbsp;mm. Gravity settles it against the same walls every time.</p>
 
   <figure><img src="media/sec_drivetrain.png" alt="Cross-section through the drivetrain">
-  <figcaption>Straight down the middle: nut — fence — keyhole — fence — washer — wing nut, one axis under the wafer centre.</figcaption></figure>
+  <figcaption>Straight down the middle: nut — fence — keyhole — fence — washer — knob, one axis under the wafer centre.</figcaption></figure>
 
   <figure><img src="media/sec_capture.png" alt="Close-up of the rim slot">
   <figcaption>The slot, up close. The rim never touches anything unless it tries to leave.</figcaption></figure>
 
   <div class="note"><span class="tag">Zero force, on purpose</span><br>
-  Tightening the wing nut pulls both fences onto the <em>segment</em> — the force loop closes
+  Tightening the knob pulls both fences onto the <em>segment</em> — the force loop closes
   through printed plastic and never enters the silicon. The wafer sits in 0.15&nbsp;mm of air on
   every side. Every clearance and every capture direction is boolean-checked by
-  <span class="mono">scripts/cure_jig_stl.py</span> (18 checks) each time it's regenerated.</div>
+  <span class="mono">scripts/cure_jig_stl.py</span> (19 checks) each time it's regenerated.</div>
 
   <p class="dim" style="margin-top:22px">Back to the <a href="index.html">overview</a> ·
   <a href="production.html">production</a> · <a href="engineering.html">engineering</a> ·
