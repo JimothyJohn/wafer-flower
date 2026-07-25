@@ -47,13 +47,19 @@ PARAMS = dict(
     tmin     = 10.0,    # base thickness = dovetail height = gear flange thickness
     bond     = 1.1,     # bondline
     clr      = 3.0,     # neighbour clearance
-    gear_m   = 4.0,     # gear module. 4 (2026-07-25, Nick: module-2 teeth
-                        # "look insignificant") gives 126T ring / 14T pinion
-                        # at the same Ø504 pitch and 9:1 — teeth 9 mm deep,
-                        # proper mixer-style bevel presence. Chunkier still:
-                        # --gear_m 5.6 (90T/10T, 12.6 deep; 10T pinion is
-                        # undercut territory). Module-2 (252T/28T) remains a
-                        # flag away.
+    gear_m   = 5.6,     # gear module. 5.6 (2026-07-25, Nick: m4 still read
+                        # as "little nubbins") gives 90T ring / 10T pinion at
+                        # the same Ø504 pitch and 9:1 — teeth 12.6 mm deep,
+                        # automotive ring-gear proportions. The 10T pinion is
+                        # viable BECAUSE the set is spiral (gear_sp) and the
+                        # ring is generated from it. m4 (126T/14T) and m2
+                        # (252T/28T) remain a flag away.
+    gear_sp  = 35.0,    # SPIRAL angle, deg (2026-07-25, DESIGN.md: "spiral
+                        # bevel rack on the inner radius"). The cutter pinion
+                        # is extruded with taper AND twist — tan(sp) of
+                        # circumferential advance per unit of face at the
+                        # matched pitch — and the generated ring teeth come
+                        # out conjugate-spiral automatically. 0 = straight.
     gear_pa  = 20.0,    # pressure angle, degrees
     gear_bl  = 0.6,     # tooth thinning for printed backlash. 0.6 is the
                         # face-drive tune: the mesh sweep measures 0.002 mm3
@@ -270,7 +276,13 @@ def bevel_pinion(cf, backlash=None):
     pts = [(x * bg['s_prof'], y * bg['s_prof']) for x, y in pts]
     if signed_area(pts) < 0:
         pts = pts[::-1]
-    p = Manifold.extrude(CrossSection([pts]), bg['face'],
+    # SPIRAL: twist across the face puts tan(gear_sp) of circumferential
+    # advance per unit of face at the matched pitch radius; the generated
+    # ring inherits the conjugate spiral
+    tw = math.degrees(bg['face'] * math.tan(math.radians(cf.gear_sp))
+                      / bg['pin_mid'])
+    p = Manifold.extrude(CrossSection([pts]), bg['face'], n_divisions=16,
+                         twist_degrees=tw,
                          scale_top=((bg['apex'] - bg['face']) / bg['apex'],) * 2)
     g = {k: (v * bg['s_prof'] if k != 'T' else v) for k, v in g.items()}
     return p, g
@@ -307,7 +319,7 @@ def gear_teeth_bevel45(cf, z0=0.0, steps=None, span_pitches=4.0):
     # contact meridian, and without this chamfer it severs a 2 mm top-inner
     # rim ring (physically unattached scrap — showed up as a 348 mm3 second
     # component spanning the whole segment arc)
-    rel = 1.35 * cf.gear_m
+    rel = 0.6 * cf.gear_m + 1.5
     blank = blank - (Manifold.cylinder(rel + 0.2, cf.g_tip + rel, cf.g_tip + rel, 256)
                      .translate([0.0, 0.0, F - rel]))
     cutter_pin, _ = bevel_pinion(cf, backlash=0.0)

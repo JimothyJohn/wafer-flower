@@ -11,7 +11,7 @@ const SI ={rho:2.329e-3, E:130000, cte:2.6e-6};   // g/mm3, MPa, /K
 const PET={rho:1.270e-3, E:2000, allow:20, cte:60e-6};
 const CLR=3;                           // neighbor clearance, mm
 const DT_W=16, PLATE=0.922;            // dovetail wide width; plate stiffening (1-nu^2)
-const HOLE_D=6.5, GEAR_M=4;             // M6 keyhole bore; gear module (m4: chunky bevel)
+const HOLE_D=6.5, GEAR_M=5.6, GEAR_SP=35; // M6 keyhole bore; module; spiral angle
 
 // BEVEL45 gear (2026-07-24, generated): the teeth live on a 45-deg cone —
 // tips start at r = pitch - m on the wafer side and drop radially outward
@@ -280,11 +280,14 @@ function buildScene(){
   // cone — tips at G.tip on the wafer side, G.tip+tmin at the wall ----
   const G=gearSpec(), kb=(G.tip+P.tmin)/G.tip;
   const fPos=[], fIdx=[], NF=Math.max(64,G.tps*10);
+  // SPIRAL: the wall layer's tooth wave is phase-shifted by the spiral
+  // advance (tmin*tan(sp) of arc), so the teeth lean across the cone face
+  const skew=P.tmin*Math.tan(GEAR_SP*Math.PI/180)/G.rp;
   for(let j=0;j<=NF;j++){
-    const a=-H+2*H*j/NF, ri=toothWave(a,G), ro=G.band_o;
+    const a=-H+2*H*j/NF, ri=toothWave(a,G), rw=toothWave(a-skew,G), ro=G.band_o;
     const c=Math.cos(a), s=Math.sin(a);
     fPos.push(ri*c,ri*s,zBot+P.tmin, ro*c,ro*s,zBot+P.tmin,
-              ri*kb*c,ri*kb*s,zBot,   ro*c,ro*s,zBot);
+              rw*kb*c,rw*kb*s,zBot,   ro*c,ro*s,zBot);
   }
   const fq=(a,b,c,d)=>{fIdx.push(a,b,c,a,c,d);};
   for(let j=0;j<NF;j++){
@@ -367,7 +370,7 @@ function readouts(th,zBot,Ro,yMax,topZ){
   set('r_tmax',(P.tmin+2*yMax*Math.tan(th)+P.bond).toFixed(1)+' mm');
   set('r_land',((H+lead)*180/Math.PI).toFixed(0)+'° of '+(360/N).toFixed(0)+'°');
   const G=gearSpec(), gearHidden=G.tip>=hi;
-  set('r_gear',G.tps+'T×'+N+' = '+G.T+'T, 45° cone r'+G.tip.toFixed(0)+'→'+G.tip_wall.toFixed(0));
+  set('r_gear',G.tps+'T×'+N+' = '+G.T+'T spiral '+GEAR_SP+'°, cone r'+G.tip.toFixed(0)+'→'+G.tip_wall.toFixed(0));
   set('r_gearok',(gearHidden?'HIDDEN ✓ +':'VISIBLE ✗ ')+(G.tip-hi).toFixed(0)+' mm',gearHidden?'ok':'bad');
   if(!gearHidden) alerts.push('⚠ Gear cone front tips at r='+G.tip.toFixed(0)+' fall inside the hide window ('+hi.toFixed(0)+') — the teeth will show through the centre. Raise Ri or use a finer module.');
   if(!bandOK) alerts.push('⚠ Band ['+P.Ri.toFixed(0)+'–'+Ro.toFixed(0)+'] exits hide window ['+hi.toFixed(0)+'–'+ho.toFixed(0)+'] — frame shows at the joints.');
@@ -499,11 +502,12 @@ function exportBodies(){
   const G=gearSpec(), kb=(G.tip+P.tmin)/G.tip;
   const fPos=[], fIdx=[], NF=Math.max(64,G.tps*10);
   const ro=G.band_o;                            // overlaps into the band body
+  const skew=P.tmin*Math.tan(GEAR_SP*Math.PI/180)/G.rp;
   for(let j=0;j<=NF;j++){
-    const a=-H+2*H*j/NF, ri=toothWave(a,G);
+    const a=-H+2*H*j/NF, ri=toothWave(a,G), rw=toothWave(a-skew,G);
     const c=Math.cos(a), s=Math.sin(a);
     fPos.push(ri*c,ri*s,zBot+P.tmin, ro*c,ro*s,zBot+P.tmin,
-              ri*kb*c,ri*kb*s,zBot,   ro*c,ro*s,zBot);
+              rw*kb*c,rw*kb*s,zBot,   ro*c,ro*s,zBot);
   }
   const fq=(a,b,c,d)=>{fIdx.push(a,b,c,a,c,d);};
   for(let j=0;j<NF;j++){
