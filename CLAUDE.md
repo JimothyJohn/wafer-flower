@@ -77,16 +77,27 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   nothing at 0.3 rpm and its ~tan(sp) axial thrust would fight the idler
   groove, the ring's only axial restraint; gear_sp=0 default, 35 restores
   the spiral look): 108 teeth (12/segment), MODULE 5.6, on a 45° cone ON A
-  WEB OUTSIDE THE BAND — tips r318 at the WAFER side dropping to r308 at
+  WEB OUTSIDE THE BAND — tips r312.6 at the WAFER side dropping to r308 at
   the wall (big-at-front is forced: it is the only orientation whose
   working face points outward-and-back where the bracket pinion lives).
-  Pitch Ø605, 12T pinion (~Ø90 big end), exactly 9:1, radial axis 29.2
-  BEHIND the ring's wall face at 12 o'clock — hence the bracket's 38 mm
-  standoff. GENERATED as before (cutter swept ±2 pitches, 0.3 mm deep for
-  tip relief; runner thinned gear_bl=0.6): mesh sweep 0.0006 mm³, gating
-  segment_stl's exit. The old INNER flange and inner teeth are GONE — the
-  bore is plain Ri with the idler groove. COST: +31 g/segment (94.0 g
-  sliced vs 63.0 inner-spiral) for the web + outer teeth. Generation traps
+  BAND FACE = gear_F = 4.5 mm, NOT tmin — HARD CEILING ~4.86 (2026-07-25
+  regression fix): the neighbour wafer's clearance plane dips to
+  z_bot+4.86 over the leading ~15–20° of the sector (its rim crosses the
+  tooth annulus at a≈14.6°), so a tmin-tall band gets its last two teeth
+  planed to half height by the MANDATORY clearance cut, plus fin slivers
+  where the disc rim crosses a tooth at a grazing angle (Nick: "multiple
+  heights + a strand"). The inner gear at r≤255 never touched that plane;
+  the external one does. main() now GATES it: clearance cut must remove
+  0 mm³ of teeth or exit 1. All 108 teeth identical, verified periodic.
+  Pitch Ø605, 12T pinion (~Ø90 big end), exactly 9:1, radial axis 31.6
+  BEHIND the ring's wall face at 12 o'clock (moved from 29.2 when the
+  face slimmed: pin_mid = (g_pitch+F/2)/9) — the bracket's 38 mm standoff
+  still covers it. GENERATED as before (cutter swept ±2 pitches, 0.3 mm
+  deep for tip relief; runner thinned gear_bl=0.6): mesh sweep 0.0005 mm³,
+  gating segment_stl's exit. The old INNER flange and inner teeth are
+  GONE — the bore is plain Ri with the idler groove. COST: +16 g/segment
+  (77.7 g sliced vs 63.0 inner-spiral) for the web + outer teeth (was
+  +31 g at the tmin-tall band). Generation traps
   added this round: the sector clip backs off 1e-5 rad (clipping exactly
   at ±half leaves facet wobble reading as 1e-4 joint interference), and
   build_segment drops <0.01 mm³ specks at source (they survived as
@@ -158,8 +169,9 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   allowable — press over the LAND CENTROID only.
 - ASSEMBLY (slicer-measured masses): θ=10 traveler build 2.35 kg / 23.0 N
   (9× 128 g Si + 9× 132.8 g PETG at 45% infill, gear flange included);
-  current bevel45 build 1.71 kg / 16.8 N (61.8 g PETG — the coned tooth
-  band is the lightest gear yet: 70.3 g face-slot, 65.5 g spur at the M6
+  current EXTERNAL bevel build (gear_F=4.5) 1.85 kg / 18.2 N (77.7 g
+  PETG; the inner-spiral era read 1.71 kg / 61.8 g — the outer web +
+  teeth cost +16 g/segment; 70.3 g face-slot, 65.5 g spur at the M6
   keyhole, 66.0 pre-M6). The old uniform-45% figures (2.29 / 1.64 kg)
   under-read the PETG.
 - TIGHTEST MARGIN IN THE BUILD: single centred dovetail on a one-point
@@ -282,10 +294,11 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   mount on it. The ring HANGS on the wheels (±25° from top — the OP 015
   two-hang-point case; the dovetail keeps its full 427 mm³ since the gear
   left the band) and is driven purely rotationally from the top. plate_t
-  = 38 standoff exists because the external pinion axis sits 29.2 behind
-  the ring's wall face. 9 self-checks vs the full ring + wafers (seat,
+  = 38 standoff exists because the external pinion axis sits 31.6 behind
+  the ring's wall face (29.2 pre-gear_F; the standoff re-derives from
+  bevel_geom). 9 self-checks vs the full ring + wafers (seat,
   rib jam both ways, axial float, clocking sweep, hidden ≤ r410, nothing
-  behind the wall) — exits nonzero on FAIL. Sliced: plate 337 g / 9h46
+  behind the wall) — exits nonzero on FAIL. Sliced: plate 330.6 g / 9h34
   @45%, wheels 7.7 g / 19 min each.
 - scripts/cure_jig_stl.py — OP 012 cure jig (see Frame design). Imports
   segment_stl for params/geometry, emits cure_jig_{outboard,inboard,knob}.stl
@@ -329,9 +342,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   the solid skins dominate. Sliced mass is exactly linear in infill %:
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
   35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted). CURRENT B.3
-  build: 94.0 g/segment at the EXTERNAL bevel (63.0 inner spiral, 61.6
-  m4, 70.3 face-slot, 65.5 spur; book estimate 54), 3h19m each, assembly
-  2.00 kg / 19.6 N. Hanging on the two top idlers is the OP 015
+  build: 77.7 g/segment at the EXTERNAL bevel with gear_F=4.5 (94.0 at
+  the regressed tmin-tall band, 63.0 inner spiral, 61.6
+  m4, 70.3 face-slot, 65.5 spur; book estimate 54), 2h44m each, assembly
+  1.85 kg / 18.2 N. Hanging on the two top idlers is the OP 015
   two-hang-point case: M well under the single-point 2.2 N·m, and the
   dovetail keeps its full 427 mm³ section (gear left the band) — margin
   comfortably >6×. Traveler

@@ -78,10 +78,9 @@ PARAMS = dict(
                         # residual at 0.6 vs 0.83 at 0.4 (straight radial
                         # slots are only exact at the pitch radius).
     gear_drive = 'bevel45', # 'bevel45' (2026-07-24, Nick's call) or 'spur'.
-                        # bevel45: the 252 teeth live on a 45-deg CONE — they
-                        # start at the wafer side (r = g_tip at the flange
-                        # front) and drop radially outward toward the mounting
-                        # wall (g_tip + tmin at the wall face) — and mesh a
+                        # bevel45: the teeth live on a 45-deg CONE — big end
+                        # at the wafer side (r = g_tip·(pitch+gear_F)/pitch),
+                        # shrinking to g_tip at the wall face — and mesh a
                         # module-matched 45-deg coned pinion on a RADIAL axis
                         # (motor flat against the wall, perpendicular to the
                         # halo axis). Ideal involutes on these cones would
@@ -94,7 +93,20 @@ PARAMS = dict(
                         # ~0.03 mm3 of discretisation scallop against the
                         # 0.6 mm backlash. (The interim 'face' slot drive was
                         # removed when Nick called for the coned look.)
-    gear_pf  = 10.0,    # pinion face width (also sets the generated band)
+    gear_pf  = 10.0,    # pinion face width (cutter extrude length)
+    gear_F   = 4.5,     # RING band face height (2026-07-25 regression fix).
+                        # HARD CEILING ~4.86 at B.3: the external band sits
+                        # under the NEIGHBOUR wafer's clearance plane over the
+                        # leading ~15-20 deg of the sector (rim crosses the
+                        # tooth annulus at a~14.6), and the plane dips to
+                        # z_bot+4.86 there. The first outer-drive build used
+                        # tmin (10) as the face: the mandatory clearance disc
+                        # planed the last two teeth to half height and its rim
+                        # left fin slivers through a tooth ("multiple heights
+                        # + a strand", Nick 2026-07-25). 4.5 clears the plane
+                        # everywhere -> all 108 teeth identical, nothing
+                        # trimmed. main() gates this: any tooth material
+                        # removed by the clearance cut FAILS the run.
     grv_z0   = 2.5,     # idler retention groove, now in the INNER face at Ri
     grv_h    = 1.5,     # (2026-07-25, was outer): starts grv_z0 above the
     grv_d    = 2.0,     # flat bottom, straight ledge for grv_h, then a
@@ -157,9 +169,10 @@ class Cfg:
                         else self.g_pitch + 1.25 * self.gear_m)
         self.g_base  = self.g_pitch * math.cos(math.radians(self.gear_pa))
         # external bevel45: nominal radii at the WALL face, scaled up by
-        # (pitch+tmin)/pitch toward the wafer side (the working face must
+        # (pitch+gear_F)/pitch toward the wafer side (the working face must
         # point outward-and-back, where the bracket pinion lives). A web
-        # annulus ties the band OD to the root cone. The slab inner boundary
+        # annulus ties the band OD to the root cone; band + web are gear_F
+        # tall (NOT tmin — see the gear_F note). The slab inner boundary
         # is plain Ri — the old inner flange is GONE (teeth left the bore).
         self.g_web_i = self.Ro - 2.0                   # web overlap into band
         self.g_fi    = self.Ri if self.g_bev else self.g_root
@@ -273,7 +286,7 @@ def bevel_geom(cf):
     """Shared placement numbers for the generated 45-deg crossed pair, in the
     MESH FRAME (wall face at z=0, teeth big-end down). The pinion is module-
     matched at the cone's mid-height: pitch there = ring_mid / ratio."""
-    F = cf.tmin
+    F = cf.gear_F
     ratio = cf.teeth / cf.tps
     ring_mid = cf.g_pitch + F / 2.0            # cone pitch radius, mid-height
     pin_mid = ring_mid / ratio
@@ -325,15 +338,18 @@ def gear_teeth_bevel45(cf, z0=0.0, steps=None, span_pitches=4.0):
     """EXTERNAL 45-deg spiral bevel ring teeth, GENERATED (2026-07-25 flip:
     the drive moved outboard so the ring can hang on inner-groove idlers and
     be driven from the top). The tooth cone is big at the FRONT — nominal
-    radii at the wall face, scaled up by (pitch+tmin)/pitch toward the wafer
-    side — because that is the only orientation whose working face points
-    outward-and-back, where the bracket-mounted pinion lives. A short web
-    annulus ties the band OD to the root cone. Same generation recipe as the
-    inner drive it replaces: sweep the zero-backlash spiral cutter through
-    the meshing motion 0.3 mm deep (radial tip relief), extract one pitch,
-    pattern tps+1 and clip to the sector (phase: the cutter cuts a SPACE at
-    angle 0, so the pattern tiles k*pitch from the joint)."""
-    F = cf.tmin
+    radii at the wall face, scaled up by (pitch+gear_F)/pitch toward the
+    wafer side — because that is the only orientation whose working face
+    points outward-and-back, where the bracket-mounted pinion lives. A short
+    web annulus ties the band OD to the root cone. Band face = gear_F, NOT
+    tmin: taller than ~4.86 and the neighbour-wafer clearance disc planes
+    the leading teeth down (see the gear_F PARAMS note). Same generation
+    recipe as the inner drive it replaces: sweep the zero-backlash spiral
+    cutter through the meshing motion 0.3 mm deep (radial tip relief),
+    extract one pitch, pattern tps+1 and clip to the sector (phase: the
+    cutter cuts a SPACE at angle 0, so the pattern tiles k*pitch from the
+    joint)."""
+    F = cf.gear_F
     kb = (cf.g_pitch + F) / cf.g_pitch
     big = cf.g_tip * kb + 1.0
     blank = prism(arc(big, -cf.half, cf.half, 200) +
@@ -639,10 +655,11 @@ def main():
           f"band {cf.Ri:.0f}–{cf.Ro:.0f}")
     if cf.g_bev:
         bg = bevel_geom(cf)
-        kbp = (cf.g_pitch + cf.tmin) / cf.g_pitch
+        kbp = (cf.g_pitch + cf.gear_F) / cf.g_pitch
         print(f"  gear    EXTERNAL spiral bevel (generated): {cf.tps}T/seg × {cf.N} = "
-              f"{cf.teeth}T, {cf.gear_sp:.0f}° spiral, tips r{cf.g_tip * kbp:.0f} "
-              f"(wafer side) → r{cf.g_tip:.0f} (wall), pinion {cf.tps}T spiral, "
+              f"{cf.teeth}T, {cf.gear_sp:.0f}° spiral, face {cf.gear_F} mm, "
+              f"tips r{cf.g_tip * kbp:.1f} "
+              f"(wafer side) → r{cf.g_tip:.0f} (wall), pinion {cf.tps}T, "
               f"radial axis {-bg['z_p']:.1f} behind the wall face — driven from "
               f"the top; the ring hangs on inner-groove idlers")
 
@@ -717,6 +734,23 @@ def main():
         print(f"FAIL: gear mesh overlap {mesh['worst_overlap']:.3f} mm3 > 0.05 "
               f"— raise gear_bl or fix the slot geometry")
         return 1
+    # REGRESSION GATE (2026-07-25): the neighbour-wafer clearance cut must
+    # remove ZERO tooth material. The first outer-drive build shipped with
+    # the band at tmin height — the mandatory cut planed the leading two
+    # teeth to half height and its rim left fin slivers ("multiple heights
+    # + a strand"). Every tooth of the 108T ring must be identical.
+    if cf.g_bev:
+        t = gear_teeth_bevel45(cf, cf.z_bot)
+        trimmed = (t ^ wafer_cut(cf, 1, -cf.clrOff - 0.2, cf.tall,
+                                 extra_r=0.5)).volume()
+        if trimmed > 0.001:
+            print(f"FAIL: neighbour clearance cut removes {trimmed:.2f} mm3 "
+                  f"of gear teeth — lower gear_F (the band top must stay "
+                  f"under the neighbour wafer plane − clr; ~4.86 max at B.3)")
+            return 1
+        print(f"  gate    clearance cut removes {trimmed:.5f} mm3 of teeth "
+              f"(gear_F {cf.gear_F} vs ~4.86 ceiling) — all {cf.teeth} teeth "
+              f"identical")
     return 0
 
 
