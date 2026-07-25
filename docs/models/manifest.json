@@ -14,7 +14,7 @@
   "gear_m": 2.0,
   "gear_pa": 20.0,
   "gear_bl": 0.4,
-  "hole_D": 5.0,
+  "hole_D": 6.5,
   "hole_dep": 30.5,
   "pocket_d": 1.0,
   "pocket_m": 4.0,
@@ -26,7 +26,7 @@
   "facets": 512
  },
  "sector_deg": 40.0,
- "keyhole_z": -7.415522292974702,
+ "keyhole_z": -6.665522292974702,
  "z_bot": -20.0155222929747,
  "parts": [
   {
@@ -34,7 +34,7 @@
    "name": "segment",
    "group": "segment",
    "color": "#B9A87E",
-   "volume_cm3": 94.279
+   "volume_cm3": 93.873
   },
   {
    "file": "wafer.stl",
@@ -48,42 +48,49 @@
    "name": "jig_outboard",
    "group": "out",
    "color": "#D97742",
-   "volume_cm3": 323.252
+   "volume_cm3": 106.72
   },
   {
    "file": "jig_inboard.stl",
    "name": "jig_inboard",
    "group": "inboard",
    "color": "#3E7CB1",
-   "volume_cm3": 166.624
+   "volume_cm3": 75.711
   },
   {
    "file": "rod.stl",
    "name": "rod",
    "group": "rod",
    "color": "#30343A",
-   "volume_cm3": 6.3
+   "volume_cm3": 9.838
   },
   {
    "file": "hex_nut.stl",
    "name": "hex_nut",
    "group": "inboard",
    "color": "#4A5058",
-   "volume_cm3": 0.205
+   "volume_cm3": 0.348
   },
   {
    "file": "washer.stl",
    "name": "washer",
    "group": "rod",
    "color": "#6A7078",
-   "volume_cm3": 0.104
+   "volume_cm3": 0.129
   },
   {
-   "file": "wing_nut.stl",
-   "name": "wing_nut",
+   "file": "knob.stl",
+   "name": "knob",
+   "group": "rod",
+   "color": "#D97742",
+   "volume_cm3": 3.778
+  },
+  {
+   "file": "knob_nut.stl",
+   "name": "knob_nut",
    "group": "rod",
    "color": "#4A5058",
-   "volume_cm3": 0.46
+   "volume_cm3": 0.348
   },
   {
    "file": "my_frame_segment.stl",
@@ -128,7 +135,7 @@
  "checks": [
   {
    "group": "nominal",
-   "name": "cure-jig drivetrain + capture suite (18 checks)",
+   "name": "cure-jig drivetrain + capture suite (19 checks)",
    "value_mm3": 0.0,
    "pass": true
   },

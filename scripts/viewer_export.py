@@ -60,7 +60,7 @@ SWEEP_STEPS = 5       # positions checked across each stroke (incl. both ends)
 
 def build_scene(cf, j):
     """All bodies in scene coordinates, keyed by manifest part name."""
-    rod, nut, washer, wnut, _ = build_hardware(j)
+    rod, nut, washer, knob, knob_nut, _ = build_hardware(j)
     return {
         'segment':      (build_segment(cf),  'segment',  0xB9A87E),
         'wafer':        (build_wafer(cf, 0), 'wafer',    0x9AA6B2),
@@ -69,7 +69,8 @@ def build_scene(cf, j):
         'rod':          (rod,                'rod',      0x30343A),
         'hex_nut':      (nut,                'inboard',  0x4A5058),
         'washer':       (washer,             'rod',      0x6A7078),
-        'wing_nut':     (wnut,               'rod',      0x4A5058),
+        'knob':         (knob,               'rod',      0xD97742),
+        'knob_nut':     (knob_nut,           'rod',      0x4A5058),
     }
 
 
@@ -156,8 +157,8 @@ def build_all(cf, j):
     nominal_ok = run_checks(j, seg, waf, scene['jig_outboard'][0],
                             scene['jig_inboard'][0], scene['rod'][0],
                             scene['hex_nut'][0], scene['washer'][0],
-                            scene['wing_nut'][0])
-    checks = [('nominal', 'cure-jig drivetrain + capture suite (18 checks)',
+                            scene['knob'][0], scene['knob_nut'][0])
+    checks = [('nominal', 'cure-jig drivetrain + capture suite (19 checks)',
                0.0 if nominal_ok else 1.0, nominal_ok)]
     checks += sweep_checks(cf, scene, vecs)
     checks += assembly_checks(cf, seg, waf)
