@@ -19,7 +19,8 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
 - θ=5 IS FORCED by the 30 mm thickness cap at N=9 (θ=7.5 → 32.1, θ=10 → 39.6).
   N=12 would allow θ=10 at 27.9 mm if the deeper look is wanted back.
 - The 30 mm cap + t_min 10 FIXED the worst margin: dovetail 2.0× → 4.5×
-  at measured masses (S_joint 256 → 427 mm³, assembly 2.35 → 1.75 kg).
+  at measured masses (S_joint 256 → 427 mm³, assembly 2.35 → 1.75 kg;
+  2026-07-25 dt_h=5 later halves S_joint to 213 — see the statics bullet).
 - Wafer footprint projects as ellipse: semi-axes 150 (radial) ×
   150·cosθ (tangential).
 - Hide window (frame invisible from front) at joint meridian (20°):
@@ -189,7 +190,11 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   hang. M ≈ W·R/π = 2.6 N·m, S_joint = 6×16²/6 = 256 mm³ → 10.0 MPa vs
   ~20 MPa printed-PETG allowable = 2.0×. Everything else is 47–4000×.
   Fix via two dovetails per face, two hang points (±50°), or a ledge.
-  (Current B.3 build with S_joint 427 mm³: M = 1.9 N·m → 4.5×.)
+  (B.3 with S_joint 427 mm³: M = 1.9 N·m → 4.5×. With dt_h=5 the tail
+  is 213 mm³ → 2.2× on this RETIRED single-point case; the shipped
+  two-point idler hang has M well under it, margin >3×. Nick 2026-07-25:
+  the full-tmin tail read too thick — dt_h trims the male only, the
+  socket stays tmin-deep so segments still slide together in Z.)
 - Centring the band under the wafer CG is NOT free: +23% mass, +30%
   thermal shear, and it drags the dovetail margin 2.0× → 1.6×.
 
@@ -303,8 +308,7 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   idler wheels (rib in the inner groove, spinning on printed M6 screws
   into captive printed nuts) and the N20 worm gearmotor + 12T pinion all
   mount on it. The ring HANGS on the wheels (±25° from top — the OP 015
-  two-hang-point case; the dovetail keeps its full 427 mm³ since the gear
-  left the band) and is driven purely rotationally from the top. The
+  two-hang-point case; dovetail S_joint 213 mm³ at dt_h=5) and is driven purely rotationally from the top. The
   pinion (2026-07-25 rework) is a BEVELOID on an AXIAL axis at r=325.5 —
   motor points out of the wall, N20 body + Ø16 pinion hub inside the
   plate_t=76 standoff (2026-07-25, Nick: doubled from 38 for motor room;
@@ -363,8 +367,7 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   2h30m each, assembly 1.76 kg / 17.3 N. Hanging on the two top idlers
   is the OP 015
   two-hang-point case: M well under the single-point 2.2 N·m, and the
-  dovetail keeps its full 427 mm³ section (gear left the band) — margin
-  comfortably >6×. Traveler
+  dovetail carries S_joint 213 mm³ (dt_h=5) — margin >3×. Traveler
   standard θ=10 build: 132.8 g/segment, 2.35 kg / 23.0 N, M = 2.6 N·m,
   dovetail 2.0×. The traveler solver + spec sheet now carry this calibrated
   model (T_SKIN=1.05 on the solver's cruder area estimate, K_INF=0.92) and

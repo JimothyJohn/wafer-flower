@@ -28,6 +28,7 @@
   "dt_neck": 12.0,
   "dt_tip": 16.0,
   "dt_depth": 8.0,
+  "dt_h": 5.0,
   "dt_clear": 0.25,
   "clr_edge": 2.0,
   "facets": 512
@@ -41,7 +42,7 @@
    "name": "segment",
    "group": "segment",
    "color": "#B9A87E",
-   "volume_cm3": 95.405
+   "volume_cm3": 94.97
   },
   {
    "file": "wafer.stl",
@@ -231,13 +232,13 @@
   {
    "group": "assembly",
    "name": "clearance cut present (material within 3.05 mm)",
-   "value_mm3": 34.6296,
+   "value_mm3": 29.0082,
    "pass": true
   },
   {
    "group": "assembly",
    "name": "segments butt at the joint (0.1 deg nudge contacts)",
-   "value_mm3": 104.8434,
+   "value_mm3": 90.1007,
    "pass": true
   }
  ]
