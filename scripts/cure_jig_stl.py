@@ -375,8 +375,8 @@ def main():
         if 'fitcheck' not in fname and 'knob' not in fname:
             # 15% is the print setting for this jig — no real load path
             # through it; 45% shown for comparison with old figures.
-            print(f"{'':24}mass  15% infill {v*1.27e-3*0.15:6.1f} g   "
-                  f"45% {v*1.27e-3*0.45:6.1f} g   solid {v*1.27e-3:6.1f} g")
+            print(f"{'':24}mass  10% PLA (rough) {v*1.24e-3*0.10:6.1f} g   "
+                  f"solid {v*1.24e-3:6.1f} g")
 
     print(f"\n{'ALL CHECKS PASS' if ok else 'CHECK FAILURES ABOVE — do not print'}")
     print(f"Wrote to {os.path.abspath(a.out)}/")

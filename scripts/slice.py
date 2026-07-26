@@ -49,14 +49,20 @@ PROFILES = Path("/Applications/OrcaSlicer.app/Contents/Resources/profiles/BBL")
 DEFAULTS = {
     "machine": "Bambu Lab H2S 0.4 nozzle",
     "process": "0.20mm Standard @BBL H2S",
-    "filament": "Generic PETG @BBL H2S",
+    "filament": "Generic PLA @BBL H2S",   # Nick's spool 2026-07-26; PETG
+    #                                       remains one --filament away
 }
 
 # Project print settings (CLAUDE.md: PETG at 45% infill). Keys are OrcaSlicer
 # process-config names; anything valid there can be added.
 OVERRIDES = {
     "curr_bed_type": "Textured PEI Plate",
-    "sparse_infill_density": "45%",
+    "sparse_infill_density": "10%",
+    # the load path lives in the walls + skins (teeth, dovetail, groove
+    # are wall-solid at this scale); infill only backs the land's top
+    # surface. 6 top shells keep the land inside T4's 0.15 mm over 10%
+    # infill. 45% was the pre-2026-07-26 baseline.
+    "top_shell_layers": "6",
 }
 
 BED_X, BED_Y = 340.0, 320.0  # H2S build area, mm (from the machine profile)
@@ -171,7 +177,7 @@ def main():
     ap.add_argument("--copies", type=int, default=1,
                     help="clones per plate (auto-arranged)")
     ap.add_argument("--infill", type=int, default=None, metavar="PCT",
-                    help="sparse infill percent (default: OVERRIDES, 45)")
+                    help="sparse infill percent (default: OVERRIDES, 10)")
     ap.add_argument("--outdir", type=Path, default=None,
                     help="output directory (default: <repo>/gcode)")
     args = ap.parse_args()

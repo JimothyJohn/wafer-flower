@@ -728,8 +728,10 @@ def main():
     seg = build_segment(cf)
     bodies = write_stl(seg, os.path.join(a.out, 'segment.stl'))
     v = report('segment.stl', seg, bodies, 'one segment')
-    print(f"{'':24}mass  45% infill {v*1.27e-3*0.45:6.1f} g   solid {v*1.27e-3:6.1f} g"
-          f"   ×{cf.N} = {v*1.27e-3*0.45*cf.N/1000:.2f} kg\n")
+    # rough book estimate only — slice.py is the mass authority (skins
+    # dominate; the linear model under-reads at low infill)
+    print(f"{'':24}mass  10% PLA (rough) {v*1.24e-3*0.10:6.1f} g   "
+          f"solid {v*1.24e-3:6.1f} g\n")
 
     for fname, kw, note in (('segment_pair.stl', dict(n=2), 'gate T1'),
                             ('halo_frame.stl',   dict(), f'all {cf.N} segments'),

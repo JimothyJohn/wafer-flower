@@ -195,7 +195,7 @@ def main():
     wafer_list = [build_wafer(cf, k) for k in range(cf.N)]
     wafers = sum(wafer_list[1:], wafer_list[0])
     ring = frame + wafers
-    W = cf.N * (0.128 + 0.070) * 9.81   # N: Si + ~70 g/segment PETG sliced
+    W = cf.N * (0.128 + 0.049) * 9.81   # N: Si + 48.6 g/segment PLA@10 sliced
     print(f"Top idler bracket  ·  wheels Ø{2*b.wheel_R:.0f} at ±{b.wheel_az:.0f}° "
           f"from top, bodies on the bore at Ri={cf.Ri:.0f}, ribs in the groove")
     print(f"  hang    ring hangs on 2 wheels ({W:.1f} N est.); groove rib takes "
@@ -270,8 +270,8 @@ def main():
         bod = write_stl(solids, os.path.join(a.out, fname))
         v = report(fname, solids, bod, note)
         if 'fitcheck' not in fname:
-            print(f"{'':24}mass  30% infill {v*1.27e-3*0.30:6.1f} g   "
-                  f"solid {v*1.27e-3:6.1f} g")
+            print(f"{'':24}mass  15% PLA (rough) {v*1.24e-3*0.15:6.1f} g   "
+                  f"solid {v*1.24e-3:6.1f} g")
 
     print(f"\n{'ALL CHECKS PASS' if ok else 'CHECK FAILURES ABOVE — do not print'}")
     print(f"Wrote to {os.path.abspath(a.out)}/")

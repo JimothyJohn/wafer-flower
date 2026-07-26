@@ -14,8 +14,10 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   θ only buys standoff depth (26.9 mm @ 5° → 52.9 @ 10° → 78.4 @ 15°) at
   ~4% assembly mass and ~5% dovetail margin per degree (slicer-measured
   masses). Pick on looks.
-- CURRENT PARAMS (Rev B.2, user-set 30 mm caps): θ=5°, R_pitch=350,
-  band Ri=255 w=30, t_min=10, bondline 1.1. Part is 25.0 mm tall, 30 mm wide.
+- CURRENT PARAMS (Rev B.4 deep-bevel, user-set 30 mm caps): θ=5°,
+  R_pitch=350, band Ri=255 w=30, t_min=15 (2026-07-26: +5 so the gear
+  face reaches 9.5 — the ceiling is z_bot-relative, deepening the base
+  raises it), bondline 1.1. Part is 30.0 mm tall (AT the cap), 30 wide.
 - θ=5 IS FORCED by the 30 mm thickness cap at N=9 (θ=7.5 → 32.1, θ=10 → 39.6).
   N=12 would allow θ=10 at 27.9 mm if the deeper look is wanted back.
 - The 30 mm cap + t_min 10 FIXED the worst margin: dovetail 2.0× → 4.5×
@@ -114,8 +116,17 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   edge of the teeth (Nick: "a ring along the outside"). Segment is
   genus 1 now (keyhole only — the flipped slots form no closed tunnels).
   The old INNER flange and inner teeth are GONE — the bore is plain Ri
-  with the idler groove. COST: +5 g/segment (67.9 g sliced vs 63.0
-  inner-spiral). Generation traps that stand: the sector clip backs off
+  with the idler groove. DEEP-BEVEL REV (2026-07-26, Nick: "the
+  45-degree straight bevel I've always dreamed of… rather than what I
+  believe is a spur gear"): gear_F 4.5 → 9.5 via tmin 10 → 15 (ceiling
+  4.83 → 9.83, computed live by gear_F_ceiling()); tips r305.8 wall →
+  r296.1 front, C 325.5 → 328.3, part at the 30 mm cap. Two joint-face
+  traps fixed with it: the male tail is BUILT at dt_h via tail_poly
+  (cut-down left a coincident joint face → 1e-6 phantom pair
+  interference; the backed-off cut shed a µm sliver that broke the STEP
+  round-trip), and band/slab sector faces back off 1e-5 rad like the
+  tooth clip (exact-butt faces read float noise once taller) — pair
+  measures exactly 0. Generation traps that stand: the sector clip backs off
   1e-5 rad (facet wobble reads as 1e-4 joint interference), build_segment
   drops <0.01 mm³ specks at source (phantom STEP solids), cutters
   overshoot both faces (over=0.5 — coplanar-cap sliver trap).
@@ -186,11 +197,10 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   allowable — press over the LAND CENTROID only.
 - ASSEMBLY (slicer-measured masses): θ=10 traveler build 2.35 kg / 23.0 N
   (9× 128 g Si + 9× 132.8 g PETG at 45% infill, gear flange included);
-  current EXTERNAL beveloid build (gear_F=4.5, flush module) 1.76 kg /
-  17.3 N (67.9 g PETG; inner-spiral era 1.71 kg / 61.8 g — the outer
-  teeth now cost only +5 g/segment; 70.3 g face-slot, 65.5 g spur at the
-  M6 keyhole, 66.0 pre-M6). The old uniform-45% figures (2.29 / 1.64 kg)
-  under-read the PETG.
+  current DEEP beveloid build (gear_F=9.5, tmin=15) 1.59 kg / 15.6 N at
+  PLA @10% (48.6 g/segment; the PETG@45 deep bevel read 1.98 kg /
+  19.4 N, the 4.5-face era 1.76 / 17.3). The old uniform-45% figures
+  under-read every build — sliced G-code is the authority.
 - TIGHTEST MARGIN IN THE BUILD: single centred dovetail on a one-point
   hang. M ≈ W·R/π = 2.6 N·m, S_joint = 6×16²/6 = 256 mm³ → 10.0 MPa vs
   ~20 MPa printed-PETG allowable = 2.0×. Everything else is 47–4000×.
@@ -365,11 +375,13 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   mass figure in this file; that model under-reads ALL segments here because
   the solid skins dominate. Sliced mass is exactly linear in infill %:
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
-  35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted). CURRENT B.3
-  build: 67.9 g/segment at the EXTERNAL beveloid, gear_F=4.5, flush
-  module (77.7 big-at-front, 94.0 at the regressed tmin-tall band, 63.0
-  inner spiral, 61.6 m4, 70.3 face-slot, 65.5 spur; book estimate 54),
-  2h30m each, assembly 1.76 kg / 17.3 N. Hanging on the two top idlers
+  35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted; PETG-
+  calibrated — PLA runs ~2% lighter still). CURRENT B.4
+  build: 48.6 g/segment PLA @10% + 6 top shells, 1h49 each, assembly
+  1.59 kg / 15.6 N (2026-07-26, Nick's minimal-infill call; PETG@45
+  history: 91.8 deep bevel, 67.9 at the 4.5 face, 63.0 inner spiral).
+  Pinion 15.0 g, plate 367.2 g / 9h27 @15%, wheels 6.1 g, jig
+  61.0/29.1/2.4 g @10%. Hanging on the two top idlers
   is the OP 015
   two-hang-point case: M well under the single-point 2.2 N·m, and the
   dovetail carries S_joint 213 mm³ (dt_h=5) — margin >3×. Traveler

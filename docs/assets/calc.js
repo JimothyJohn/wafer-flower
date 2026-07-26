@@ -72,7 +72,7 @@ canvas.addEventListener('wheel',e=>{e.preventDefault();autoDist=false;dist=Math.
 
 // boots at the SHIPPED Rev B.3 parameters, so the first render is the real
 // CAD (below); the old traveler values are one slider-drag away
-const P={D:300,wt:0.775,N:9,tilt:5,R:350,Ri:255,bw:30,tmin:15,bond:1.1,G:0.06,dT:20,dens:45};
+const P={D:300,wt:0.775,N:9,tilt:5,R:350,Ri:255,bw:30,tmin:15,bond:1.1,G:0.06,dT:20,dens:10};
 const B3={D:300,wt:0.775,N:9,tilt:5,R:350,Ri:255,bw:30,tmin:15,bond:1.1};
 const atB3=()=>Object.keys(B3).every(k=>Math.abs(P[k]-B3[k])<1e-9);
 const WR=()=>P.D/2, SEG=()=>2*Math.PI/P.N, HALF=()=>Math.PI/P.N;
