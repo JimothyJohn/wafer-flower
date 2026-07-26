@@ -44,7 +44,10 @@ PARAMS = dict(
     R        = 350.0,   # pitch radius
     Ri       = 255.0,   # band inner radius (255 -> the clean 252-tooth gear)
     bw       = 30.0,    # band width  (30 mm cap)
-    tmin     = 10.0,    # base thickness = dovetail height (gear face is gear_F)
+    tmin     = 15.0,    # base thickness (gear face is gear_F). 15 (2026-07-26,
+                        # the deep-bevel rev): the flat bottom drops 5 mm so
+                        # the gear face can reach 9.5 under the neighbour-
+                        # plane ceiling — part lands at the 30 mm cap.
     bond     = 1.1,     # bondline
     clr      = 3.0,     # neighbour clearance
     gear_m   = 5.6,     # NOMINAL gear module (sets tooth count); the
@@ -61,10 +64,12 @@ PARAMS = dict(
                         # at the wall, generated conjugate to a parallel-
                         # axis pinion — see bevel_geom(). 'spur' is the
                         # parked legacy drive (gearmotor_stl pins it).
-    gear_F   = 4.5,     # ring band face height. HARD CEILING: must stay
-                        # under the neighbour-wafer clearance plane (~4.86
-                        # at B.3, recomputed live) or the clearance cut
-                        # planes the leading teeth — gated in main().
+    gear_F   = 9.5,     # ring band face height — the visible 45-deg cone
+                        # (9.5 face ~ the 12.1 tooth depth: the mixer look).
+                        # HARD CEILING: must stay under the neighbour-wafer
+                        # clearance plane (9.83 at tmin=15, recomputed live)
+                        # or the clearance cut planes the leading teeth —
+                        # gated in main().
     grv_z0   = 2.5,     # idler retention groove, now in the INNER face at Ri
     grv_h    = 1.5,     # (2026-07-25, was outer): starts grv_z0 above the
     grv_d    = 2.0,     # flat bottom, straight ledge for grv_h, then a
@@ -221,28 +226,46 @@ def tooth_profile(cf):
 
 
 def band_poly(cf, na=160):
-    p  = [face_pt(-cf.half, cf.Ri, 0.0)]
-    p += arc(cf.Ro, -cf.half, cf.half, na)
-    p += [face_pt(cf.half, cf.Ri, 0.0)]
-    p += arc(cf.Ri, cf.half, -cf.half, na)[1:-1]
+    # the sector faces back off 1e-5 rad (~2.7 um) from the exact joint
+    # plane: assembled neighbours BUTT here, and numerically coincident
+    # faces read as ~1e-6 mm3 of phantom interference in the assembly
+    # gates (same convention as the tooth sector clip)
+    h = cf.half - 1e-5
+    p  = [face_pt(-h, cf.Ri, 0.0)]
+    p += arc(cf.Ro, -h, h, na)
+    p += [face_pt(h, cf.Ri, 0.0)]
+    p += arc(cf.Ri, h, -h, na)[1:-1]
     return p
 
 
 def slab_poly(cf, na=160):
-    """Band + male dovetail; socket subtracted later. 'bevel45': inner
-    boundary is plain Ri (g_fi); the generated teeth union on outside.
-    'spur': boundary at the root circle, gear_teeth unions inward."""
-    dtn, dtt, dtd = cf.dt_neck / 2, cf.dt_tip / 2, cf.dt_depth
+    """Band WITHOUT the male dovetail (tail_poly carries it at its own
+    dt_h height; socket subtracted later). 'bevel45': inner boundary is
+    plain Ri (g_fi); the generated teeth union on outside. 'spur':
+    boundary at the root circle, gear_teeth unions inward."""
     ri = cf.g_fi
-    p  = [face_pt(-cf.half, ri, 0.0), face_pt(-cf.half, cf.Ro, 0.0)]
-    p += arc(cf.Ro, -cf.half, cf.half, na)[1:]
-    p += [face_pt(cf.half, cf.rho_c + dtn, 0.0),
-          face_pt(cf.half, cf.rho_c + dtt, dtd),
-          face_pt(cf.half, cf.rho_c - dtt, dtd),
-          face_pt(cf.half, cf.rho_c - dtn, 0.0),
-          face_pt(cf.half, ri, 0.0)]
-    p += arc(ri, cf.half, -cf.half, na)[1:-1]
+    h = cf.half - 1e-5          # joint-face setback, see band_poly
+    p  = [face_pt(-h, ri, 0.0), face_pt(-h, cf.Ro, 0.0)]
+    p += arc(cf.Ro, -h, h, na)[1:]
+    p += [face_pt(h, ri, 0.0)]
+    p += arc(ri, h, -h, na)[1:-1]
     return p
+
+
+def tail_poly(cf):
+    """The male dovetail's plan profile, rooted 2 mm inside the joint face
+    so the union with the slab is overlapped, never coplanar. Extruded
+    dt_h tall by build_segment — the tail is built at height, not cut
+    down from a full-height slab (cut-on-the-joint-plane left coincident
+    faces that read as ~1e-6 assembled interference, and the backed-off
+    variant shed a um sliver strip that broke the STEP round-trip)."""
+    dtn, dtt, dtd = cf.dt_neck / 2, cf.dt_tip / 2, cf.dt_depth
+    return [face_pt(cf.half, cf.rho_c + dtn, -2.0),
+            face_pt(cf.half, cf.rho_c + dtn, 0.0),
+            face_pt(cf.half, cf.rho_c + dtt, dtd),
+            face_pt(cf.half, cf.rho_c - dtt, dtd),
+            face_pt(cf.half, cf.rho_c - dtn, 0.0),
+            face_pt(cf.half, cf.rho_c - dtn, -2.0)]
 
 
 def gear_teeth(cf, z0=0.0):
@@ -477,18 +500,10 @@ def build_segment(cf):
     # 1-2. band, trimmed by its own wafer's land plane:  z <= y*tan(th) - landOff
     seg = prism(band_poly(cf), cf.z_bot, cf.tall)
     seg = seg.trim_by_plane([0.0, tn, -1.0], cf.landOff)
-    # 3. bottom slab (band + male dovetail); gear per gear_drive
+    # 3. bottom slab; the male dovetail unions on at ITS OWN dt_h height
+    #    (see tail_poly for why it is built, not cut down)
     seg = seg + prism(slab_poly(cf), cf.z_bot, cf.tmin)
-    # trim the male dovetail to dt_h: only the tail crosses the +half
-    # face plane (the sector clip keeps the teeth 1e-5 rad inside); the
-    # cutter overshoots the tail depth ~4x.
-    if cf.dt_h < cf.tmin:
-        dx, dy = math.cos(cf.half), math.sin(cf.half)
-        nx, ny = -math.sin(cf.half), math.cos(cf.half)
-        wedge = [(0.0, 0.0), (500 * dx, 500 * dy),
-                 (500 * dx + 30 * nx, 500 * dy + 30 * ny), (30 * nx, 30 * ny)]
-        seg = seg - prism(wedge, cf.z_bot + cf.dt_h,
-                          cf.tmin - cf.dt_h + 0.5)
+    seg = seg + prism(tail_poly(cf), cf.z_bot, cf.dt_h)
     if cf.g_bev:
         t = gear_teeth_bevel45(cf, cf.z_bot)
         # the tooth SPACES must stay open below the band OD (flush root
@@ -741,6 +756,7 @@ def main():
     profiles = [
         ('01_band.dxf',      [band_poly(cf)],                        'extrude tall, trim to the land plane'),
         ('02_slab.dxf',      [slab_poly(cf)],                        f'extrude {cf.tmin} mm up from the flat bottom'),
+        ('02b_tail.dxf',     [tail_poly(cf)],                        f'extrude {cf.dt_h} mm up from the flat bottom (male dovetail)'),
         ('03_socket.dxf',    [socket_poly(cf)],                      f'cut {cf.dt_h + 0.5} mm from the flat bottom'),
         ('04_pocket.dxf',    [pocket_poly(cf)],                      f'cut {cf.pocket_d} mm down from the land plane'),
     ]

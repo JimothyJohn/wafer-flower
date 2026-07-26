@@ -11,7 +11,7 @@ const SI ={rho:2.329e-3, E:130000, cte:2.6e-6};   // g/mm3, MPa, /K
 const PET={rho:1.270e-3, E:2000, allow:20, cte:60e-6};
 const CLR=3;                           // neighbor clearance, mm
 const DT_W=16, DT_H=5, PLATE=0.922;    // dovetail wide width / height (dt_h); plate stiffening (1-nu^2)
-const HOLE_D=6.5, GEAR_M=5.6, GEAR_SP=0, GEAR_F=4.5; // M6 keyhole bore; module; spiral angle (0 = straight); ring band face height (4.86 ceiling: the band must clear the neighbour wafer plane - 3)
+const HOLE_D=6.5, GEAR_M=5.6, GEAR_SP=0, GEAR_F=9.5; // M6 keyhole bore; module; spiral angle (0 = straight); ring band face height (9.83 ceiling at tmin=15: the band must clear the neighbour wafer plane - 3)
 
 // BEVELOID gear (2026-07-25, generated, parallel axes): the teeth live on
 // a 45-deg cone — big end at the WALL, working face toward the viewer —
@@ -72,8 +72,8 @@ canvas.addEventListener('wheel',e=>{e.preventDefault();autoDist=false;dist=Math.
 
 // boots at the SHIPPED Rev B.3 parameters, so the first render is the real
 // CAD (below); the old traveler values are one slider-drag away
-const P={D:300,wt:0.775,N:9,tilt:5,R:350,Ri:255,bw:30,tmin:10,bond:1.1,G:0.06,dT:20,dens:45};
-const B3={D:300,wt:0.775,N:9,tilt:5,R:350,Ri:255,bw:30,tmin:10,bond:1.1};
+const P={D:300,wt:0.775,N:9,tilt:5,R:350,Ri:255,bw:30,tmin:15,bond:1.1,G:0.06,dT:20,dens:45};
+const B3={D:300,wt:0.775,N:9,tilt:5,R:350,Ri:255,bw:30,tmin:15,bond:1.1};
 const atB3=()=>Object.keys(B3).every(k=>Math.abs(P[k]-B3[k])<1e-9);
 const WR=()=>P.D/2, SEG=()=>2*Math.PI/P.N, HALF=()=>Math.PI/P.N;
 
@@ -692,7 +692,7 @@ document.getElementById('b_hide').addEventListener('click',()=>{fitHide();rescal
 document.getElementById('b_bal').addEventListener('click',()=>{fitBalanced();rescaleRanges();sync();buildScene();});
 // The shipped Rev B.3 parameter set (scripts/segment_stl.py defaults).
 document.getElementById('b_b3').addEventListener('click',()=>{
-  P.D=300; P.wt=0.775; P.N=9; P.tilt=5; P.R=350; P.Ri=255; P.bw=30; P.tmin=10; P.bond=1.1;
+  P.D=300; P.wt=0.775; P.N=9; P.tilt=5; P.R=350; P.Ri=255; P.bw=30; P.tmin=15; P.bond=1.1;
   document.querySelectorAll('button.pz[data-d]').forEach(x=>x.classList.toggle('act',x.dataset.d==='300'));
   rescaleRanges(); sync(); buildScene();
 });

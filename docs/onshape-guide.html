@@ -199,7 +199,7 @@ footer a{color:var(--os-green)}
       <span class="badge">108T ring · 12T pinion · 9:1</span>
       <span class="badge">straight or spiral</span>
       <span class="badge">flush module 5.384</span>
-      <span class="badge">C = 325.53 mm</span>
+      <span class="badge">C = 328.31 mm</span>
     </div>
   </div>
   <div class="notaffil"><div class="wrap">Independent project documentation for the Wafer Halo repo, styled in the spirit of the tool it targets. Not affiliated with, sponsored, or endorsed by PTC / Onshape. "Onshape" is a trademark of PTC Inc.</div></div>
@@ -237,7 +237,7 @@ footer a{color:var(--os-green)}
       <tr><td>Cone direction</td><td>big end at the <b>wall</b> (z = 0)</td><td class="n">big end at the <b>front</b> (z = face)</td></tr>
       <tr><td>Teeth @ B.3</td><td class="n">108 (12 per segment)</td><td class="n">12 — ratio 9:1, counter-rotating</td></tr>
       <tr><td>Module</td><td class="n" colspan="2">5.6 nominal → 5.384 effective (flush retune, shared)</td></tr>
-      <tr><td>Front radii</td><td class="n">root 284.0 · pitch 290.7 · tip 296.1</td><td class="n">pitch 32.55 mid-face (s_prof 1.0077)</td></tr>
+      <tr><td>Front radii</td><td class="n">root 284.0 · pitch 290.7 · tip 296.1</td><td class="n">pitch 32.83 mid-face (s_prof 1.0163)</td></tr>
       <tr><td>Phase</td><td>every segment joint lands mid-space</td><td class="n">tooth points at the ring at build</td></tr>
     </table>
   </div>
@@ -255,7 +255,7 @@ footer a{color:var(--os-green)}
         <tr><td>Band inner radius (Ri)</td><td>255 mm</td></tr>
         <tr><td>Band width (bw)</td><td>30 mm</td></tr>
         <tr><td>Nominal module</td><td>5.6 mm</td></tr>
-        <tr><td>Face height (gear_F)</td><td>4.5 mm &nbsp;<span style="color:var(--dim)">— ceiling ≈ 4.83, see step 06</span></td></tr>
+        <tr><td>Face height (gear_F)</td><td>9.5 mm &nbsp;<span style="color:var(--dim)">— ceiling ≈ 9.83, see step 06</span></td></tr>
         <tr><td>Pressure angle</td><td>20°</td></tr>
         <tr><td>Spiral angle</td><td>0° &nbsp;<span style="color:var(--dim)">(straight)</span></td></tr>
         <tr><td>Full ring (all N sectors)</td><td>☐</td></tr>
@@ -288,7 +288,7 @@ footer a{color:var(--os-green)}
       </table>
       <div class="dlg-foot"><span class="btn">Cancel</span><span class="btn ok">✓ OK</span></div>
     </div>
-    <p><b>Mating it.</b> The feature reports <code>C = 325.53 mm</code> at B.3. In an Assembly:</p>
+    <p><b>Mating it.</b> The feature reports <code>C = 328.31 mm</code> at B.3. In an Assembly:</p>
     <ol>
       <li>Insert ring and pinion. Add a <b>Revolute</b> mate on each about its own axis — both axes <b>parallel</b>, pointing out of the wall.</li>
       <li>Set the axis-to-axis distance to C, with the pinion at 12 o'clock and its <b>big end toward the viewer</b> (the ring's big end faces the wall — the cones complement).</li>
@@ -315,7 +315,7 @@ footer a{color:var(--os-green)}
     <p>Two halo-level constraints live outside the gear geometry. The features can't enforce them — the Python gates do, on every CI run:</p>
     <table class="data">
       <tr><th>Constraint</th><th>Value @ B.3</th><th>What breaks if violated</th></tr>
-      <tr><td><b>gear_F ceiling</b> — the band face must clear the neighbour wafer's clearance plane over the leading ~15–20° of the sector</td><td class="n">≤ ≈ 4.83 mm<br>(computed live by <code>gear_F_ceiling()</code>)</td><td>The mandatory clearance cut planes the leading teeth to partial height and sheds slivers at the disc rim — the exact regression the repo gates against.</td></tr>
+      <tr><td><b>gear_F ceiling</b> — the band face must clear the neighbour wafer's clearance plane over the leading ~15–20° of the sector</td><td class="n">≤ ≈ 9.83 mm (tmin=15)<br>(computed live by <code>gear_F_ceiling()</code>)</td><td>The mandatory clearance cut planes the leading teeth to partial height and sheds slivers at the disc rim — the exact regression the repo gates against.</td></tr>
       <tr><td><b>Tooth count ≡ 0 (mod N)</b> — enforced by construction here (teeth = tps × N)</td><td class="n">108 = 12 × 9</td><td>The pattern breaks at every segment joint; the ring stops tiling.</td></tr>
     </table>
     <p>If you explore a different face height or tilt in Onshape, run <code>python3 scripts/segment_stl.py --gear_F &lt;x&gt;</code> before printing — exit 0 with the <span class="mono">gate</span> line means the clearance cut removed zero tooth material.</p>
@@ -336,8 +336,8 @@ footer a{color:var(--os-green)}
       <li><b>Update path:</b> when the repo's gear parameters change, this page's crib numbers and the FS defaults are regenerated together — diff <code>scripts/onshape/wafer_halo_beveloid.fs</code>, paste the new version into the Feature Studio, commit, create <code>V2</code>, and re-point consumers when ready.</li>
     </ul>
     <div class="tip"><b>Crib sheet @ Rev B.3</b>
-    108T / 12T · flush module 5.384 (5.6 nominal) · face 4.5 mm · PA 20° · straight ·
-    front radii 284.0 / 290.7 / 296.1 · wall = front × 1.0155 · C = 325.53 mm ·
+    108T / 12T · flush module 5.384 (5.6 nominal) · face 9.5 mm · PA 20° · straight ·
+    front radii 284.0 / 290.7 / 296.1 · wall = front × 1.0327 · C = 328.31 mm ·
     hub Ø16 × 5 · bore Ø3.2 + 0.4 flat · backlash 0.6</div>
   </div>
 
