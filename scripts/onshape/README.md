@@ -51,7 +51,7 @@ neighbour wafer's clearance plane; the gate computes 9.83 mm at the deep-bevel b
 - Face 9.5 mm, cone 45°, straight (spiral 0°)
 - 12T pinion, mid-face scale s_prof ≈ 1.0077, ratio 9:1, counter-rotating
 - Centre distance **C = 328.3 mm**, pinion axis ∥ ring axis
-- Hub Ø16 × 5 mm on the wall side, bore Ø3.2 with 0.4 D-flat (N20 shaft)
+- Hub Ø16 × 5 mm on the wall side, bore Ø3.2 with 0.4 D-flat (Pololu #1596 3 mm D-shaft)
 
 `docs/onshape-variables.html` still carries the 46 copy-paste variable
 expressions for the rest of the segment; these features replace only the
