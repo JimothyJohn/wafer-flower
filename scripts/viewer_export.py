@@ -124,11 +124,12 @@ def sweep_checks(cf, scene, vecs):
     # wafer drop with the jig fully open
     jig_open = sum((moved(groups[g], vecs[g], 1.0) for g in groups),
                    Manifold())
+    fixed_open = seg + jig_open        # loop-invariant: hoisted out of the sweep
     worst = 0.0
     for i in range(SWEEP_STEPS):
         t = i / (SWEEP_STEPS - 1)
         w = moved(waf, vecs['wafer'], t)
-        worst = max(worst, (w ^ (seg + jig_open)).volume())
+        worst = max(worst, (w ^ fixed_open).volume())
     checks.append(('placement', f'wafer drop ({WAFER_LIFT:.0f} mm) vs segment '
                    f'+ open jig, {SWEEP_STEPS} steps', worst, worst < EPS))
     return checks

@@ -25,7 +25,7 @@ function gearSpec(){
   // at the wafer side, pinion above the ring on the wall bracket
   const Ro=P.Ri+P.bw;
   const target=Ro+1.25*GEAR_M+2;
-  const tps=Math.max(8,Math.ceil(2*target/GEAR_M/P.N)); // teeth per segment
+  const tps=Math.max(6,Math.ceil(2*target/GEAR_M/P.N)); // teeth per segment — floor MUST match Cfg's max(6,...) or the page draws a gear the generator never builds
   const T=tps*P.N;
   // FLUSH module: tooth count is quantised in steps of N, so the module is
   // retuned to land the FRONT root circle 1 mm inside the band OD — the

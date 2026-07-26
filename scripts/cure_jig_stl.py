@@ -67,15 +67,16 @@ from __future__ import annotations
 import math, os, sys, argparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from segment_stl import (PARAMS, Cfg, prism, build_segment, build_wafer,
-                         write_stl, report, keyhole_z, Manifold, HAVE_MANIFOLD)
+from segment_stl import (PARAMS, Cfg, prism, box, hex_poly, build_segment,
+                         build_wafer, write_stl, report, keyhole_z,
+                         Manifold, HAVE_MANIFOLD, M6_NUT_AF, M6_NUT_CLR)
 
 # ----------------------------------------------------------------------------
 JIG = dict(
     rod_D    = 6.0,    # M6x1.0 threaded rod; #10-24 (4.83) / M5 also fit, loose
     bore_clr = 0.5,    # rod bore = rod_D + bore_clr (= the segment's Ø6.5 keyhole)
-    nut_AF   = 10.0,   # M6 hex nut across flats (ISO 4032)
-    nut_clr  = 0.45,   # pocket oversize on the across-flats
+    nut_AF   = M6_NUT_AF,   # M6 hex nut across flats (shared spec)
+    nut_clr  = M6_NUT_CLR,  # pocket oversize on the across-flats
     nut_t    = 5.2,    # M6 hex nut thickness (ISO 4032)
     nut_deep = 9.0,    # hex pocket depth (nut is 5.2 thick; extra is rod room)
     slack    = 0.15,   # peg standoff per side from the nominal rim
@@ -104,6 +105,8 @@ class Jig:
         self.w2     = self.fence_w / 2.0
         self.x_in   = cf.R - cf.r              # nominal rim, inboard / outboard
         self.x_out  = cf.R + cf.r
+        self.x_back = self.x_out + 10.0        # outboard fence rear face
+        self.x_nut  = self.x_in - 28.0         # inboard fence back face
         az = math.radians(self.peg_az)
         # peg centres sit slack + peg radius outside the PROJECTED rim at
         # their own azimuth. The tilted wafer's plan rim is an ELLIPSE
@@ -137,11 +140,7 @@ class Jig:
             "bore roof rib would touch the wafer underside"
 
 
-# ---- solid helpers ----------------------------------------------------------
-def box(x0, x1, y0, y1, z0, z1):
-    return prism([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], z0, z1 - z0)
-
-
+# ---- solid helpers (box/hex_poly come from segment_stl) --------------------
 def vcyl(r, z0, h, cx=0.0, cy=0.0, fn=512):
     return Manifold.cylinder(h, r, r, fn).translate([cx, cy, z0])
 
@@ -162,11 +161,22 @@ def peg(j, px, py):
 
 
 def hex_pocket(j, x0):
-    R = j.nut_R   # vertex-up hexagon: flats vertical (nut can't spin), no bridge
-    pts = [(R * math.cos(math.radians(60 * i)), R * math.sin(math.radians(60 * i)))
-           for i in range(6)]
-    return (prism(pts, 0.0, j.nut_deep + 0.5)
+    # phase 0 -> vertex up after the x-rotation: flats vertical (nut can't
+    # spin) and no flat bridge to print
+    return (prism(hex_poly(j.nut_AF, j.nut_clr, phase=0.0), 0.0, j.nut_deep + 0.5)
             .rotate([0.0, 90.0, 0.0]).translate([x0, 0.0, j.zc]))
+
+
+def peg_arms(j, pegs):
+    """Support arm + peg for each capture peg; arm half-width = the peg
+    diameter so the peg never overhangs its own support."""
+    f = None
+    for px, py in pegs:
+        sy = 1.0 if py > 0 else -1.0
+        a = box(px - j.peg_D, px + j.peg_D, sy * (j.w2 - 2.0),
+                py + sy * j.peg_D, j.cf.z_bot, j.arm_top) + peg(j, px, py)
+        f = a if f is None else f + a
+    return f
 
 
 # ---- the two fences ---------------------------------------------------------
@@ -182,16 +192,12 @@ def build_outboard(j):
     cf = j.cf
     tip_max = cf.g_tip * (cf.g_pitch + cf.gear_F) / cf.g_pitch  # big end (wall)
     xf = tip_max + 4.0                      # feet start beyond the tooth tips
-    x1 = j.x_out + 10.0
+    x1 = j.x_back
     deck_lo, deck_hi = cf.z1 + 0.8, -3.5    # over the teeth, under the wafer
     f  = box(cf.Ro, x1, -j.w2, j.w2, deck_lo, deck_hi)                      # deck
     f += box(xf, xf + 16.0, -j.w2, j.w2, cf.z_bot, deck_lo + 1.0)           # front foot
     f += box(j.x_out - 30.0, x1, -j.w2, j.w2, cf.z_bot, j.under_top)        # rear block
-    for px, py in j.pegs_out:
-        sy = 1.0 if py > 0 else -1.0
-        f += box(px - 8.0, px + 8.0, sy * (j.w2 - 2.0), py + sy * 8.0,
-                 cf.z_bot, j.arm_top)                                       # peg arm
-        f += peg(j, px, py)
+    f += peg_arms(j, j.pegs_out)
     # nose finger: butts the outer arc face above the tooth band. +0.05
     # standoff so the different chord phases of this 512-gon and the
     # segment's 160-point arc don't overlap.
@@ -209,14 +215,10 @@ def build_inboard(j):
     (r246) by ~30."""
     cf = j.cf
     x1 = j.x_in + 2.0
-    x0 = j.x_in - 28.0                                                      # back face
+    x0 = j.x_nut                                                            # back face
     f  = box(x0, x1, -j.w2, j.w2, cf.z_bot, j.under_top)                    # base
     f += box(x0, x0 + 18.0, -j.w2, j.w2, cf.z_bot, j.wall_top)              # nut tower
-    for px, py in j.pegs_in:
-        sy = 1.0 if py > 0 else -1.0
-        f += box(px - 8.0, px + 8.0, sy * (j.w2 - 2.0), py + sy * 8.0,
-                 cf.z_bot, j.arm_top)                                       # peg arm
-        f += peg(j, px, py)
+    f += peg_arms(j, j.pegs_in)
     # datum prong: butts the band inner face (r=Ri) between gear flange and
     # land. The rod bore breaks 0.6 mm out of its underside over the last
     # stretch (prong floor is capped by the flange top) — an open guide
@@ -238,13 +240,11 @@ def build_hardware(j):
     the M6x1 tap drill (5.0), so their overlap with the rod is real thread
     engagement and is deliberately not an interference check."""
     cf = j.cf
-    back  = j.x_out + 10.0                    # outboard fence rear face
-    floor = (j.x_in - 28.0) + j.nut_deep      # hex pocket floor
+    back  = j.x_back                          # outboard fence rear face
+    floor = j.x_nut + j.nut_deep              # hex pocket floor
     rod0, rod1 = floor - j.nut_t - 0.4, back + 1.6 + 12.0
     rod = xcyl(j.rod_D / 2, rod0, rod1, j.zc)
-    R = j.nut_AF / math.sqrt(3.0)             # actual nut, no clearance
-    hx = [(R * math.cos(math.radians(60 * i)), R * math.sin(math.radians(60 * i)))
-          for i in range(6)]
+    hx = hex_poly(j.nut_AF, 0.0, phase=0.0)   # actual nut, no clearance
     nut = (prism(hx, 0.0, j.nut_t).rotate([0.0, 90.0, 0.0])
            .translate([floor - j.nut_t, 0.0, j.zc]))
     nut -= xcyl(2.5, floor - j.nut_t - 1.0, floor + 1.0, j.zc)
@@ -267,9 +267,7 @@ def build_knob(j):
     where a wing nut's ~15 would strike."""
     pts = [(10.0 * math.cos(math.radians(30 * i + 15)),
             10.0 * math.sin(math.radians(30 * i + 15))) for i in range(12)]
-    R = j.nut_R
-    hx = [(R * math.cos(math.radians(60 * i)), R * math.sin(math.radians(60 * i)))
-          for i in range(6)]
+    hx = hex_poly(j.nut_AF, j.nut_clr, phase=0.0)
     k = prism(pts, 0.0, 16.0)
     k -= prism(hx, -0.5, 8.5)
     k -= Manifold.cylinder(20.0, j.bore_r, j.bore_r, 96).translate([0, 0, -2.0])
