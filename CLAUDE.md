@@ -439,6 +439,19 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   and viewer_export.py --verify on every PR (gearmotor_stl dropped when it
   was parked, 2026-07-24). STEP + manual are committed artifacts, not
   CI-gated.
+- scripts/onshape/wafer_halo_beveloid.fs — OnShape FeatureScript port
+  (2026-07-25, Nick's ask, modelled on Anthony Lu's "Gear Lab" FS): two
+  custom features, "Halo Beveloid Band" (the 40° external tooth-band
+  sector — flush module, big-at-wall cone, joints mid-space, straight or
+  spiral) and "Halo Beveloid Pinion" (parallel-axis mate, hub + N20
+  D-bore, reports C). ANALYTIC lofted involutes, not the Python swept
+  envelope — mid-face identical, hundredths off at the faces; the Python
+  gates stay the authority for printed parts. The spec math is
+  parity-tested against Cfg/bevel_geom to 1e-9 (all 11 quantities).
+  scripts/onshape/README.md has the crib sheet + why Gear Lab's
+  intersecting-axis bevels can't make this pair. UNTESTED inside OnShape
+  itself (no FS runtime here) — expect minor std-API touch-ups on first
+  paste.
 - scripts/*.py — halo_gen.py, v3_dxf_gen.py (parametric; edit constants).
 - NOTE: cad/ and tools/ do not exist in this repo. Everything else is
   tracked: README.md, docs/, scripts/, stl/, CLAUDE.md, V3_NOTES.md,
