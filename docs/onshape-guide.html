@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wafer Halo × Onshape — Beveloid Drive Workflow Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,500..900&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0d1f17;          /* near-black green-cast */
+  --paper:#f4f6f3;        /* warm paper */
+  --panel:#ffffff;
+  --os-green:#0dbf6e;     /* Onshape-family green accent */
+  --os-deep:#067a45;
+  --os-dark:#0a2e1e;
+  --line:#d8ded9;
+  --dim:#5c6b62;
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Archivo',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font:16px/1.65 var(--disp);
+  font-variation-settings:'wdth' 100;
+  color:var(--ink);
+  background:
+    linear-gradient(rgba(13,191,110,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13,191,110,0.035) 1px, transparent 1px),
+    var(--paper);
+  background-size:28px 28px, 28px 28px, auto;
+}
+.wrap{max-width:1060px;margin:0 auto;padding:0 28px}
+
+/* ---------- masthead ---------- */
+header{
+  background:var(--os-dark);
+  color:#e8f5ee;
+  position:relative;
+  overflow:hidden;
+}
+header::after{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(700px 340px at 85% 20%, rgba(13,191,110,.22), transparent 65%),
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size:auto, 28px 28px, 28px 28px;
+  pointer-events:none;
+}
+.mast{position:relative;z-index:1;padding:56px 0 46px}
+.crumb{font:600 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--os-green);margin-bottom:18px}
+.crumb a{color:inherit;text-decoration:none;border-bottom:1px dotted}
+h1{
+  font-family:var(--disp);
+  font-variation-settings:'wdth' 125;
+  font-weight:850;
+  font-size:clamp(34px,5.4vw,58px);
+  line-height:1.02;
+  letter-spacing:-0.015em;
+  max-width:15ch;
+}
+h1 em{font-style:normal;color:var(--os-green)}
+.sub{max-width:62ch;margin-top:18px;color:#b9cec2;font-size:17px}
+.badge-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.badge{
+  font:500 12.5px/1 var(--mono);
+  padding:8px 12px;border:1px solid rgba(13,191,110,.45);
+  border-radius:3px;color:#d9efe3;background:rgba(13,191,110,.08);
+}
+.notaffil{
+  position:relative;z-index:1;
+  border-top:1px solid rgba(255,255,255,.12);
+  padding:12px 0;font:400 12.5px/1.5 var(--mono);color:#8fa89a;
+}
+
+/* ---------- step rail layout ---------- */
+main{display:grid;grid-template-columns:64px 1fr;gap:0;margin:56px auto 0}
+.rail{position:relative}
+.rail::before{content:"";position:absolute;left:31px;top:0;bottom:0;width:2px;
+  background:repeating-linear-gradient(var(--os-green) 0 10px, transparent 10px 18px);opacity:.5}
+section.step{display:contents}
+.knob{
+  position:sticky;top:24px;align-self:start;
+  width:64px;height:64px;display:grid;place-items:center;
+  z-index:2;
+}
+.knob i{
+  font:800 15px/1 var(--mono);font-style:normal;
+  width:46px;height:46px;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--os-dark);color:var(--os-green);
+  border:2px solid var(--os-green);
+  box-shadow:0 0 0 6px var(--paper);
+}
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-left:3px solid var(--os-green);
+  margin:0 0 44px 8px;
+  padding:30px 34px 32px;
+  box-shadow:0 1px 2px rgba(13,31,23,.05), 0 14px 34px -22px rgba(13,31,23,.25);
+  animation:rise .5s ease both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.card:nth-of-type(odd){animation-delay:.05s}
+h2{
+  font-variation-settings:'wdth' 125;font-weight:800;
+  font-size:24px;letter-spacing:-.01em;margin-bottom:4px;
+}
+.kicker{font:600 11.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--os-deep);margin-bottom:10px}
+.card p{margin:12px 0;max-width:72ch}
+.card p+p{margin-top:10px}
+.card ol,.card ul{margin:12px 0 12px 22px;max-width:70ch}
+.card li{margin:7px 0}
+.card b{font-weight:650}
+code,.mono{font-family:var(--mono);font-size:.92em}
+code{background:#eef4ef;border:1px solid #dfe8e1;border-radius:3px;padding:1px 6px;white-space:nowrap}
+pre{
+  font:13.5px/1.6 var(--mono);
+  background:var(--os-dark);color:#cfe9db;
+  border-radius:6px;padding:18px 20px;margin:14px 0;
+  overflow-x:auto;
+}
+pre .g{color:var(--os-green)}
+pre .c{color:#6f8f7e}
+a{color:var(--os-deep)}
+
+/* ---------- mock feature dialog ---------- */
+.dlg{
+  border:1px solid var(--line);border-radius:8px;overflow:hidden;
+  margin:18px 0;max-width:560px;
+  box-shadow:0 10px 28px -18px rgba(13,31,23,.35);
+  background:var(--panel);
+}
+.dlg-head{
+  display:flex;align-items:center;gap:10px;
+  background:#eef3ef;
+  border-bottom:1px solid var(--line);
+  padding:10px 14px;font:650 14px/1 var(--disp);
+}
+.dlg-head .dot{width:10px;height:10px;border-radius:50%;background:var(--os-green)}
+.dlg table{width:100%;border-collapse:collapse;font-size:14px}
+.dlg td{padding:8px 14px;border-bottom:1px solid #f0f4f1;vertical-align:top}
+.dlg td:first-child{color:var(--dim);width:46%}
+.dlg td:last-child{font-family:var(--mono);font-size:13px}
+.dlg tr:last-child td{border-bottom:none}
+.dlg-foot{display:flex;gap:8px;justify-content:flex-end;padding:10px 14px;background:#f7faf8;border-top:1px solid var(--line)}
+.btn{font:600 12.5px/1 var(--disp);padding:8px 16px;border-radius:4px;border:1px solid var(--line);background:#fff}
+.btn.ok{background:var(--os-green);border-color:var(--os-green);color:#04301c}
+
+/* ---------- callouts + tables ---------- */
+.warn,.tip{
+  border-radius:6px;padding:14px 18px;margin:16px 0;font-size:14.5px;max-width:72ch;
+}
+.warn{background:#fff6ec;border:1px solid #f2ddc2;border-left:3px solid #e8a13d}
+.tip{background:#edf8f2;border:1px solid #cfe8da;border-left:3px solid var(--os-green)}
+.warn b,.tip b{display:block;font:700 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.warn b{color:#a86414}.tip b{color:var(--os-deep)}
+table.data{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+table.data th{
+  text-align:left;font:700 11.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);border-bottom:2px solid var(--os-green);padding:8px 10px;
+}
+table.data td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.data td.n{font-family:var(--mono);font-size:13px;white-space:nowrap}
+kbd{
+  font:600 12px/1 var(--mono);background:#fff;border:1px solid var(--line);
+  border-bottom-width:2px;border-radius:4px;padding:3px 7px;
+}
+
+/* ---------- footer ---------- */
+footer{
+  margin-top:30px;background:var(--os-dark);color:#8fa89a;
+  font:400 13px/1.7 var(--mono);
+}
+footer .wrap{padding:30px 28px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+footer a{color:var(--os-green)}
+@media (max-width:720px){
+  main{grid-template-columns:1fr}
+  .knob{display:none}
+  .card{margin-left:0}
+  .rail::before{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap mast">
+    <div class="crumb"><a href="index.html">WAFER&nbsp;HALO</a> / ONSHAPE WORKFLOW / BEVELOID DRIVE</div>
+    <h1>Cut the halo's gear <em>inside Onshape</em> — procedurally.</h1>
+    <p class="sub">A complete walkthrough of <code style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:#d9efe3">scripts/onshape/wafer_halo_beveloid.fs</code> —
+    two custom FeatureScript features, modelled on Anthony Lu's <b>Gear Lab</b>, that generate the segment-edge
+    beveloid band and its parallel-axis pinion natively in Onshape, with sliders instead of STL re-imports.</p>
+    <div class="badge-row">
+      <span class="badge">FeatureScript 1803</span>
+      <span class="badge">108T ring · 12T pinion · 9:1</span>
+      <span class="badge">straight or spiral</span>
+      <span class="badge">flush module 5.384</span>
+      <span class="badge">C = 325.53 mm</span>
+    </div>
+  </div>
+  <div class="notaffil"><div class="wrap">Independent project documentation for the Wafer Halo repo, styled in the spirit of the tool it targets. Not affiliated with, sponsored, or endorsed by PTC / Onshape. "Onshape" is a trademark of PTC Inc.</div></div>
+</header>
+
+<div class="wrap">
+<main>
+
+  <!-- STEP 1 -->
+  <div class="knob"><i>01</i></div>
+  <div class="card">
+    <div class="kicker">One-time setup</div>
+    <h2>Install the Feature Studio</h2>
+    <p>Custom features live in a <b>Feature Studio</b> — a code tab inside an Onshape document. You install once, version it, and every Part Studio in the document (or any document that links it) gets two new toolbar features.</p>
+    <ol>
+      <li>Open (or create) your Wafer Halo Onshape document.</li>
+      <li>Click the <kbd>+</kbd> at the bottom-left tab bar → <b>Create Feature Studio</b>. Name it <code>halo-beveloid</code>.</li>
+      <li>Delete the stub content and paste the entire contents of <a href="https://github.com/JimothyJohn/wafer-flower/blob/master/scripts/onshape/wafer_halo_beveloid.fs"><code>scripts/onshape/wafer_halo_beveloid.fs</code></a>.</li>
+      <li>Press <kbd>⌘S</kbd> / <kbd>Ctrl S</kbd> — the studio <b>commits</b> (compiles). Green check in the tab = good.</li>
+      <li>Open any Part Studio → toolbar → the puzzle-piece <b>Custom features</b> flyout → you'll see <b>Halo Beveloid Band</b> and <b>Halo Beveloid Pinion</b>.</li>
+    </ol>
+    <div class="warn"><b>First-commit expectations</b>
+    The geometry math in this file is parity-tested against the Python model to 1&nbsp;×&nbsp;10⁻⁹ (all 11 spec quantities), but the file has not been executed inside Onshape's runtime. If the studio flags a standard-library call on commit (sketch or loft API spelling), it's a mechanical fix — paste the error back into the repo session and it gets patched. The math is the load-bearing part.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="knob"><i>02</i></div>
+  <div class="card">
+    <div class="kicker">Concept</div>
+    <h2>What these features actually build</h2>
+    <p>The halo's drive is a <b>parallel-axis beveloid pair</b> — conical involute gears whose axes are parallel, not intersecting. The ring's teeth sit on a 45° cone with the <b>big end at the wall</b>; each mm of axial travel trades 1&nbsp;mm of ring radius for 1&nbsp;mm of pinion radius, so the centre-radius sum is constant across the face and the pinion's axis points straight out of the wall.</p>
+    <p>This is why <b>Gear Lab can't produce this pair</b>, as brilliant as it is: its bevel gears are spherical involutes for <i>intersecting</i> shafts. A 45° Gear Lab bevel wants its mate's axis to cross the ring's axis at the cone apex — and on the halo, a radial-axis pinion's swept disc spans its full Ø along the wall normal, straight through the drywall behind or the wafer field in front. Gear Lab also has no ring-sector output, no flush-root module retune, and no joint-phase convention. Use Gear Lab for spurs and intersecting-axis bevels; use these two features for the halo drive.</p>
+    <table class="data">
+      <tr><th>Property</th><th>Band (ring sector)</th><th>Pinion</th></tr>
+      <tr><td>Cone direction</td><td>big end at the <b>wall</b> (z = 0)</td><td class="n">big end at the <b>front</b> (z = face)</td></tr>
+      <tr><td>Teeth @ B.3</td><td class="n">108 (12 per segment)</td><td class="n">12 — ratio 9:1, counter-rotating</td></tr>
+      <tr><td>Module</td><td class="n" colspan="2">5.6 nominal → 5.384 effective (flush retune, shared)</td></tr>
+      <tr><td>Front radii</td><td class="n">root 284.0 · pitch 290.7 · tip 296.1</td><td class="n">pitch 32.55 mid-face (s_prof 1.0077)</td></tr>
+      <tr><td>Phase</td><td>every segment joint lands mid-space</td><td class="n">tooth points at the ring at build</td></tr>
+    </table>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="knob"><i>03</i></div>
+  <div class="card">
+    <div class="kicker">Feature 1</div>
+    <h2>Halo Beveloid Band — the segment's teeth</h2>
+    <p>Model your segment first (the <a href="onshape-variables.html">46 variable expressions</a> + DXF sketches drive everything except the gear). Then run the feature. It builds <b>at the origin</b> in the same frame the printed parts use: wall face on the XY plane, the 40° sector centred on +X, front face at z&nbsp;=&nbsp;face&nbsp;height.</p>
+    <div class="dlg">
+      <div class="dlg-head"><span class="dot"></span>Halo Beveloid Band</div>
+      <table>
+        <tr><td>Segments (N)</td><td>9</td></tr>
+        <tr><td>Band inner radius (Ri)</td><td>255 mm</td></tr>
+        <tr><td>Band width (bw)</td><td>30 mm</td></tr>
+        <tr><td>Nominal module</td><td>5.6 mm</td></tr>
+        <tr><td>Face height (gear_F)</td><td>4.5 mm &nbsp;<span style="color:var(--dim)">— ceiling ≈ 4.83, see step 06</span></td></tr>
+        <tr><td>Pressure angle</td><td>20°</td></tr>
+        <tr><td>Spiral angle</td><td>0° &nbsp;<span style="color:var(--dim)">(straight)</span></td></tr>
+        <tr><td>Full ring (all N sectors)</td><td>☐</td></tr>
+      </table>
+      <div class="dlg-foot"><span class="btn">Cancel</span><span class="btn ok">✓ OK</span></div>
+    </div>
+    <ol>
+      <li>Accept the defaults (they <i>are</i> the shipped Rev B.3 build) → <b>OK</b>. A notice reports the derived numbers — tooth count, flush module, tip radii, and the pinion centre distance C.</li>
+      <li>Position your segment so its flat bottom is on XY with the sector centred on +X (that's the repo's native frame — the DXF sketches import this way), or <b>Transform</b> the band solid to the segment.</li>
+      <li><b>Boolean → Union</b> the band into the segment body. The root circle lands 1 mm inside the band OD, so the union is watertight by construction — teeth rise straight off the band's outer wall, no gap, exactly like the printed part.</li>
+    </ol>
+    <div class="tip"><b>Design on the fly</b>
+    Everything re-derives when you drag a parameter. Change N and the sector angle, tooth count, and phase all follow; change the nominal module and the flush retune keeps the root on the band wall. Tick <b>Full ring</b> to generate all 108 teeth for an assembly-level check — spaces land mid-joint at every seam, so N sector instances tile seamlessly.</div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="knob"><i>04</i></div>
+  <div class="card">
+    <div class="kicker">Feature 2</div>
+    <h2>Halo Beveloid Pinion — the mate</h2>
+    <p>Same dialog family, plus drive-side hardware: a wall-side hub and a D-shaft bore sized for the N20 gearmotor's 3&nbsp;mm D-shaft.</p>
+    <div class="dlg">
+      <div class="dlg-head"><span class="dot"></span>Halo Beveloid Pinion</div>
+      <table>
+        <tr><td>Ring parameters (N, Ri, bw, module, face)</td><td>match the band exactly</td></tr>
+        <tr><td>Backlash</td><td>0.6 mm &nbsp;<span style="color:var(--dim)">— keep ≥ 0.4 for printed parts</span></td></tr>
+        <tr><td>Hub length</td><td>5 mm (Ø16, wall side)</td></tr>
+        <tr><td>Bore diameter</td><td>3.2 mm</td></tr>
+        <tr><td>D-flat depth</td><td>0.4 mm</td></tr>
+      </table>
+      <div class="dlg-foot"><span class="btn">Cancel</span><span class="btn ok">✓ OK</span></div>
+    </div>
+    <p><b>Mating it.</b> The feature reports <code>C = 325.53 mm</code> at B.3. In an Assembly:</p>
+    <ol>
+      <li>Insert ring and pinion. Add a <b>Revolute</b> mate on each about its own axis — both axes <b>parallel</b>, pointing out of the wall.</li>
+      <li>Set the axis-to-axis distance to C, with the pinion at 12 o'clock and its <b>big end toward the viewer</b> (the ring's big end faces the wall — the cones complement).</li>
+      <li>Add a <b>Gear relation</b> between the two revolutes, ratio 9:1, <b>reverse direction</b> (external pair — they counter-rotate). Drag the ring: the pinion spins 9× the other way, exactly like the Drive view on the <a href="index.html">hub page</a>.</li>
+    </ol>
+    <div class="warn"><b>Mesh fidelity</b>
+    The Python model <i>generates</i> the ring as the swept envelope of its cutter (conjugate by construction; the repo's mesh gate measures 0.00000&nbsp;mm³ interference). These features loft <i>analytic</i> involute sections — identical at the mid-face, a few hundredths off toward the faces. Visually and kinematically indistinguishable in Onshape; for anything you print, the repo's <code>segment_stl.py</code> gates remain the authority.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="knob"><i>05</i></div>
+  <div class="card">
+    <div class="kicker">Options</div>
+    <h2>Spiral teeth, one slider</h2>
+    <p>Set <b>Spiral angle</b> on both features (same value, and it must match on both). The wall section rotates by <code>tan(spiral) · face / pitch_r</code> — the same twist the Python <code>twist-extrude</code> applies — so the flanks become ruled helicoids and the pair stays complementary.</p>
+    <p>The repo ships <b>0° (straight)</b> deliberately: at 0.3 rpm a spiral buys no smoothness, and its <code>~tan(sp)</code> axial thrust component would fight the idler-groove mount — the ring's only axial restraint. If you want the spiral <i>look</i>, 35° matches the old aesthetic; just know the groove takes the thrust.</p>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="knob"><i>06</i></div>
+  <div class="card">
+    <div class="kicker">Constraints that don't move</div>
+    <h2>The two numbers Onshape can't see</h2>
+    <p>Two halo-level constraints live outside the gear geometry. The features can't enforce them — the Python gates do, on every CI run:</p>
+    <table class="data">
+      <tr><th>Constraint</th><th>Value @ B.3</th><th>What breaks if violated</th></tr>
+      <tr><td><b>gear_F ceiling</b> — the band face must clear the neighbour wafer's clearance plane over the leading ~15–20° of the sector</td><td class="n">≤ ≈ 4.83 mm<br>(computed live by <code>gear_F_ceiling()</code>)</td><td>The mandatory clearance cut planes the leading teeth to partial height and sheds slivers at the disc rim — the exact regression the repo gates against.</td></tr>
+      <tr><td><b>Tooth count ≡ 0 (mod N)</b> — enforced by construction here (teeth = tps × N)</td><td class="n">108 = 12 × 9</td><td>The pattern breaks at every segment joint; the ring stops tiling.</td></tr>
+    </table>
+    <p>If you explore a different face height or tilt in Onshape, run <code>python3 scripts/segment_stl.py --gear_F &lt;x&gt;</code> before printing — exit 0 with the <span class="mono">gate</span> line means the clearance cut removed zero tooth material.</p>
+  </div>
+
+  <!-- STEP 7 -->
+  <div class="knob"><i>07</i></div>
+  <div class="card">
+    <div class="kicker">Working together</div>
+    <h2>Collaboration: versions, links, and the repo loop</h2>
+    <p>Onshape's collaboration model is what makes the custom-feature route worth it:</p>
+    <ul>
+      <li><b>Share the document</b> (Share → email or link). Edits are simultaneous and live — two people can have the same Part Studio open; feature regenerations propagate in real time. No files, no checkouts.</li>
+      <li><b>Version the Feature Studio before you lean on it.</b> Right panel → <b>Versions</b> → create <code>V1</code>. Custom features referenced from other documents bind to a <i>version</i>, so downstream models never shift under you when the studio changes.</li>
+      <li><b>Publish across documents:</b> in any other document, Custom features flyout → <b>Add custom feature</b> → pick your <code>halo-beveloid</code> document at version <code>V1</code>. Team members can use the features without ever seeing the code.</li>
+      <li><b>Branch to experiment:</b> Versions panel → branch a workspace (e.g. <code>spiral-35</code>), crank the spiral slider, compare, and <b>merge</b> back if it wins — Onshape's branching is real, like git for CAD.</li>
+      <li><b>The repo loop:</b> the git repo stays the source of truth for printed parts. Check your Onshape rebuild against the shipped solids by importing <code>stl/step/segment.stp</code> (view-only reference), or export your Part Studio STL into <code>stl/my_frame_segment.stl</code> — <code>viewer_export.py</code> carries it through to the <a href="viewer.html">web viewer</a> as a compare overlay (mis-orientation warns, never gates).</li>
+      <li><b>Update path:</b> when the repo's gear parameters change, this page's crib numbers and the FS defaults are regenerated together — diff <code>scripts/onshape/wafer_halo_beveloid.fs</code>, paste the new version into the Feature Studio, commit, create <code>V2</code>, and re-point consumers when ready.</li>
+    </ul>
+    <div class="tip"><b>Crib sheet @ Rev B.3</b>
+    108T / 12T · flush module 5.384 (5.6 nominal) · face 4.5 mm · PA 20° · straight ·
+    front radii 284.0 / 290.7 / 296.1 · wall = front × 1.0155 · C = 325.53 mm ·
+    hub Ø16 × 5 · bore Ø3.2 + 0.4 flat · backlash 0.6</div>
+  </div>
+
+</main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div>WAFER HALO · beveloid drive workflow<br>
+    sources: <a href="https://github.com/JimothyJohn/wafer-flower/tree/master/scripts/onshape">scripts/onshape/</a> · <a href="onshape-variables.html">variable expressions</a> · <a href="engineering.html">engineering</a></div>
+    <div style="text-align:right">Gear Lab by Anthony Lu — <a href="https://forum.onshape.com/discussion/18686">forum thread</a><br>
+    Independent guide. Not affiliated with PTC / Onshape.</div>
+  </div>
+</footer>
+
+</body>
+</html>
