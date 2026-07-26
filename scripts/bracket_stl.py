@@ -46,9 +46,10 @@ from __future__ import annotations
 import math, os, sys, argparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from segment_stl import (PARAMS, Cfg, prism, arc, build_ring, build_wafer,
-                         bevel_geom, bevel_pinion, write_stl, report,
-                         Manifold, HAVE_MANIFOLD)
+from segment_stl import (PARAMS, Cfg, prism, box, hex_poly, build_ring,
+                         build_wafer, bevel_geom, build_pinion, write_stl,
+                         report, Manifold, HAVE_MANIFOLD,
+                         M6_NUT_AF, M6_NUT_CLR)
 
 BRK = dict(
     wheel_az = 25.0,   # idler azimuth, deg either side of top-dead-centre
@@ -68,15 +69,7 @@ BRK = dict(
 )
 
 
-def box(x0, x1, y0, y1, z0, z1):
-    return prism([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], z0, z1 - z0)
-
-
-def vcyl(r, z0, h, cx=0.0, cy=0.0, fn=256):
-    return Manifold.cylinder(h, r, r, fn).translate([cx, cy, z0])
-
-
-def zcyl_at(r, h, cx, cy, z0, fn=128):
+def cyl(r, h, z0, cx=0.0, cy=0.0, fn=128):
     return Manifold.cylinder(h, r, r, fn).translate([cx, cy, z0])
 
 
@@ -94,11 +87,9 @@ class Brk:
             self.wheels.append((self.d_c * math.cos(a), self.d_c * math.sin(a)))
         # groove z (scene coords: ring wall face at z_bot)
         self.g0 = cf.z_bot + cf.grv_z0                  # groove floor z
-        self.g1 = self.g0 + cf.grv_h                    # ledge top
         # wheel body z-extent: from just off the ring back to under the
         # wafers' worst dip (clocking sweep checks it for real)
         self.w_lo = cf.z_bot + 0.3
-        self.w_hi = self.w_lo + self.wheel_w
         self.rib_lo = self.g0 + (cf.grv_h - self.rib_w) / 2.0
         # deck the wheels/motor mount on, and the wall plate behind it
         self.deck_z = cf.z_bot - 0.8                    # deck front face
@@ -108,19 +99,16 @@ class Brk:
         # behind the wall face (the deck gets a recess for it), N20 in an
         # axial pocket behind the recess floor
         bg = bevel_geom(cf)
-        self.bg = bg
         self.pin_C = bg['C']                            # pinion axis radius
-        self.hub_len = 5.0
-        self.recess_z = cf.z_bot - self.hub_len - 0.5   # recess floor
+        self.recess_z = cf.z_bot - bg['hub_len'] - 0.5  # hub recess floor
 
 
 def build_wheel(b):
     """Idler wheel, local frame (axis +z, wall side at z=0): body cylinder
     with the groove rib, axle bore through. Print flat, no supports."""
-    w = vcyl(b.wheel_R, 0.0, b.wheel_w, fn=128)
-    rib_z0 = b.rib_lo - b.w_lo
-    w += vcyl(b.wheel_R + b.rib_h, rib_z0, b.rib_w, fn=128)
-    w -= vcyl(b.axle_D / 2.0, -1.0, b.wheel_w + 2.0, fn=64)
+    w = cyl(b.wheel_R, b.wheel_w, 0.0)
+    w += cyl(b.wheel_R + b.rib_h, b.rib_w, b.rib_lo - b.w_lo)
+    w -= cyl(b.axle_D / 2.0, b.wheel_w + 2.0, -1.0, fn=64)
     return w
 
 
@@ -141,26 +129,25 @@ def build_plate(b):
                 b.wall_z + b.back_t, b.deck_z - sh)  # hollow the standoff
     # wheel axle bosses: deck-mounted, captive M6 nut pocket from behind
     for cx, cy in b.wheels:
-        body += zcyl_at(12.0, b.deck_z - b.wall_z, cx, cy, b.wall_z)
-        body -= zcyl_at(3.4, b.deck_z - b.wall_z + 2.0, cx, cy, b.wall_z - 1.0)
-        R = (10.0 + 0.45) / math.sqrt(3.0)           # M6 nut pocket
-        hx = [(R * math.cos(math.radians(60 * i + 30)),
-               R * math.sin(math.radians(60 * i + 30))) for i in range(6)]
-        body -= (prism(hx, 0.0, 6.0).translate([cx, cy, b.wall_z + 2.0]))
+        body += cyl(12.0, b.deck_z - b.wall_z, b.wall_z, cx, cy)
+        body -= cyl(b.axle_D / 2.0, b.deck_z - b.wall_z + 2.0,
+                    b.wall_z - 1.0, cx, cy)
+        body -= (prism(hex_poly(M6_NUT_AF, M6_NUT_CLR), 0.0, 6.0)
+                 .translate([cx, cy, b.wall_z + 2.0]))
     # motor boss + AXIAL pocket at (0, C): solid boss through the shell,
     # front recess for the pinion hub, N20 body pocket behind it (shaft
     # pointing forward, out of the wall)
-    body += zcyl_at(b.mot_D / 2.0 + 4.0, b.deck_z - b.wall_z, 0.0, b.pin_C,
-                    b.wall_z, fn=96)
-    body -= zcyl_at(10.5, b.deck_z - b.recess_z + 1.0, 0.0, b.pin_C,
-                    b.recess_z, fn=96)               # hub recess, open front
-    body -= zcyl_at(b.mot_D / 2.0 + 0.4, b.mot_L + 1.0, 0.0, b.pin_C,
-                    b.recess_z - b.mot_L - 1.0, fn=96)  # N20 body pocket
+    body += cyl(b.mot_D / 2.0 + 4.0, b.deck_z - b.wall_z, b.wall_z,
+                0.0, b.pin_C, fn=96)
+    body -= cyl(10.5, b.deck_z - b.recess_z + 1.0, b.recess_z,
+                0.0, b.pin_C, fn=96)                 # hub recess, open front
+    body -= cyl(b.mot_D / 2.0 + 0.4, b.mot_L + 1.0,
+                b.recess_z - b.mot_L - 1.0, 0.0, b.pin_C, fn=96)  # N20 pocket
     # wall keyholes in the back plate, slots running upward (gravity seats)
     for sx in (1.0, -1.0):
         kx = sx * b.key_gap / 2.0
-        body -= zcyl_at(b.key_D / 2.0, b.back_t + 2.0, kx, y1 - 26.0,
-                        b.wall_z - 1.0, fn=48)
+        body -= cyl(b.key_D / 2.0, b.back_t + 2.0, b.wall_z - 1.0,
+                    kx, y1 - 26.0, fn=48)
         body -= box(kx - b.key_d / 2.0, kx + b.key_d / 2.0,
                     y1 - 26.0, y1 - 12.0, b.wall_z - 1.0,
                     b.wall_z + b.back_t + 1.0)
@@ -170,13 +157,17 @@ def build_plate(b):
 def pinion_at_top(cf, b, backlash=None):
     """The running pinion (with hub + D-bore) in the hanging scene:
     bevel_geom's mesh frame (axis at (C,0), teeth z 0..gear_F off the wall
-    face) rotated to 12 o'clock. With 12 teeth the mesh-frame phase carries
-    straight over: a tooth points at the ring, the ring has a space at
-    azimuth 90 (spaces tile k*pitch from the joints and 110/3.333 is an
-    integer), so the nominal scene meshes without a phase shim."""
-    from segment_stl import build_pinion
+    face) rotated to 12 o'clock, with a computed phase shim so the pinion
+    meshes the ring space nearest 12 o'clock for ANY tooth count (spaces
+    tile k*pitch from the joints; the shim is 0 whenever teeth/4 is an
+    integer, as at B.3's 108T)."""
     pin, _ = build_pinion(cf, backlash=backlash)
-    return (pin.translate([b.pin_C, 0.0, cf.z_bot])
+    pitch = 360.0 / cf.teeth
+    eps = (90.0 + math.degrees(cf.half)) % pitch
+    if eps > pitch / 2.0:
+        eps -= pitch
+    return (pin.rotate([0.0, 0.0, eps * cf.teeth / cf.tps])
+               .translate([b.pin_C, 0.0, cf.z_bot])
                .rotate([0.0, 0.0, 90.0]))
 
 
@@ -204,9 +195,7 @@ def main():
     wafer_list = [build_wafer(cf, k) for k in range(cf.N)]
     wafers = sum(wafer_list[1:], wafer_list[0])
     ring = frame + wafers
-    hardware = plate + wheels[0] + wheels[1] + pin
-
-    W = 9 * (0.128 + 0.070) * 9.81  # N: ~70 g/segment sliced (beveloid drive)
+    W = cf.N * (0.128 + 0.070) * 9.81   # N: Si + ~70 g/segment PETG sliced
     print(f"Top idler bracket  ·  wheels Ø{2*b.wheel_R:.0f} at ±{b.wheel_az:.0f}° "
           f"from top, bodies on the bore at Ri={cf.Ri:.0f}, ribs in the groove")
     print(f"  hang    ring hangs on 2 wheels ({W:.1f} N est.); groove rib takes "
@@ -257,7 +246,8 @@ def main():
     bb = (plate + wheels[0] + wheels[1]).bounding_box()
     rmax = max(math.hypot(bb[0], bb[1]), math.hypot(bb[3], bb[4]),
                math.hypot(bb[0], bb[4]), math.hypot(bb[3], bb[1]))
-    good = rmax <= 410.0
+    HIDE_R_MAX = 410.0   # hide-window outer radius (~416 at B.3) − margin
+    good = rmax <= HIDE_R_MAX
     ok &= good
     print(f"    {'PASS' if good else 'FAIL':4}  {'hidden: max plan radius':58} {rmax:10.1f}")
     # EVERYTHING vs the drywall — plate, wheels AND the pinion. The first
