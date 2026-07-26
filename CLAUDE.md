@@ -322,8 +322,8 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   float, clocking sweep, hidden ≤ r410, nothing behind the wall — NOW
   INCLUDING THE PINION; the plate-only version let the old radial-axis
   pinion sail 39 mm through the drywall) — exits nonzero on FAIL.
-  Sliced: plate 525.1 g / 15h49 @45% (30% is fine — no real load
-  path), wheels 7.7 g / 19 min each, pinion 12.9 g.
+  Sliced: plate 532.5 g / 16h02 @45% (30% is fine — no real load
+  path), wheels 7.7 g / 19 min each, pinion 23.1 g (deep face).
 - scripts/cure_jig_stl.py — OP 012 cure jig (see Frame design). Imports
   segment_stl for params/geometry, emits cure_jig_{outboard,inboard,knob}.stl
   print-ready plus cure_jig_fitcheck.stl (segment+wafer+fences+drivetrain,

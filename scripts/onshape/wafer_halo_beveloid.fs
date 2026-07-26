@@ -45,8 +45,9 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
       Band inner radius -> Ri         (255 mm)
       Band width        -> bw         (30 mm)
       Nominal module    -> gear_m     (5.6 mm; retuned to flush, see below)
-      Face height       -> gear_F     (4.5 mm — must clear the neighbour
-                                       wafer plane; the repo gates ~4.83)
+      Face height       -> gear_F     (9.5 mm — must clear the neighbour
+                                       wafer plane; the repo gates 9.83 at
+                                       the deep-bevel base tmin=15)
       Spiral angle      -> gear_sp    (0 = straight)
       Pressure angle    -> gear_pa    (20 deg)
       Backlash          -> gear_bl    (0.6 mm, applied to the pinion)
@@ -193,7 +194,7 @@ export const haloBeveloidBand = defineFeature(function(context is Context, id is
         annotation { "Name" : "Nominal module" }
         isLength(definition.mNom, { (millimeter) : [1, 5.6, 12] } as LengthBoundSpec);
         annotation { "Name" : "Face height (gear_F)", "Description" : "Axial height of the tooth band. On the halo this must clear the neighbour wafer's clearance plane (~4.8 mm at the shipped build) — the Python gate is the authority." }
-        isLength(definition.faceH, { (millimeter) : [2, 4.5, 12] } as LengthBoundSpec);
+        isLength(definition.faceH, { (millimeter) : [2, 9.5, 14] } as LengthBoundSpec);
         annotation { "Name" : "Pressure angle" }
         isAngle(definition.pa, { (degree) : [14, 20, 28] } as AngleBoundSpec);
         annotation { "Name" : "Spiral angle", "Description" : "0 = straight. The wall section is rotated by tan(spiral)*face/pitchR — matches the Python twist-extrude." }
@@ -277,7 +278,7 @@ export const haloBeveloidPinion = defineFeature(function(context is Context, id 
         annotation { "Name" : "Nominal module" }
         isLength(definition.mNom, { (millimeter) : [1, 5.6, 12] } as LengthBoundSpec);
         annotation { "Name" : "Face height (gear_F)" }
-        isLength(definition.faceH, { (millimeter) : [2, 4.5, 12] } as LengthBoundSpec);
+        isLength(definition.faceH, { (millimeter) : [2, 9.5, 14] } as LengthBoundSpec);
         annotation { "Name" : "Pressure angle" }
         isAngle(definition.pa, { (degree) : [14, 20, 28] } as AngleBoundSpec);
         annotation { "Name" : "Spiral angle" }
