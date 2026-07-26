@@ -63,8 +63,12 @@ BRK = dict(
     key_gap  = 120.0,  # wall keyhole spacing, tangential
     key_d    = 5.5,    # keyhole slot width (#10 / M5 pan shank)
     key_D    = 11.0,   # keyhole entry (pan head passes)
-    mot_D    = 12.5,   # N20 gearmotor body Ø (MEASURE the purchased unit)
-    mot_L    = 26.0,   # N20 body length, gearbox included
+    mot_w    = 10.0,   # Pololu micro metal gearmotor body (#1596 1000:1
+    mot_h    = 12.0,   # LP 6V, 13 rpm): 10 x 12 mm RECTANGULAR cross
+    mot_L    = 26.0,   # section x ~26 long incl. gearbox — a round pocket
+                       # can't hold it (15.6 mm diagonal). 3 mm D-shaft,
+                       # 9 mm long; the pinion's 3.2 bore + 0.4 flat fits.
+    mot_clr  = 0.4,    # pocket clearance per side
     shaft_D  = 3.2,    # output shaft clearance bore
 )
 
@@ -137,12 +141,16 @@ def build_plate(b):
     # motor boss + AXIAL pocket at (0, C): solid boss through the shell,
     # front recess for the pinion hub, N20 body pocket behind it (shaft
     # pointing forward, out of the wall)
-    body += cyl(b.mot_D / 2.0 + 4.0, b.deck_z - b.wall_z, b.wall_z,
-                0.0, b.pin_C, fn=96)
+    boss_r = math.hypot(b.mot_w, b.mot_h) / 2.0 + 4.0
+    body += cyl(boss_r, b.deck_z - b.wall_z, b.wall_z, 0.0, b.pin_C, fn=96)
     body -= cyl(10.5, b.deck_z - b.recess_z + 1.0, b.recess_z,
                 0.0, b.pin_C, fn=96)                 # hub recess, open front
-    body -= cyl(b.mot_D / 2.0 + 0.4, b.mot_L + 1.0,
-                b.recess_z - b.mot_L - 1.0, 0.0, b.pin_C, fn=96)  # N20 pocket
+    # RECTANGULAR motor pocket (10x12 body flat against the shaft plane;
+    # the wide face parallel to the wall)
+    w2 = b.mot_w / 2.0 + b.mot_clr
+    h2 = b.mot_h / 2.0 + b.mot_clr
+    body -= box(-h2, h2, b.pin_C - w2, b.pin_C + w2,
+                b.recess_z - b.mot_L - 1.0, b.recess_z + 0.5)
     # wall keyholes in the back plate, slots running upward (gravity seats)
     for sx in (1.0, -1.0):
         kx = sx * b.key_gap / 2.0
@@ -204,7 +212,8 @@ def main():
           f"— motor points out of the wall, body + hub inside the "
           f"plate_t = {b.plate_t:.0f} standoff")
     print(f"  wall    back plate at z = {b.wall_z:.1f}; 2 keyholes {b.key_gap:.0f} "
-          f"apart; motor pocket Ø{b.mot_D + 0.8:.1f} (MEASURE your N20)\n")
+          f"apart; motor pocket {b.mot_w + 2*b.mot_clr:.1f} x "
+          f"{b.mot_h + 2*b.mot_clr:.1f} rect (Pololu #1596 micro metal)\n")
 
     EPS = 1e-6
     mv = lambda s_, v: s_.translate(list(v))

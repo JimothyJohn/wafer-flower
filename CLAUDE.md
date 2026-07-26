@@ -321,11 +321,16 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 - scripts/bracket_stl.py — TOP IDLER BRACKET (2026-07-25 rewrite, was two
   saddles): ONE part bolts to the wall at 12 o'clock; two printed Ø48
   idler wheels (rib in the inner groove, spinning on printed M6 screws
-  into captive printed nuts) and the N20 worm gearmotor + 12T pinion all
+  into captive printed nuts) and the gearmotor + 12T pinion all
   mount on it. The ring HANGS on the wheels (±25° from top — the OP 015
   two-hang-point case; dovetail S_joint 213 mm³ at dt_h=5) and is driven purely rotationally from the top. The
   pinion (2026-07-25 rework) is a BEVELOID on an AXIAL axis at r=325.5 —
-  motor points out of the wall, N20 body + Ø16 pinion hub inside the
+  motor points out of the wall; MOTOR IS BOUGHT (2026-07-26): Pololu
+  #1596 micro metal 1000:1 LP 6V, 13 rpm/40 mA, 5.5 kg·cm stall, 10×12
+  RECTANGULAR body ×26 (round pockets cannot hold it — 15.6 diagonal),
+  3 mm D-shaft ×9 (pinion bore 3.2 + 0.4 flat fits). Nick runs it at 5 V
+  USB (~10.8 rpm shaft → ~1.2 rpm ring); target 1.0 rpm ring via PWM.
+  Body + Ø16 pinion hub inside the
   plate_t=76 standoff (2026-07-25, Nick: doubled from 38 for motor room;
   axial motor pocket behind a Ø21 deck recess). 9
   self-checks vs the full ring + wafers (seat, rib jam both ways, axial
