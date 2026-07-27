@@ -49,7 +49,8 @@ BRK = dict(
                        # TEETH plan swing (r<=305.8) below the groove.
     axle_D   = 6.8,    # wheel bore: spins on a printed M6 screw shank
     arc_span = 60.0,   # static saddle arc, deg of groove it cradles
-    wall_gap = 18.0,   # ring wall face to drywall (pinion swings ~15 behind)
+    wall_gap = 6.0,    # ring wall face to drywall (the small pinion dips
+                       # only ~1.2 behind the wall face)
     back_t   = 6.0,    # wall plate thickness
     anchor_D = 5.0,    # drywall-anchor screw clearance (#8/#10 pan)
     anchor_gap = 50.0, # the two anchors sit this far apart, inline vertical

@@ -129,8 +129,9 @@ function geoCtx(){
   const yMax=Ro*Math.sin(H);
   // wafer standoff: the crossed pinion's big end bulges in front of the
   // wall face; the wafers move forward to clear it (segment_stl Cfg)
-  const Gz=gearSpec(), rhoZ=Gz.rp/10.8;
-  const bulge=GEAR_F+rhoZ+(Gz.tip*Gz.kb-(Gz.rp-rhoZ))*1.2;
+  const Gz=gearSpec(), rhoZ=12, faceP=10;
+  const apexZ=(Gz.tip*Gz.kb-faceP/2)-rhoZ;
+  const bulge=GEAR_F/2+rhoZ*1.2+(Gz.tip*Gz.kb-apexZ)*1.2;
   const gap0=yMax*Math.tan(th)+P.bond+P.tmin-(P.wt/2+P.D/2*Math.sin(th));
   const STAND=Math.max(0,bulge+3-gap0);
   const zBot=-(yMax*Math.tan(th)+P.bond+P.tmin+STAND);
@@ -246,7 +247,7 @@ function buildScene(){
       // B.5 crossed-drive geometry (mirrors segment_stl/bracket_stl):
       // pinion on a VERTICAL (radial) axis at 12 o'clock, ratio 10.8:1;
       // the ring rests on wheels riding the OUTER groove at the bottom
-      const G3=gearSpec(), RHO=G3.rp/10.8, ZAX=GEAR_F+RHO;
+      const G3=gearSpec(), RHO=12, ZAX=GEAR_F/2+RHO*1.2;
       const pinZ=zBot+ZAX;
       const WAZ=[245,295].map(a=>a*Math.PI/180), DC=(P.Ri+P.bw-2)+34;
       const foot=realMesh(view==='drive'?'bracket_bottom':'bracket_static');

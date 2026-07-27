@@ -11,7 +11,7 @@ toolbar under the custom-features flyout.
 | Feature | What it builds | How to use it |
 |---|---|---|
 | **Halo Beveloid Band** | One segment's 40° external tooth band: 45° cone big-at-wall, flush root at the band OD, joints mid-space. | Build at origin (wall face on XY, sector centred on +X), then boolean-union onto the segment body. `Full ring` gives all N sectors for assembly checks. |
-| **Halo Beveloid Pinion** | The parallel-axis mate: cone big-at-front, wall-side hub, N20 D-shaft bore. | Mate its axis **parallel** to the ring axis at the centre distance C the feature reports (328.3 mm at the shipped build), big end toward the viewer. |
+| **Halo Crossed Pinion** | The Rev B.5 drive pinion: 10T 45° cone (Ø17→Ø41 tips), apex toward the halo centre, hub + Pololu D-bore on the big end. | Mate its axis **radial** — vertical at 12 o'clock, motor above, shaft down — small end at the reported ring radius, axis ~19 mm in front of the ring's wall plane. Ratio 10.8:1 → 1.00 rpm at 5 V. |
 
 Both features default to the shipped Rev B.3 numbers (N=9, Ri=255, bw=30,
 module 5.6 nominal → 5.384 flush, face 9.5, PA 20°, straight teeth). Spiral
@@ -49,9 +49,11 @@ neighbour wafer's clearance plane; the gate computes 9.83 mm at the deep-bevel b
 - 108T ring (12/segment), flush module **5.384** (5.6 nominal)
 - Front radii: root 284.0, pitch 290.7, tip 296.1; wall = front × 1.0327
 - Face 9.5 mm, cone 45°, straight (spiral 0°)
-- 12T pinion, mid-face scale s_prof ≈ 1.0077, ratio 9:1, counter-rotating
-- Centre distance **C = 328.3 mm**, pinion axis ∥ ring axis
-- Hub Ø16 × 5 mm on the wall side, bore Ø3.2 with 0.4 D-flat (Pololu #1596 3 mm D-shaft)
+- 10T crossed pinion: pitch rho 12 (FREE — not the rolling value; conjugacy
+  is by generation), face 10, tips Ø17→Ø41, axis 19.1 mm off the wall plane
+- Ratio 108/10 = **10.8:1** — 13 rpm × 5/6 V ÷ 10.8 = **1.00 rpm** at the ring
+- Hub Ø16 × 6 mm on the big (motor) end, bore Ø3.2 with 0.4 D-flat
+  (Pololu #1596 3 mm D-shaft)
 
 `docs/onshape-variables.html` still carries the 46 copy-paste variable
 expressions for the rest of the segment; these features replace only the

@@ -20,19 +20,20 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
          the band OD, spaces phased so every segment joint lands mid-space.
          Union it onto your segment body.
 
-      2. Halo Beveloid Pinion — the complementary cone (big end at the
-         FRONT), full revolution, with a wall-side hub and a D-shaft bore
-         for an N20 gearmotor. Its axis is PARALLEL to the ring axis at
-         centre distance C (reported in a notice when the feature runs).
+      2. Halo Crossed Pinion — the Rev B.5 drive pinion: a 45-deg cone
+         (apex toward the halo centre) on a RADIAL axis — vertical at
+         12 o'clock, motor above it, shaft straight down. 10 teeth
+         against the 108T ring gives 10.8:1, which pairs the Pololu
+         #1596 at 5 V (13 x 5/6 = 10.83 no-load rpm) to 1.00 rpm at the
+         ring. Hub and D-bore on the big (top) end.
 
     Why not Gear Lab directly? Gear Lab's bevel gears are spherical
-    involutes for INTERSECTING shafts. This drive deliberately uses a
-    PARALLEL-AXIS beveloid pair (conical involute): the ring slice radius
-    falls 1 mm per mm of z while the pinion's rises, so the centre-radius
-    sum is constant across the face and the pinion axis can point straight
-    out of the wall. A radial-axis bevel pinion cannot fit this build — its
-    swept disc spans its full diameter along the wall normal, through
-    either the drywall behind or the wafer field in front.
+    involutes for INTERSECTING shafts sized for true rolling — and a
+    true-rolling 45/45 pair only exists at 1:1. The halo pair runs at
+    10.8:1 with the flanks GENERATED conjugate to the imposed motion in
+    the Python model (heavy sliding, mN.m loads — fine). These features
+    build the same envelopes analytically for CAD work; the generated
+    Python parts remain the authority for anything that prints.
 
     Construction here is ANALYTIC (lofted involute sections), where the
     Python model GENERATES the ring as the swept envelope of its cutter.
@@ -86,8 +87,17 @@ export function haloGearSpec(segN is number, ri is ValueWithUnits,
         "webIR" : ro - 2 * millimeter,         // web overlaps 2 mm into band
         "kb" : kb,
         "ringMid" : pitchR + faceH / 2,
-        "pinMid" : (pitchR + faceH / 2) * tps / teeth,
-        "C" : (pitchR + faceH / 2) * (1 + tps / teeth)  // centre distance
+        // crossed-drive pinion numbers (segment_stl Cfg, pin_T = 10,
+        // pin_rho = 12, pin_face = 10): rho is FREE, not the rolling
+        // value — conjugacy is by generation, so only the tooth count
+        // is forced, and small = the motor sits right at the mesh
+        "pinT" : 10,
+        "rho" : 12 * millimeter,
+        "face" : 10 * millimeter,
+        "x1" : (pitchR + m) * kb,
+        "x0" : (pitchR + m) * kb - 10 * millimeter,
+        "apex" : (pitchR + m) * kb - 5 * millimeter - 12 * millimeter,
+        "zax" : faceH / 2 + 12 * millimeter * 1.2
     };
 }
 
@@ -255,18 +265,19 @@ export const haloBeveloidBand = defineFeature(function(context is Context, id is
                    ~ "flush module " ~ roundToPrecision(spec.m / millimeter, 3)
                    ~ " mm, tips r" ~ roundToPrecision(spec.tipR * spec.kb / millimeter, 1)
                    ~ " (wall) -> r" ~ roundToPrecision(spec.tipR / millimeter, 1)
-                   ~ " (front). Pinion centre distance C = "
-                   ~ roundToPrecision(spec.C / millimeter, 2) ~ " mm.");
+                   ~ " (front). Crossed pinion: axis RADIAL, "
+                   ~ roundToPrecision(spec.zax / millimeter, 1)
+                   ~ " mm above the ring's wall plane.");
     });
 
 // ---------------------------------------------------------------------------
-// Feature 2: the complementary pinion (axis parallel, big end at the front)
+// Feature 2: the crossed-drive pinion (radial axis, apex down, hub on top)
 // ---------------------------------------------------------------------------
 annotation {
-    "Feature Type Name" : "Halo Beveloid Pinion",
-    "Feature Type Description" : "The parallel-axis mate of the Halo Beveloid Band: cone big-at-front, wall-side hub with an N20 D-shaft bore. Build at origin; mate its axis parallel to the ring axis at the reported centre distance C."
+    "Feature Type Name" : "Halo Crossed Pinion",
+    "Feature Type Description" : "The Rev B.5 drive pinion: 10T 45-deg cone, apex toward the halo centre, on a RADIAL axis (vertical at 12 o'clock, motor above, shaft down). Built about +Z (apex at z=0, big end + hub up); mate its axis radial with the small end at the reported ring radius and the axis the reported height off the ring's wall plane. Analytic involute sections — the Python-generated parts are the authority for printing."
 }
-export const haloBeveloidPinion = defineFeature(function(context is Context, id is Id, definition is map)
+export const haloCrossedPinion = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
         annotation { "Name" : "Segments (N)" }
@@ -295,38 +306,40 @@ export const haloBeveloidPinion = defineFeature(function(context is Context, id 
     {
         const spec = haloGearSpec(definition.segN, definition.ri, definition.bw,
                                   definition.mNom, definition.faceH);
-        // pinion profile: tps teeth at the shared module, scaled so its
-        // MID-face pitch complements the ring (bevel_geom.s_prof), then the
-        // cone: small at the wall (z=0), big at the front (z=faceH)
-        const rp0 = spec.tps * spec.m / 2;
-        const sProf = spec.pinMid / rp0;
+        // pinion profile: pinT teeth at the ring's module; each section
+        // along the axis is the profile scaled by (station - apex)/rp0 —
+        // the 45-deg cone (segment_stl.bevel_pinion). Local frame: apex
+        // toward z=0 (small end), big end + hub at the top.
+        // profile at the ring module; the section SCALE (station-apex)/rp0
+        // shrinks it to the small pinion — same trick as bevel_pinion
+        const rp0 = spec.pinT * spec.m / 2;
         var pSpec = {
-            "teeth" : spec.tps, "m" : spec.m * sProf,
-            "pitchR" : rp0 * sProf,
-            "tipR" : (rp0 + spec.m) * sProf,
-            "rootR" : (rp0 - 1.25 * spec.m) * sProf,
+            "teeth" : spec.pinT, "m" : spec.m,
+            "pitchR" : rp0,
+            "tipR" : rp0 + spec.m,
+            "rootR" : rp0 - 1.25 * spec.m,
             "pa" : definition.pa / degree
         };
-        var outline = toothArcPoints(pSpec, spec.tps, -PI, definition.backlash, 8);
-        const sLo = (spec.pinMid - definition.faceH / 2) / spec.pinMid;
-        const sHi = (spec.pinMid + definition.faceH / 2) / spec.pinMid;
-        const twist = tan(definition.spiral) * (definition.faceH / spec.pinMid);
-        const wall  = sketchClosedPoly(context, id, "wall",
+        const face = spec.x1 - spec.x0;
+        var outline = toothArcPoints(pSpec, spec.pinT, -PI, definition.backlash, 8);
+        const sLo = (spec.x0 - spec.apex) / rp0;
+        const sHi = (spec.x1 - spec.apex) / rp0;
+        const twist = tan(definition.spiral) * (face / spec.rho);
+        const small = sketchClosedPoly(context, id, "small",
                                        sectionOf(outline, sLo, 0), 0 * millimeter);
-        const front = sketchClosedPoly(context, id, "front",
-                                       sectionOf(outline, sHi, twist),
-                                       definition.faceH);
+        const bigE  = sketchClosedPoly(context, id, "bigE",
+                                       sectionOf(outline, sHi, twist), face);
         opLoft(context, id + "loft", {
-            "profileSubqueries" : [wall, front],
+            "profileSubqueries" : [small, bigE],
             "bodyType" : ToolBodyType.SOLID
         });
 
-        // wall-side hub
+        // motor-side hub on the BIG (top) end
         if (definition.hubLen > 0)
         {
             fCylinder(context, id + "hub", {
-                "topCenter" : vector(0, 0, 0.1) * millimeter,
-                "bottomCenter" : vector(0, 0, -definition.hubLen / millimeter) * millimeter,
+                "topCenter" : vector(0, 0, (face + definition.hubLen) / millimeter) * millimeter,
+                "bottomCenter" : vector(0, 0, face / millimeter - 0.1) * millimeter,
                 "radius" : 8 * millimeter
             });
             opBoolean(context, id + "hubU", {
@@ -367,9 +380,11 @@ export const haloBeveloidPinion = defineFeature(function(context is Context, id 
         }
 
         reportInfo(context, id,
-                   spec.tps ~ "T beveloid pinion, ratio " ~ definition.segN
-                   ~ ":1. Mount its axis PARALLEL to the ring axis at C = "
-                   ~ roundToPrecision(spec.C / millimeter, 2)
-                   ~ " mm, big end toward the viewer; the motor points out of"
-                   ~ " the wall.");
+                   spec.pinT ~ "T crossed pinion, ratio "
+                   ~ roundToPrecision(spec.teeth / spec.pinT, 1)
+                   ~ ":1 (1.00 rpm at 5 V). Mount its axis RADIAL — vertical"
+                   ~ " at 12 o'clock, shaft down — with the small end at ring"
+                   ~ " radius " ~ roundToPrecision(spec.x0 / millimeter, 1)
+                   ~ " and the axis " ~ roundToPrecision(spec.zax / millimeter, 1)
+                   ~ " mm in front of the ring's wall plane.");
     });

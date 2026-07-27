@@ -62,6 +62,14 @@ PARAMS = dict(
                         # pairs the Pololu #1596 at 5 V (13*5/6 = 10.83
                         # no-load rpm) to 1.00 rpm at the ring (2026-07-26,
                         # Nick: "pair it exactly with the rack count").
+    pin_rho  = 12.0,    # pinion mid-face pitch radius. FREE, not the
+                        # rolling value ring_pitch/ratio (26.9): conjugacy
+                        # is by generation under the imposed motion, so
+                        # only the COUNT is forced — the first crossed rev
+                        # used the rolling size and read "way out of
+                        # scale" (Nick). Small = motor right at the mesh.
+    pin_face = 10.0,    # pinion face length along its axis: engages the
+                        # OUTER pin_face mm of the tooth radial envelope.
     stand    = -1.0,    # extra wafer standoff from the wall, mm. The
                         # crossed-axis pinion's body bulges in front of
                         # the tooth band; the wafers must clear it.
@@ -172,18 +180,18 @@ class Cfg:
         # wafer standoff.
         if self.g_bev:
             self.pin_ratio = self.teeth / self.pin_T
-            self.pin_rho   = self.g_pitch / self.pin_ratio   # pitch radius
-            self.pin_apex  = self.g_pitch - self.pin_rho     # cone apex x
-            self.pin_zax   = self.gear_F + self.pin_rho      # axis z (mesh)
-            self.pin_x0    = self.Ro + 2.0                   # face span:
-            # NOT g_root — the crossed pinion's small-end disc at stations
-            # inside the band OD sweeps through the tall riser above the
-            # gear (953 mm3 measured); it cannot dip into teeth below
-            # ~Ro+2 anyway (the dip table bottoms out there)
+            # face engages the OUTER pin_face mm of the tooth envelope
             self.pin_x1    = self.g_tip * self.g_kbig
+            self.pin_x0    = max(self.Ro + 2.0, self.pin_x1 - self.pin_face)
+            xs             = (self.pin_x0 + self.pin_x1) / 2.0
+            self.pin_apex  = xs - self.pin_rho               # 45-deg cone
+            # axis height: mid-face tips dip to the tooth mid-height
+            self.pin_zax   = (self.gear_F / 2.0
+                              + self.pin_rho * (1 + 2.0 / self.pin_T))
             tip_big = (self.pin_x1 - self.pin_apex) * (1 + 2.0 / self.pin_T)
             self.pin_bulge = self.pin_zax + tip_big          # frontmost z
-            gap0 = (self.rise + self.landOff + self.tmin) -                    (self.wafer_T / 2.0 + self.r * math.sin(self.th))
+            gap0 = ((self.rise + self.landOff + self.tmin)
+                    - (self.wafer_T / 2.0 + self.r * math.sin(self.th)))
             if self.stand < 0:
                 self.stand = max(0.0, self.pin_bulge + 3.0 - gap0)
         else:
@@ -421,6 +429,32 @@ def gear_teeth_bevel45(cf, z0=0.0, steps=None, span_pitches=4.0):
                       .rotate([0, 0, -math.degrees(-span / 2.0
                                                    + span * i / (n - 1))]))
                      for i in range(n)])
+    # COSMETIC pass: the small crossed pinion only carves the outer
+    # pin_face of the envelope; the visible deep-bevel tooth pattern
+    # (Rev B.4, Nick's "always dreamed of" look) is restored by ALSO
+    # sweeping the old parallel-axis 12T beveloid cutter over the full
+    # face. Extra removal can only add clearance — the mesh gate is
+    # untouched — and both patterns tile k*pitch, so they align.
+    ring_mid = cf.g_pitch + F / 2.0
+    pin_mid = ring_mid / (cf.teeth / cf.tps)
+    rp0c = cf.tps * cf.gear_m / 2.0
+    pts, _ = pinion_profile(cf, cf.tps, backlash=0.0)
+    s_lo = (pin_mid - F / 2.0 - 0.5) / rp0c
+    s_hi = (pin_mid + F / 2.0 + 0.5) / rp0c
+    cpts = [(x * s_lo, y * s_lo) for x, y in pts]
+    if signed_area(cpts) < 0:
+        cpts = cpts[::-1]
+    cos_pin = Manifold.extrude(CrossSection([cpts]), F + 1.0,
+                               n_divisions=16,
+                               scale_top=(s_hi / s_lo,) * 2
+                               ).translate([0.0, 0.0, -0.5])
+    C = ring_mid + pin_mid
+    nc = 30 * int(round(cf.gear_m)) + 1
+    cut = cut + union_all([
+        (cos_pin.rotate([0.0, 0.0, -math.degrees(d * cf.teeth / cf.tps)])
+                .translate([C - 0.3, 0.0, 0.0])
+                .rotate([0, 0, -math.degrees(d)]))
+        for d in (-span / 2.0 + span * i / (nc - 1) for i in range(nc))])
     gen = blank - cut
     pitch = 360.0 / cf.teeth
     wedge = prism([(0.0, 0.0)] + arc(big + 100.0,
