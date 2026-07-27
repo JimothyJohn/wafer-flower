@@ -148,14 +148,20 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   restored by a COSMETIC parallel-axis sweep over the full face (extra
   removal only adds clearance, so the mesh gate is untouched; both
   patterns tile k*pitch so they align). Pinion dips 1.2 behind the wall
-  face (wall_gap 6) and bulges 39.5 in front (stand owns it). MOUNTS: nothing
-  behind the frame. The ring RESTS in a new OUTER mount groove
-  (ogrv_z0/w/d: z_bot+12, 10 wide, 2 deep, chamfered roof — an INTERNAL
-  engagement can only HANG a ring, so the bottom rest is external) on
-  the bottom foot: two Ø68 wheels (dynamic; wheel_R 34 clears the
-  tooth swing r≤305.8 below the groove) or a 60° arc saddle (static);
-  small wall plate, two drywall anchors inline vertical. The top drive
-  unit exists only when motorised. 12 bracket checks gate it all.
+  face (wall_gap 6) and bulges 39.5 in front (stand owns it). MOUNTS
+  (2026-07-26 final, Nick: "wheels right underneath the motor… idling
+  to preload the motor pinion… needs mounting slots"): DYNAMIC = ONE
+  top unit — the ring HANGS on two Ø48 bore idlers (ribs in the INNER
+  groove, ±12° from top, directly under the motor: the wheels are the
+  radial datum AT the mesh meridian so engagement can't breathe), and
+  the Pololu shell mounts on ±8 mm VERTICAL SLOTS (printed M6 + captive
+  nuts) — slide to set pinion preload, clamp. STATIC = bottom saddle
+  nesting in the OUTER groove (ogrv_*: z_bot+12, 10×2, chamfered roof;
+  52° arc — 60° printed 348 wide vs the 340 bed). Internal engagement
+  hangs, external rests — proven both ways numerically. Two drywall
+  anchors inline vertical per mount; nothing behind the frame. 12
+  bracket checks gate it; the hide check measures exact mesh vertices
+  (bbox corners false-alarm on L-shaped parts).
 - GEAR TOOTH COUNT MUST DIVIDE BY N or the pitch breaks at every joint.
   Module 5.6, N=9: 10T/segment = 90 (pitch Ø504, cone tips r246→256)
   needs Ri≈255 — every joint lands mid-slot and the pattern tiles
@@ -411,8 +417,8 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   build: 84.3 g/segment PLA @10% + 6 top shells (61 mm part), 2h43
   each, assembly 1.91 kg / 18.7 N (48.6 g at the 30 mm B.4 part;
   PETG@45 history: 91.8 deep bevel, 67.9 at the 4.5 face).
-  Pinion 3.8 g / 21 min, bottom foot 101.8 g / 2h39 @15% (static
-  145.7), top drive shell 15.4 g, wheels 15.0 g each, jig
+  Pinion 3.8 g / 21 min, top unit 69.6 g / 1h51 @15%, slotted shell
+  7.7 g, static saddle 74.8 g, wheels 6.1 g each, jig
   61.0/29.1/2.4 g @10%. Hanging on the two top idlers
   is the OP 015
   two-hang-point case: M well under the single-point 2.2 N·m, and the

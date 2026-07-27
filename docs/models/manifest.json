@@ -106,39 +106,39 @@
    "volume_cm3": 0.348
   },
   {
-   "file": "bracket_bottom.stl",
-   "name": "bracket_bottom",
-   "group": "bracket",
-   "color": "#B86038",
-   "volume_cm3": 189.267
-  },
-  {
    "file": "bracket_static.stl",
    "name": "bracket_static",
    "group": "bracket",
    "color": "#8A6D3B",
-   "volume_cm3": 293.934
+   "volume_cm3": 150.378
   },
   {
    "file": "bracket_top.stl",
    "name": "bracket_top",
    "group": "bracket",
    "color": "#B86038",
-   "volume_cm3": 24.698
+   "volume_cm3": 132.44
+  },
+  {
+   "file": "bracket_shell.stl",
+   "name": "bracket_shell",
+   "group": "bracket",
+   "color": "#9A4A2E",
+   "volume_cm3": 8.926
   },
   {
    "file": "wheel_l.stl",
    "name": "wheel_l",
    "group": "bracket",
    "color": "#6A7078",
-   "volume_cm3": 34.502
+   "volume_cm3": 9.516
   },
   {
    "file": "wheel_r.stl",
    "name": "wheel_r",
    "group": "bracket",
    "color": "#6A7078",
-   "volume_cm3": 34.502
+   "volume_cm3": 9.516
   },
   {
    "file": "drive_pinion.stl",
