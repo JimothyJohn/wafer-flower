@@ -38,7 +38,8 @@ from segment_stl import (PARAMS, Cfg, build_segment, build_wafer, write_stl,
                          report, wafer_cut, keyhole_z, Manifold, HAVE_MANIFOLD)
 from cure_jig_stl import (JIG, Jig, build_outboard, build_inboard,
                           build_hardware, run_checks)
-from bracket_stl import BRK, Brk, build_foot, build_top, wheel_at, pinion_at_top
+from bracket_stl import (BRK, Brk, build_foot, build_top, build_shell,
+                         wheel_at, pinion_at_top)
 
 EPS = 1e-6
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -81,10 +82,9 @@ def build_scene(cf, j):
         'knob_nut':     (knob_nut,           'rod',      0x4A5058),
         # top idler bracket in the hanging orientation (gravity -y):
         # shown by the viewers only in ring/halo contexts
-        'bracket_bottom': (build_foot(_brk(cf)), 'bracket', 0xB86038),
-        'bracket_static': (build_foot(_brk(cf), static=True),
-                           'bracket', 0x8A6D3B),
+        'bracket_static': (build_foot(_brk(cf)), 'bracket', 0x8A6D3B),
         'bracket_top':  (build_top(_brk(cf)),    'bracket', 0xB86038),
+        'bracket_shell': (build_shell(_brk(cf)), 'bracket', 0x9A4A2E),
         'wheel_l':      (wheel_at(_brk(cf), 0),  'bracket', 0x6A7078),
         'wheel_r':      (wheel_at(_brk(cf), 1),  'bracket', 0x6A7078),
         'drive_pinion': (pinion_at_top(cf, _brk(cf)), 'bracket', 0xC2497B),

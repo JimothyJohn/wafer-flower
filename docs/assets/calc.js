@@ -252,12 +252,17 @@ function buildScene(){
       // wheel_l is built at 270+25=295 deg, wheel_r at 245 (bracket_stl
       // wheels[] order) — mismatched pivots orbit each wheel around the
       // OTHER's axle
-      const WAZ=[295,245].map(a=>a*Math.PI/180), DC=(P.Ri+P.bw-2)+34;
-      const foot=realMesh(view==='drive'?'bracket_bottom':'bracket_static');
+      // wheels hang the ring from INSIDE the bore at 90±12 (wheels[]
+      // order: s_=+1 first -> 102 then 78), right under the motor
+      const WAZ=[102,78].map(a=>a*Math.PI/180), DC=P.Ri-24;
+      const foot=view!=='drive'?realMesh('bracket_static'):null;
       if(foot)group.add(foot);
       const topu=view==='drive'?realMesh('bracket_top'):null;
       if(topu){topu.material.transparent=true;topu.material.opacity=0.35;
         group.add(topu);}
+      const shl=view==='drive'?realMesh('bracket_shell'):null;
+      if(shl){shl.material.transparent=true;shl.material.opacity=0.45;
+        group.add(shl);}
       const pin=view==='drive'?realMesh('drive_pinion'):null;
       if(pin){
         // vertical-axis pivot: rotate about world Y through (x=0, z=pinZ)
@@ -268,7 +273,7 @@ function buildScene(){
       if(view==='drive') ['wheel_l','wheel_r'].forEach((n,i)=>{
         const m=realMesh(n); if(!m)return;
         const g=pivot(m,DC*Math.cos(WAZ[i]),DC*Math.sin(WAZ[i]));
-        ANIM.spin.push({g:g,rate:-(P.Ri+P.bw-2)/34});
+        ANIM.spin.push({g:g,rate:P.Ri/24});   // bore contact co-rotates
       });
       if(view==='drive'){
         // schematic Pololu #1596 above the pinion, shaft straight down
