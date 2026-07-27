@@ -249,7 +249,10 @@ function buildScene(){
       // the ring rests on wheels riding the OUTER groove at the bottom
       const G3=gearSpec(), RHO=12, ZAX=GEAR_F/2+RHO*1.2;
       const pinZ=zBot+ZAX;
-      const WAZ=[245,295].map(a=>a*Math.PI/180), DC=(P.Ri+P.bw-2)+34;
+      // wheel_l is built at 270+25=295 deg, wheel_r at 245 (bracket_stl
+      // wheels[] order) — mismatched pivots orbit each wheel around the
+      // OTHER's axle
+      const WAZ=[295,245].map(a=>a*Math.PI/180), DC=(P.Ri+P.bw-2)+34;
       const foot=realMesh(view==='drive'?'bracket_bottom':'bracket_static');
       if(foot)group.add(foot);
       const topu=view==='drive'?realMesh('bracket_top'):null;
