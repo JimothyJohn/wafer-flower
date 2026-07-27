@@ -34,7 +34,7 @@ import math, os, sys, argparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from segment_stl import (PARAMS, Cfg, build_segment, build_wafer, build_ring,
                          to_arrays, Manifold, HAVE_MANIFOLD)
-from bracket_stl import BRK, Brk, build_plate, build_wheel, wheel_at, pinion_at_top
+from bracket_stl import BRK, Brk, build_foot, build_top, build_wheel, wheel_at, pinion_at_top
 # NOTE: the gearmotor drive module is PARKED (2026-07-24, predates the face
 # gear) — its parts are no longer exported here; see gearmotor_stl.py.
 
@@ -420,7 +420,8 @@ def build_everything(cf, b):
         ('segment.stp',        [('segment', seg)]),
         ('wafer.stp',          [('wafer', waf)]),
         ('pinion.stp',         [('pinion', pin)]),
-        ('bracket_plate.stp',  [('bracket_plate', build_plate(brk))]),
+        ('bracket_bottom.stp', [('bracket_bottom', build_foot(brk))]),
+        ('bracket_top.stp',    [('bracket_top', build_top(brk))]),
         ('bracket_wheel.stp',  [('bracket_wheel', build_wheel(brk))]),
     ]
     return singles

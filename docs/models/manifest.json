@@ -14,9 +14,14 @@
   "gear_m": 5.6,
   "gear_sp": 0.0,
   "gear_pa": 20.0,
+  "pin_T": 10,
+  "stand": -1.0,
   "gear_bl": 0.6,
   "gear_drive": "bevel45",
   "gear_F": 9.5,
+  "ogrv_z0": 12.0,
+  "ogrv_w": 10.0,
+  "ogrv_d": 2.0,
   "grv_z0": 2.5,
   "grv_h": 1.5,
   "grv_d": 2.0,
@@ -32,15 +37,15 @@
   "facets": 512
  },
  "sector_deg": 40.0,
- "keyhole_z": -6.665522292974702,
- "z_bot": -25.0155222929747,
+ "keyhole_z": -84.90538484553466,
+ "z_bot": -103.25538484553465,
  "parts": [
   {
    "file": "segment.stl",
    "name": "segment",
    "group": "segment",
    "color": "#B9A87E",
-   "volume_cm3": 135.568
+   "volume_cm3": 571.64
   },
   {
    "file": "wafer.stl",
@@ -54,14 +59,14 @@
    "name": "jig_outboard",
    "group": "out",
    "color": "#D97742",
-   "volume_cm3": 145.114
+   "volume_cm3": 1290.742
   },
   {
    "file": "jig_inboard.stl",
    "name": "jig_inboard",
    "group": "inboard",
    "color": "#3E7CB1",
-   "volume_cm3": 78.532
+   "volume_cm3": 368.012
   },
   {
    "file": "rod.stl",
@@ -99,32 +104,46 @@
    "volume_cm3": 0.348
   },
   {
-   "file": "bracket_plate.stl",
-   "name": "bracket_plate",
+   "file": "bracket_bottom.stl",
+   "name": "bracket_bottom",
    "group": "bracket",
    "color": "#B86038",
-   "volume_cm3": 733.935
+   "volume_cm3": 371.804
+  },
+  {
+   "file": "bracket_static.stl",
+   "name": "bracket_static",
+   "group": "bracket",
+   "color": "#8A6D3B",
+   "volume_cm3": 471.484
+  },
+  {
+   "file": "bracket_top.stl",
+   "name": "bracket_top",
+   "group": "bracket",
+   "color": "#B86038",
+   "volume_cm3": 29.123
   },
   {
    "file": "wheel_l.stl",
    "name": "wheel_l",
    "group": "bracket",
    "color": "#6A7078",
-   "volume_cm3": 9.516
+   "volume_cm3": 34.502
   },
   {
    "file": "wheel_r.stl",
    "name": "wheel_r",
    "group": "bracket",
    "color": "#6A7078",
-   "volume_cm3": 9.516
+   "volume_cm3": 34.502
   },
   {
    "file": "drive_pinion.stl",
    "name": "drive_pinion",
    "group": "bracket",
    "color": "#C2497B",
-   "volume_cm3": 30.718
+   "volume_cm3": 59.455
   },
   {
    "file": "my_frame_segment.stl",
@@ -224,7 +243,7 @@
   {
    "group": "assembly",
    "name": "depth clearance >= 2.95 mm under the neighbour wafer",
-   "value_mm3": 0.0,
+   "value_mm3": -0.0,
    "pass": true
   },
   {
@@ -236,7 +255,7 @@
   {
    "group": "assembly",
    "name": "segments butt at the joint (0.1 deg nudge contacts)",
-   "value_mm3": 194.2909,
+   "value_mm3": 1278.0363,
    "pass": true
   }
  ]
