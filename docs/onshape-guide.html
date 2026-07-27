@@ -199,7 +199,7 @@ footer a{color:var(--os-green)}
       <span class="badge">108T ring · 12T pinion · 9:1</span>
       <span class="badge">straight or spiral</span>
       <span class="badge">flush module 5.384</span>
-      <span class="badge">C = 328.31 mm</span>
+      <span class="badge">crossed 10.8:1 · 1 rpm @5 V</span>
     </div>
   </div>
   <div class="notaffil"><div class="wrap">Independent project documentation for the Wafer Halo repo, styled in the spirit of the tool it targets. Not affiliated with, sponsored, or endorsed by PTC / Onshape. "Onshape" is a trademark of PTC Inc.</div></div>
@@ -276,7 +276,7 @@ footer a{color:var(--os-green)}
   <div class="card">
     <div class="kicker">Feature 2</div>
     <h2>Halo Beveloid Pinion — the mate</h2>
-    <p>Same dialog family, plus drive-side hardware: a wall-side hub and a D-shaft bore sized for the Pololu #1596 micro metal gearmotor's 3&nbsp;mm D-shaft.</p>
+    <p>Same dialog family, plus drive-side hardware: a big-end hub and a D-shaft bore sized for the Pololu #1596 micro metal gearmotor's 3&nbsp;mm D-shaft. Rev B.5: the pinion is the CROSSED-drive 10T cone (Ø17→Ø41 tips, apex toward the halo centre) — small on purpose; only the tooth count is forced by the 10.8:1 ratio.</p>
     <div class="dlg">
       <div class="dlg-head"><span class="dot"></span>Halo Beveloid Pinion</div>
       <table>
@@ -288,11 +288,11 @@ footer a{color:var(--os-green)}
       </table>
       <div class="dlg-foot"><span class="btn">Cancel</span><span class="btn ok">✓ OK</span></div>
     </div>
-    <p><b>Mating it.</b> The feature reports <code>C = 328.31 mm</code> at B.3. In an Assembly:</p>
+    <p><b>Mating it.</b> The feature reports the small-end ring radius (~295.8) and axis height (~19.1 off the ring's wall plane) at B.5. In an Assembly:</p>
     <ol>
-      <li>Insert ring and pinion. Add a <b>Revolute</b> mate on each about its own axis — both axes <b>parallel</b>, pointing out of the wall.</li>
-      <li>Set the axis-to-axis distance to C, with the pinion at 12 o'clock and its <b>big end toward the viewer</b> (the ring's big end faces the wall — the cones complement).</li>
-      <li>Add a <b>Gear relation</b> between the two revolutes, ratio 9:1, <b>reverse direction</b> (external pair — they counter-rotate). Drag the ring: the pinion spins 9× the other way, exactly like the Drive view on the <a href="index.html">hub page</a>.</li>
+      <li>Insert ring and pinion. Add a <b>Revolute</b> mate on each — the ring about the halo axis, the pinion about a <b>radial</b> axis (vertical at 12 o'clock, shaft pointing down toward the halo centre).</li>
+      <li>Position the pinion with its <b>small end at ring radius ~295.8</b> and its axis <b>~19.1 mm in front of the ring's wall plane</b>, apex toward the halo centre; the Pololu #1596 sits directly above on the hub.</li>
+      <li>Add a <b>Gear relation</b> between the two revolutes, ratio <b>10.8:1</b>. Drag the ring: one ring rev per 10.8 pinion revs — 1.00 rpm at the sculpture with the motor on 5&nbsp;V USB.</li>
     </ol>
     <div class="warn"><b>Mesh fidelity</b>
     The Python model <i>generates</i> the ring as the swept envelope of its cutter (conjugate by construction; the repo's mesh gate measures 0.00000&nbsp;mm³ interference). These features loft <i>analytic</i> involute sections — identical at the mid-face, a few hundredths off toward the faces. Visually and kinematically indistinguishable in Onshape; for anything you print, the repo's <code>segment_stl.py</code> gates remain the authority.</div>

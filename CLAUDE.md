@@ -16,11 +16,12 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   masses). Pick on looks.
 - CURRENT PARAMS (Rev B.5 crossed-drive, 2026-07-26): θ=5°, R_pitch=350,
   band Ri=255 w=30, t_min=15, gear_F=9.5, bondline 1.1, pin_T=10,
-  stand=DERIVED 78.2 (the crossed pinion's big end bulges 86.8 in front
-  of the wall face; the wafers move forward to clear it — Nick: "if you
-  increase the wafer distance from the wall it's absolutely possible").
-  Part is 108.3 mm tall — the 30 mm cap was traded for the mixer drive;
-  total wall depth ~126 vs ~106 of the old bracket-standoff era.
+  pin_rho=12 pin_face=10, stand=DERIVED 31.0 (the crossed pinion bulges
+  39.5 in front of the wall face; the wafers move forward to clear it).
+  Part is 61.0 mm tall. The FIRST crossed rev used the textbook rolling
+  pitch (rho 26.9 -> pinion Ø100, part 108) and Nick called it "way out
+  of scale" — conjugacy is by GENERATION, so only the tooth count is
+  forced and rho is a free style/packaging knob. Total wall depth ~67.
 - θ=5 IS FORCED by the 30 mm thickness cap at N=9 (θ=7.5 → 32.1, θ=10 → 39.6).
   N=12 would allow θ=10 at 27.9 mm if the deeper look is wanted back.
 - The 30 mm cap + t_min 10 FIXED the worst margin: dovetail 2.0× → 4.5×
@@ -140,11 +141,14 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   10.8:1 — pairs 5 V USB (13×5/6 = 10.83 no-load rpm) to 1.00 rpm at
   the ring. Conjugacy is by CSG generation under the imposed motion (a
   true rolling 45/45 pair exists only at 1:1 — heavy sliding, mN·m
-  loads, fine); mesh sweep 0.00000. Pinion face spans Ro+2..tip_wall
-  (its small-end disc would sweep through the tall riser if it started
-  at the flush root — 953 mm³ measured; it can't dip into teeth below
-  ~Ro+2 anyway). It swings 14 behind the ring's wall face (wall_gap 18
-  owns it) and bulges 86.8 in front (stand owns it). MOUNTS: nothing
+  loads, fine); mesh sweep 0.00000. SMALL pinion (pin_rho 12, tips
+  Ø17→Ø41, face 10 engaging the OUTER 10 mm of the envelope): rho is
+  FREE because generation owns conjugacy — the rolling-size first cut
+  (Ø100) was Nick-rejected. The visible deep-bevel tooth pattern is
+  restored by a COSMETIC parallel-axis sweep over the full face (extra
+  removal only adds clearance, so the mesh gate is untouched; both
+  patterns tile k*pitch so they align). Pinion dips 1.2 behind the wall
+  face (wall_gap 6) and bulges 39.5 in front (stand owns it). MOUNTS: nothing
   behind the frame. The ring RESTS in a new OUTER mount groove
   (ogrv_z0/w/d: z_bot+12, 10 wide, 2 deep, chamfered roof — an INTERNAL
   engagement can only HANG a ring, so the bottom rest is external) on
@@ -404,11 +408,11 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
   35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted; PETG-
   calibrated — PLA runs ~2% lighter still). CURRENT B.4
-  build: 135.7 g/segment PLA @10% + 6 top shells (the 108 mm riser),
-  3h56 each, assembly 2.37 kg / 23.3 N (48.6 g at the 30 mm B.4 part;
+  build: 84.3 g/segment PLA @10% + 6 top shells (61 mm part), 2h43
+  each, assembly 1.91 kg / 18.7 N (48.6 g at the 30 mm B.4 part;
   PETG@45 history: 91.8 deep bevel, 67.9 at the 4.5 face).
-  Pinion 23.9 g, bottom foot 144.3 g / 3h51 @15% (static 187.8), top
-  drive shell 17.6 g, wheels 15.0 g each, jig
+  Pinion 3.8 g / 21 min, bottom foot 101.8 g / 2h39 @15% (static
+  145.7), top drive shell 15.4 g, wheels 15.0 g each, jig
   61.0/29.1/2.4 g @10%. Hanging on the two top idlers
   is the OP 015
   two-hang-point case: M well under the single-point 2.2 N·m, and the
