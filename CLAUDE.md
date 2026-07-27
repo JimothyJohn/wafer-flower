@@ -14,10 +14,13 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   θ only buys standoff depth (26.9 mm @ 5° → 52.9 @ 10° → 78.4 @ 15°) at
   ~4% assembly mass and ~5% dovetail margin per degree (slicer-measured
   masses). Pick on looks.
-- CURRENT PARAMS (Rev B.4 deep-bevel, user-set 30 mm caps): θ=5°,
-  R_pitch=350, band Ri=255 w=30, t_min=15 (2026-07-26: +5 so the gear
-  face reaches 9.5 — the ceiling is z_bot-relative, deepening the base
-  raises it), bondline 1.1. Part is 30.0 mm tall (AT the cap), 30 wide.
+- CURRENT PARAMS (Rev B.5 crossed-drive, 2026-07-26): θ=5°, R_pitch=350,
+  band Ri=255 w=30, t_min=15, gear_F=9.5, bondline 1.1, pin_T=10,
+  stand=DERIVED 78.2 (the crossed pinion's big end bulges 86.8 in front
+  of the wall face; the wafers move forward to clear it — Nick: "if you
+  increase the wafer distance from the wall it's absolutely possible").
+  Part is 108.3 mm tall — the 30 mm cap was traded for the mixer drive;
+  total wall depth ~126 vs ~106 of the old bracket-standoff era.
 - θ=5 IS FORCED by the 30 mm thickness cap at N=9 (θ=7.5 → 32.1, θ=10 → 39.6).
   N=12 would allow θ=10 at 27.9 mm if the deeper look is wanted back.
 - The 30 mm cap + t_min 10 FIXED the worst margin: dovetail 2.0× → 4.5×
@@ -130,6 +133,25 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   1e-5 rad (facet wobble reads as 1e-4 joint interference), build_segment
   drops <0.01 mm³ specks at source (phantom STEP solids), cutters
   overshoot both faces (over=0.5 — coplanar-cap sliver trap).
+- CROSSED DRIVE (Rev B.5, 2026-07-26, Nick: "shaft perpendicular to the
+  arc… pinion flipped… top bracket only exists when we want to drive
+  it"): the 10T 45° pinion sits on a RADIAL axis at 12 o'clock (shaft
+  straight down, Pololu #1596 above it in a shell), ratio 108/10 =
+  10.8:1 — pairs 5 V USB (13×5/6 = 10.83 no-load rpm) to 1.00 rpm at
+  the ring. Conjugacy is by CSG generation under the imposed motion (a
+  true rolling 45/45 pair exists only at 1:1 — heavy sliding, mN·m
+  loads, fine); mesh sweep 0.00000. Pinion face spans Ro+2..tip_wall
+  (its small-end disc would sweep through the tall riser if it started
+  at the flush root — 953 mm³ measured; it can't dip into teeth below
+  ~Ro+2 anyway). It swings 14 behind the ring's wall face (wall_gap 18
+  owns it) and bulges 86.8 in front (stand owns it). MOUNTS: nothing
+  behind the frame. The ring RESTS in a new OUTER mount groove
+  (ogrv_z0/w/d: z_bot+12, 10 wide, 2 deep, chamfered roof — an INTERNAL
+  engagement can only HANG a ring, so the bottom rest is external) on
+  the bottom foot: two Ø68 wheels (dynamic; wheel_R 34 clears the
+  tooth swing r≤305.8 below the groove) or a 60° arc saddle (static);
+  small wall plate, two drywall anchors inline vertical. The top drive
+  unit exists only when motorised. 12 bracket checks gate it all.
 - GEAR TOOTH COUNT MUST DIVIDE BY N or the pitch breaks at every joint.
   Module 5.6, N=9: 10T/segment = 90 (pitch Ø504, cone tips r246→256)
   needs Ri≈255 — every joint lands mid-slot and the pattern tiles
@@ -382,10 +404,11 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
   35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted; PETG-
   calibrated — PLA runs ~2% lighter still). CURRENT B.4
-  build: 48.6 g/segment PLA @10% + 6 top shells, 1h49 each, assembly
-  1.59 kg / 15.6 N (2026-07-26, Nick's minimal-infill call; PETG@45
-  history: 91.8 deep bevel, 67.9 at the 4.5 face, 63.0 inner spiral).
-  Pinion 15.0 g, plate 367.2 g / 9h27 @15%, wheels 6.1 g, jig
+  build: 135.7 g/segment PLA @10% + 6 top shells (the 108 mm riser),
+  3h56 each, assembly 2.37 kg / 23.3 N (48.6 g at the 30 mm B.4 part;
+  PETG@45 history: 91.8 deep bevel, 67.9 at the 4.5 face).
+  Pinion 23.9 g, bottom foot 144.3 g / 3h51 @15% (static 187.8), top
+  drive shell 17.6 g, wheels 15.0 g each, jig
   61.0/29.1/2.4 g @10%. Hanging on the two top idlers
   is the OP 015
   two-hang-point case: M well under the single-point 2.2 N·m, and the

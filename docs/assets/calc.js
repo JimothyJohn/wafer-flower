@@ -127,7 +127,13 @@ function landStats(th,zBot){
 function geoCtx(){
   const th=P.tilt*Math.PI/180, Ro=P.Ri+P.bw, H=HALF();
   const yMax=Ro*Math.sin(H);
-  const zBot=-(yMax*Math.tan(th)+P.bond+P.tmin);
+  // wafer standoff: the crossed pinion's big end bulges in front of the
+  // wall face; the wafers move forward to clear it (segment_stl Cfg)
+  const Gz=gearSpec(), rhoZ=Gz.rp/10.8;
+  const bulge=GEAR_F+rhoZ+(Gz.tip*Gz.kb-(Gz.rp-rhoZ))*1.2;
+  const gap0=yMax*Math.tan(th)+P.bond+P.tmin-(P.wt/2+P.D/2*Math.sin(th));
+  const STAND=Math.max(0,bulge+3-gap0);
+  const zBot=-(yMax*Math.tan(th)+P.bond+P.tmin+STAND);
   const topZ=(x,y)=>{
     if(!inFootprint(x,y,0,th)) return zBot+2;
     let z=planeZ(x,y,0,th)-P.wt/2-P.bond;
@@ -237,32 +243,35 @@ function buildScene(){
       const pivot=(m,cx,cy)=>{const g=new THREE.Group();
         g.position.set(cx,cy,0); m.position.set(-cx,-cy,0); g.add(m);
         group.add(g); return g;};
-      // B.3 drivetrain geometry (mirrors segment_stl/bracket_stl):
-      // flush module 5.384, C = ring_mid+pin_mid; wheels tangent to the
-      // bore, spun up by rolling contact Ri/wheel_R
-      const G3=gearSpec(), C=(G3.rp+GEAR_F/2)*(10/9);   // ring_mid+pin_mid
-      const WAZ=[115,65].map(a=>a*Math.PI/180), DC=P.Ri-24;
-      const plate=realMesh('bracket_plate');
-      if(plate&&view==='drive'){plate.material.transparent=true;plate.material.opacity=0.30;}
-      if(plate)group.add(plate);
-      const pin=realMesh('drive_pinion');
-      if(pin){const g=pivot(pin,0,C); ANIM.spin.push({g:g,rate:-9});}
-      ['wheel_l','wheel_r'].forEach((n,i)=>{
+      // B.5 crossed-drive geometry (mirrors segment_stl/bracket_stl):
+      // pinion on a VERTICAL (radial) axis at 12 o'clock, ratio 10.8:1;
+      // the ring rests on wheels riding the OUTER groove at the bottom
+      const G3=gearSpec(), RHO=G3.rp/10.8, ZAX=GEAR_F+RHO;
+      const pinZ=zBot+ZAX;
+      const WAZ=[245,295].map(a=>a*Math.PI/180), DC=(P.Ri+P.bw-2)+34;
+      const foot=realMesh(view==='drive'?'bracket_bottom':'bracket_static');
+      if(foot)group.add(foot);
+      const topu=view==='drive'?realMesh('bracket_top'):null;
+      if(topu){topu.material.transparent=true;topu.material.opacity=0.35;
+        group.add(topu);}
+      const pin=view==='drive'?realMesh('drive_pinion'):null;
+      if(pin){
+        // vertical-axis pivot: rotate about world Y through (x=0, z=pinZ)
+        const g=new THREE.Group();
+        g.position.set(0,0,pinZ); pin.position.set(0,0,-pinZ); g.add(pin);
+        group.add(g); ANIM.spin.push({g:g,rate:10.8,axis:'y'});
+      }
+      if(view==='drive') ['wheel_l','wheel_r'].forEach((n,i)=>{
         const m=realMesh(n); if(!m)return;
         const g=pivot(m,DC*Math.cos(WAZ[i]),DC*Math.sin(WAZ[i]));
-        ANIM.spin.push({g:g,rate:P.Ri/24});
+        ANIM.spin.push({g:g,rate:-(P.Ri+P.bw-2)/34});
       });
       if(view==='drive'){
-        // schematic N20 gearmotor behind the pinion hub (real envelope is
-        // parametric in bracket_stl — MEASURE the purchased unit)
-        const mot=new THREE.Mesh(new THREE.CylinderGeometry(6.25,6.25,26,32),
+        // schematic Pololu #1596 above the pinion, shaft straight down
+        const mot=new THREE.Mesh(new THREE.BoxGeometry(10,26,12),
           new THREE.MeshPhongMaterial({color:0x707880,shininess:60}));
-        mot.rotation.x=Math.PI/2; mot.position.set(0,C,zBot-5.5-13);
+        mot.position.set(0,G3.tip_front+6.5+13,pinZ);
         group.add(mot);
-        const shaft=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,6,16),
-          new THREE.MeshPhongMaterial({color:0xB8BEC4,shininess:80}));
-        shaft.rotation.x=Math.PI/2; shaft.position.set(0,C,zBot-3);
-        group.add(shaft);
         ANIM.ring=rg;
       }
     }
@@ -710,7 +719,10 @@ let _tPrev=0, _ringA=0;
     const dt=Math.min(t-_tPrev,100)/1000;
     _ringA+=dt*DRIVE_W;
     ANIM.ring.rotation.z=_ringA;
-    for(const s of ANIM.spin) s.g.rotation.z=_ringA*s.rate;
+    for(const s of ANIM.spin){
+      if(s.axis==='y') s.g.rotation.y=_ringA*s.rate;
+      else s.g.rotation.z=_ringA*s.rate;
+    }
     window.__ringAngle=_ringA;       // probed by the test suite
   }
   _tPrev=t;
