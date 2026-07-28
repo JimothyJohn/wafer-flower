@@ -17,7 +17,7 @@
   <a href="engineering.html">Engineering</a>
   <a class="here" href="production.html">Production</a>
   <span class="sep">·</span>
-  <a href="cure-jig.html">Cure jig</a>
+  <a href="cure-jig.html">Tape jig</a>
   <a href="kiselring-manual.pdf">Manual (PDF)</a>
 </nav>
 
@@ -29,7 +29,7 @@
     <div class="head-meta">
       <span>GATES <b>T1–T7 pass before printing ×9</b></span>
       <span>BOND <b>bench, one station at a time — compliant adhesive only</b></span>
-      <span>ILLUSTRATED <b><a href="cure-jig.html" style="color:inherit">cure-jig steps</a> · <a href="kiselring-manual.pdf" style="color:inherit">assembly manual</a></b></span>
+      <span>ILLUSTRATED <b><a href="cure-jig.html" style="color:inherit">tape-jig steps</a> · <a href="kiselring-manual.pdf" style="color:inherit">assembly manual</a></b></span>
     </div>
   </div>
 </header>
@@ -58,13 +58,14 @@
   <div class="op-head"><span class="op-chip">OP 020</span><h2>Bond — bench, one station at a time</h2></div>
   <ol class="steps">
     <li>IPA-wipe land and wafer contact zone; let flash.</li>
-    <li><b>Tape path</b>: two 20–25 mm strips arced on the land, ≥5 mm inside its boundary, <em>as close to the land centroid as the geometry allows</em> (OP 015 §4: stress scales with distance from centroid, not with area). Roller-press. Liners off only with wafer in hand. <b>Liquid path (SMP)</b>: serpentine bead, 5 mm inside the land edge; Ø4 × #bond printed nubs (3×) set the bondline.</li>
-    <li>Rest wafer edge on the jig's downhill fence first, lower like closing a book. Confirm both fences touch <em>before</em> full contact — tape gives one attempt.</li>
-    <li>Press over the land centroid through a foam pad (tape: 15 s firm; SMP: clamp to nub contact + ¼ turn, 24 h in jig). <b>Never press the overhang</b> — 20 N at the free edge is ~35 MPa in the silicon, at the fracture allowable.</li>
-    <li>Repeat ×N, then join the ring.</li>
+    <li>Two <b>13 × 13 mm tape pads</b> in the adhesive pocket, split ~20 mm radially about its centroid (OP 015 §4: stress scales with distance from centroid, not with area — small pads are <em>better</em>). Roller-press the pads onto the plastic. <b>Leave the top liners on.</b></li>
+    <li>Assemble the tape jig on the segment (outer fence, inner fence, pin — see <a href="cure-jig.html">OP 012</a>), <em>then</em> peel the liners.</li>
+    <li>Lower the wafer straight down between the peg chamfers — the flanks centre it on the way down. One landing; tape does not reposition.</li>
+    <li>Press over the land centroid through a foam pad, 15 s firm (acrylic foam wants ~100 kPa to wet out). <b>Never press the overhang</b> — 20 N at the free edge is ~35 MPa in the silicon, at the fracture allowable.</li>
+    <li>Slide the pin out, part the fences, repeat ×N, then join the ring.</li>
   </ol>
-  <div class="note"><span class="tag">The cure jig, illustrated</span><br>
-  The SMP path holds each station in the printed cure jig for 24 h — two fences on one #10-24 rod through the segment's keyhole, wafer edge-captured with zero clamp load on silicon. Plain-language, illustrated, step-by-step: <a href="cure-jig.html"><b>cure-jig.html</b></a> (OP 012). The IKEA-style print is the <a href="kiselring-manual.pdf"><b>KISELRING assembly manual (PDF)</b></a>.</div>
+  <div class="note"><span class="tag">The tape jig, illustrated</span><br>
+  Tape is the bonding path (2026-07-27 — no cure hold, so the clamp drivetrain is gone): two printed fences located by one printed pin through the segment's keyhole, four pegs funnelling the wafer onto the tape in a single landing, zero bought hardware. Plain-language, illustrated, step-by-step: <a href="cure-jig.html"><b>cure-jig.html</b></a> (OP 012). The IKEA-style print is the <a href="kiselring-manual.pdf"><b>KISELRING assembly manual (PDF)</b></a>. The SMP/liquid path below remains documented but is retired.</div>
 </section>
 
 <!-- ============ BILL OF MATERIALS ============ -->
@@ -89,7 +90,7 @@
       <tr><td class="ref">C1.1</td><td><b>3M Scotch-Mount Extreme</b> double-sided acrylic foam tape, 1 in × 1.5 m, ~1.1 mm — or <b>3M VHB 4910</b>, ¾ in, 1.0 mm</td><td class="mono">2 rolls</td><td>Home Depot paint dept (Scotch-Mount); VHB usually ship-to-store</td><td>Two <b>13 × 13 mm</b> pads per station, separated ~20 mm radially = <b>~235 mm total</b>. That is 4× design factor on both shear and peel, and only ~3 % of the land — see the glue-area note. Buy 2 rolls anyway; the tape gives one attempt per wafer.</td></tr>
       <tr><td class="ref">C1.2</td><td>Hard rubber seam roller or J-roller</td><td class="mono">1</td><td>Paint / wallpaper aisle</td><td>Acrylic foam needs ~100 kPa application pressure to wet out. The wafer's own weight supplies 0.13 kPa — a thousand times short.</td></tr>
 
-      <tr class="grp"><td colspan="5">C2 — Adhesive, liquid path <span class="dim">(alternative)</span></td></tr>
+      <tr class="grp"><td colspan="5">C2 — Adhesive, liquid path <span class="dim">(RETIRED 2026-07-27 — tape only; SMP needs the old clamped cure jig and a 24 h hold)</span></td></tr>
       <tr><td class="ref">C2.1</td><td><b>Loctite PL Premium Max</b>, 9 oz (SMP / MS-polymer)</td><td class="mono">1 tube</td><td>Home Depot, construction adhesive aisle</td><td>20 min repositioning, 24 h cure. The only path where the jig's adjustable peg earns its keep.</td></tr>
       <tr><td class="ref">C2.2</td><td>Caulking gun, 10 oz</td><td class="mono">1</td><td>Same aisle</td><td>—</td></tr>
       <tr><td class="ref">C2.3</td><td>Mineral spirits, 1 qt</td><td class="mono">1</td><td>Paint dept</td><td>SMP cleanup. Uncured SMP is unpleasant to remove any other way.</td></tr>
@@ -130,7 +131,7 @@
   </table>
   </div>
   <div class="note"><span class="tag">Printed threads — what to expect</span><br>
-  <span class="mono">scripts/printed_hardware_stl.py</span> generates true ISO 60° single-start threads (M5×0.8 and M6×1.0) with 0.25 mm radial clearance, and self-checks that the nut spins on and the crests actually engage. Printed <b>vertically</b> at 0.20 mm layers they thread by hand; M6 is comfortable, M5 is the practical floor (0.24 mm crest overlap — run the first nut on by force once, or a steel M5 nut to chase). Loads here are finger-force, so PETG-on-PETG is plenty. The segment keyhole is Ø6.5 (M6 clearance) — the cure jig's 350 mm M6 threaded rod is the one fastener you still buy, because that span can't print as a thread.</div>
+  <span class="mono">scripts/printed_hardware_stl.py</span> generates true ISO 60° single-start threads (M5×0.8 and M6×1.0) with 0.25 mm radial clearance, and self-checks that the nut spins on and the crests actually engage. Printed <b>vertically</b> at 0.20 mm layers they thread by hand; M6 is comfortable, M5 is the practical floor (0.24 mm crest overlap — run the first nut on by force once, or a steel M5 nut to chase). Loads here are finger-force, so PETG-on-PETG is plenty. The segment keyhole is Ø6.5 (M6 clearance) — the tape jig's locating pin PRINTS (Ø6.2 D-section, nothing tightens so no thread is needed), making the jig zero bought hardware; an M6 rod from the cure-jig era still fits.</div>
 
   <div class="note"><span class="tag">Buying instead of printing? Square nuts are the right call — and here is the trap that fits one</span><br>
   The preference for square store nuts is well founded, and the reason is bridging. A captured nut pocket is entered from a side face and printed over, so the slicer has to bridge its ceiling. A square pocket bridges a <b>constant-width flat</b>; a hex pocket's ceiling narrows across the span and its two upper flats become unsupported overhangs, which is why hex traps come out fuzzy and end up needing a reamer. Square also gives more anti-rotation purchase per millimetre of pocket depth.

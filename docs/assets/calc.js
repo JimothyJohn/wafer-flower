@@ -145,7 +145,7 @@ function geoCtx(){
 }
 
 
-// ---- parametric scene extras: retention groove, cure jig, bracket saddles.
+// ---- parametric scene extras: retention groove, tape jig, bracket saddles.
 // Diagram-grade approximations of the checked CAD (cure_jig_stl.py /
 // bracket_stl.py) — boxes and arc strips, re-derived from the sliders.
 function arcStrip(cx,cy,r0,r1,a0,a1,z0,z1,color,n){
@@ -235,7 +235,7 @@ function buildScene(){
       const w=realMesh('wafer'); w.rotation.z=k*REAL.sector; rg.add(w);
     }
     if(view==='jig')
-      for(const n of ['jig_outboard','jig_inboard','rod','hex_nut','washer','knob','knob_nut']){
+      for(const n of ['jig_outboard','jig_inboard','rod']){
         const m=realMesh(n); if(m)group.add(m);
       }
     if(full){
@@ -691,8 +691,8 @@ function viewNote(){
       (real?', resting in the two printed bracket saddles (±50° from bottom — compression arch, lip noses in the retention groove).'
            :'. Segments re-derived from the sliders; the saddles render at the shipped Rev B.3 parameters.');
   else if(view==='jig')
-    el.innerHTML=real?tag+'OP 012 cure jig, seated: two fences on one M6 rod through the keyhole; the wafer floats edge-captured with zero clamp load.'
-      :'The cure jig is CAD at the shipped parameters only — press <b>Rev B.3 build</b> to see the real fences, or regenerate them for these values via the command line below.';
+    el.innerHTML=real?tag+'OP 012 tape jig, seated: two fences located by one printed pin through the keyhole (nothing tightens — tape needs no cure hold); the four pegs funnel the wafer onto the tape in one landing.'
+      :'The tape jig is CAD at the shipped parameters only — press <b>Rev B.3 build</b> to see the real fences, or regenerate them for these values via the command line below.';
   else if(view==='drive')
     el.innerHTML=real?tag+'Drivetrain, live: the 22PG-2430BL (720:1, integrated driver) + 20T crossed bevel pinion drive the ring from the top (108/20 = 5.4:1, ~2 rpm PWM-dialed) while it hangs on the two idler wheels riding the inner groove right under the motor. The bracket plate is ghosted so the motor shows; the 22PG envelope is catalog-typical — measure the purchased unit.'
       :'The drivetrain is CAD at the shipped parameters only — press <b>Rev B.3 build</b> to watch the real ring run.';

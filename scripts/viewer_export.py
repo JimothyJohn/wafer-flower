@@ -13,9 +13,9 @@ Every configuration the viewer can show is CHECKED here first, on the real
 solids, with boolean CSG — the script exits nonzero on any FAIL, and the
 manifest carries the results so the page can display them:
 
-  nominal    the full cure-jig suite from cure_jig_stl.run_checks (18 checks:
-             drivetrain interference + capture)
-  travel     fences / rod / hardware swept open -> closed in steps must never
+  nominal    the full tape-jig suite from cure_jig_stl.run_checks (14 checks:
+             fence/pin interference + capture funnel)
+  travel     fences / pin swept open -> closed in steps must never
              touch the segment or the wafer at ANY point of the stroke
   placement  the wafer lowered onto the land along its plane normal with the
              jig open must clear the fences and the segment the whole way
@@ -37,7 +37,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from segment_stl import (PARAMS, Cfg, build_segment, build_wafer, write_stl,
                          report, wafer_cut, keyhole_z, Manifold, HAVE_MANIFOLD)
 from cure_jig_stl import (JIG, Jig, build_outboard, build_inboard,
-                          build_hardware, run_checks)
+                          build_pin, run_checks)
 from bracket_stl import (BRK, Brk, build_foot, build_top, build_shell,
                          wheel_at, pinion_at_top)
 
@@ -69,17 +69,15 @@ def _brk(cf):
 
 def build_scene(cf, j):
     """All bodies in scene coordinates, keyed by manifest part name."""
-    rod, nut, washer, knob, knob_nut, _ = build_hardware(j)
+    pin, _, _ = build_pin(j)
     return {
         'segment':      (build_segment(cf),  'segment',  0xB9A87E),
         'wafer':        (build_wafer(cf, 0), 'wafer',    0x9AA6B2),
         'jig_outboard': (build_outboard(j),  'out',      0xD97742),
         'jig_inboard':  (build_inboard(j),   'inboard',  0x3E7CB1),
-        'rod':          (rod,                'rod',      0x30343A),
-        'hex_nut':      (nut,                'inboard',  0x4A5058),
-        'washer':       (washer,             'rod',      0x6A7078),
-        'knob':         (knob,               'rod',      0xD97742),
-        'knob_nut':     (knob_nut,           'rod',      0x4A5058),
+        # 'rod' stays the part/group name for the locating pin — the
+        # manifest schema and viewer motion keys predate the tape rework
+        'rod':          (pin,                'rod',      0x30343A),
         # top idler bracket in the hanging orientation (gravity -y):
         # shown by the viewers only in ring/halo contexts
         'bracket_static': (build_foot(_brk(cf)), 'bracket', 0x8A6D3B),
@@ -170,13 +168,11 @@ def build_all(cf, j):
     scene = build_scene(cf, j)
     vecs = motion_vectors(cf)
 
-    print('nominal: cure-jig suite (cure_jig_stl.run_checks)')
+    print('nominal: tape-jig suite (cure_jig_stl.run_checks)')
     seg, waf = scene['segment'][0], scene['wafer'][0]
     nominal_ok = run_checks(j, seg, waf, scene['jig_outboard'][0],
-                            scene['jig_inboard'][0], scene['rod'][0],
-                            scene['hex_nut'][0], scene['washer'][0],
-                            scene['knob'][0], scene['knob_nut'][0])
-    checks = [('nominal', 'cure-jig drivetrain + capture suite (18 checks)',
+                            scene['jig_inboard'][0], scene['rod'][0])
+    checks = [('nominal', 'tape-jig fence/pin + capture suite (14 checks)',
                0.0 if nominal_ok else 1.0, nominal_ok)]
     checks += sweep_checks(cf, scene, vecs)
     checks += assembly_checks(cf, seg, waf)

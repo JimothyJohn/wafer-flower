@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Render cure-jig instruction media (PNGs + MP4s) from the CAD into docs/media/."""
+"""Render tape-jig instruction media (PNGs + MP4s) from the CAD into docs/media/.
+
+TAPE REWORK (2026-07-27): the clamp drivetrain (rod tension, nuts, washer,
+knob) is gone — the jig is two fences + a printed locating pin, and the
+ORDER FLIPPED: with wet SMP the wafer went down first and the closing jig
+could nudge it; tape grabs on first contact, so the jig assembles FIRST and
+the wafer drops through the peg funnel LAST, one shot.
+"""
 import sys, os, math
 import numpy as np
 
@@ -10,8 +17,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FFMpegWriter
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from segment_stl import Cfg, build_segment, build_wafer, prism, Manifold
-from cure_jig_stl import Jig, build_outboard, build_inboard, build_hardware, xcyl
+from segment_stl import Cfg, build_segment, build_wafer, prism, box, Manifold
+from cure_jig_stl import Jig, build_outboard, build_inboard, build_pin
 
 OUT = os.path.join(REPO, 'docs', 'media')
 os.makedirs(OUT, exist_ok=True)
@@ -33,21 +40,20 @@ seg  = build_segment(cf)
 waf  = build_wafer(cf, 0)
 fout = build_outboard(j)
 fin  = build_inboard(j)
-rod, nut, washer, knob, knob_nut, rod_len = build_hardware(j)
-knob = knob + knob_nut          # rendered as one piece: the closure you grab
+pin, _, _ = build_pin(j)
 
-# glue: two squashed beads in the adhesive pocket near the land centroid
-def bead(x):
+# tape: two 13x13 pads in the adhesive pocket, split RADIALLY about the land
+# centroid (radial separation is what resists the peel moment — glue notes)
+def pad(x):
     zl = -cf.landOff - cf.pocket_d          # pocket floor at y=0
-    return Manifold.sphere(5.0, 48).scale([1.2, 1.2, 0.30]).translate([x, 0, zl + 0.4])
-glue = bead(262.0) + bead(279.0)
+    return box(x - 6.5, x + 6.5, -6.5, 6.5, zl, zl + 1.1)
+tape = pad(261.0) + pad(281.0)
 
 C = dict(seg='#B9C0C7', waf='#8FB7E8', out='#1E9E8E', fin='#4457C4',
-         rod='#2A2E33', nut='#7A4FC0', washer='#C2497B', knob='#C2497B',
-         glue='#C9A227', bench='#E8ECEF')
+         pin='#2A2E33', tape='#C9A227', bench='#E8ECEF')
 
-BODY = {k: tris(v) for k, v in dict(seg=seg, waf=waf, out=fout, fin=fin, rod=rod,
-                                    nut=nut, washer=washer, knob=knob, glue=glue).items()}
+BODY = {k: tris(v) for k, v in dict(seg=seg, waf=waf, out=fout, fin=fin,
+                                    pin=pin, tape=tape).items()}
 
 # bench: grid of quads (small tiles sort better than one huge quad)
 def bench_tris():
@@ -107,45 +113,46 @@ def still(path, parts, labels=(), labels2d=(), **kw):
     print('still', path)
 
 Z = (0, 0, 0)
-ASSEMBLED = [('seg', Z), ('glue', Z), ('waf', Z), ('out', Z), ('fin', Z),
-             ('rod', Z), ('nut', Z), ('washer', Z), ('knob', Z)]
+ASSEMBLED = [('seg', Z), ('tape', Z), ('waf', Z), ('out', Z), ('fin', Z),
+             ('pin', Z)]
 
 # ---- stills -----------------------------------------------------------------
 still('hero.png', ASSEMBLED)
 still('step1_segment.png', [('seg', Z)],
       labels2d=[('keyhole faces you', (0.50, 0.20))],
       box=((180, 400), (-160, 160), (-30, 60)), azim=-40)
-still('step2_glue.png', [('seg', Z), ('glue', Z)],
-      labels=[('two short beads, in the pocket', (270, -110, 40))],
+still('step2_tape.png', [('seg', Z), ('tape', Z)],
+      labels=[('two pads in the pocket, split radially - LINERS ON', (270, -110, 40))],
       box=((190, 360), (-140, 140), (-30, 55)), elev=38, azim=-52)
-still('step3_wafer.png', [('seg', Z), ('glue', Z), ('waf', (0, 0, 26))],
-      labels2d=[('set it down close - the jig centres it', (0.50, 0.82))],
-      elev=22)
-still('step4_outboard.png',
-      [('seg', Z), ('glue', Z), ('waf', Z), ('out', (52, 0, 0))],
-      labels2d=[('slide in until it stops', (0.80, 0.30))], azim=-50)
-still('step5_inboard.png',
-      [('seg', Z), ('glue', Z), ('waf', Z), ('out', Z),
-       ('fin', (-52, 0, 0)), ('nut', (-70, 0, 0))],
-      labels2d=[('nut drops in the tower', (0.24, 0.26)),
-                ('slide in from the middle', (0.70, 0.76))], azim=-115)
-still('step6_rod.png',
-      [('seg', Z), ('glue', Z), ('waf', Z), ('out', Z), ('fin', Z), ('nut', Z),
-       ('rod', (78, 0, 0)), ('washer', (95, 0, 0)), ('knob', (108, 0, 0))],
-      labels2d=[('rod goes fence-keyhole-fence,\nthen threads into the nut',
+still('step3_outboard.png',
+      [('seg', Z), ('tape', Z), ('out', (52, 0, 0))],
+      labels2d=[('slide in until the nose butts', (0.80, 0.30))], azim=-50)
+still('step4_inboard.png',
+      [('seg', Z), ('tape', Z), ('out', Z), ('fin', (-52, 0, 0))],
+      labels2d=[('slide in from the middle until the prong butts', (0.68, 0.76))],
+      azim=-115)
+still('step5_pin.png',
+      [('seg', Z), ('tape', Z), ('out', Z), ('fin', Z), ('pin', (78, 0, 0))],
+      labels2d=[('pin goes fence-keyhole-fence, FLAT-DOWN.\nnothing tightens - now peel the liners',
                  (0.50, 0.12))], azim=-48)
-still('step7_tighten.png', ASSEMBLED,
-      labels2d=[('knob: FINGER tight', (0.50, 0.84))],
-      box=((380, 600), (-150, 150), (-30, 60)), azim=-38)
+still('step6_wafer.png',
+      [('seg', Z), ('tape', Z), ('out', Z), ('fin', Z), ('pin', Z),
+       ('waf', (0, 0, 26))],
+      labels2d=[('lower between the peg chamfers - the flanks centre it\nON THE WAY DOWN. one shot: tape does not reposition',
+                 (0.50, 0.84))],
+      elev=22)
+still('step7_press.png', ASSEMBLED,
+      labels2d=[('press OVER THE LAND only - never the free wafer centre',
+                 (0.50, 0.86))],
+      box=((180, 420), (-170, 170), (-30, 70)), elev=34, azim=-55)
 
 # parts overview, exploded with labels
 EXP = [('seg', Z), ('waf', (0, 0, 55)), ('out', (85, 0, 0)), ('fin', (-70, 0, 0)),
-       ('rod', (150, 0, 55)), ('nut', (-70, 0, 55)),
-       ('washer', (170, 0, 55)), ('knob', (185, 0, 55))]
+       ('pin', (150, 0, 55))]
 still('parts.png', EXP,
       labels2d=[('wafer', (0.47, 0.78)), ('segment', (0.36, 0.36)),
                 ('outboard fence', (0.66, 0.30)), ('inboard fence', (0.185, 0.55)),
-                ('rod + washer + knob', (0.80, 0.62)), ('hex nut', (0.245, 0.70))],
+                ('printed pin', (0.80, 0.62))],
       box=((80, 700), (-245, 245), (-35, 120)), elev=24, azim=-62, bench=False)
 
 # ---- 2D sections (styled) ---------------------------------------------------
@@ -157,8 +164,8 @@ def section_fig(path, y, xlim, zlim, title, ann=()):
         return V, np.array(m.tri_verts)
     fig, ax = plt.subplots(figsize=(11, 4.6))
     fig.patch.set_facecolor('#FAFBFC')
-    for key, s in dict(seg=seg, waf=waf, out=fout, fin=fin, rod=rod, nut=nut,
-                       washer=washer, knob=knob).items():
+    for key, s in dict(seg=seg, waf=waf, out=fout, fin=fin, pin=pin,
+                       tape=tape).items():
         V, F = sec(s)
         if len(F) == 0: continue
         for f in F:
@@ -177,18 +184,19 @@ def section_fig(path, y, xlim, zlim, title, ann=()):
     plt.close(fig)
     print('section', path)
 
-section_fig('sec_drivetrain.png', 0.0, (150, 545), (-27, 14),
-            'cut straight down the middle — everything on one axis, dead under the wafer centre',
-            ann=[('hex nut', (177, -11), (200, -22)),
-                 ('rod through the keyhole', (330, -7.5), (300, 8)),
-                 ('washer + knob', (513, -12), (455, -22)),
+zc = j.zc
+section_fig('sec_drivetrain.png', 0.0, (150, 545), (cf.z_bot - 4, 14),
+            'cut straight down the middle — one pin, two fences, dead under the wafer centre. nothing tightens',
+            ann=[('pin through the keyhole', (330, zc), (300, 8)),
+                 ('pull head', (513, zc), (455, zc + 12)),
+                 ('tape pads', (271, -3.0), (240, 8)),
                  ('wafer', (400, 0.4), (420, 8))])
-section_fig('sec_capture.png', 0.0, (487, 517), (-14, 11),
-            'the slot: wafer rim floats with 0.15 mm side gap, lip above, ledge below — nothing squeezes it',
-            ann=[('lip', (499.4, 3.4), (492, 6.5)),
-                 ('rim sits here', (499.2, 0.02), (491, -3.5)),
-                 ('ledge', (499.4, -2.6), (492, -7)),
-                 ('stop face', (500.4, 0.6), (505, 6.0))])
+peg_y = j.peg_rho * math.sin(math.radians(j.peg_az))
+section_fig('sec_capture.png', peg_y, (455, 500), (-16, 14),
+            'through a peg pair: the flanks sit at rim + 0.15 and funnel the wafer straight onto the tape',
+            ann=[('chamfered tip leads the wafer in', (480, 9.0), (468, 12)),
+                 ('flank gap 0.15', (478.5, 0.0), (466, -5)),
+                 ('support arm passes under the rim', (476, -8.0), (467, -13))])
 
 # ---- videos -----------------------------------------------------------------
 def ease(u):
@@ -211,21 +219,19 @@ def video(path, nframes, fps, frame_fn, figsize=(9.6, 6.4)):
     print('video', path)
 
 def assemble_frame(ax, t):
-    wz  = 60 * (1 - ease((t - 0.02) / 0.16))
-    ox  = 58 * (1 - ease((t - 0.24) / 0.18))
-    ix  = -58 * (1 - ease((t - 0.48) / 0.18))
-    rx  = 95 * (1 - ease((t - 0.72) / 0.20))
-    parts = [('seg', Z), ('glue', Z), ('waf', (0, 0, wz)), ('out', (ox, 0, 0)),
-             ('fin', (ix, 0, 0)), ('nut', (ix, 0, 0)), ('rod', (rx, 0, 0)),
-             ('washer', (rx * 1.15, 0, 0)), ('knob', (rx * 1.25, 0, 0))]
+    # tape flow: fences in, pin in, wafer drops LAST (one shot onto the tape)
+    ox  = 58 * (1 - ease((t - 0.04) / 0.18))
+    ix  = -58 * (1 - ease((t - 0.26) / 0.18))
+    px  = 95 * (1 - ease((t - 0.48) / 0.20))
+    wz  = 60 * (1 - ease((t - 0.74) / 0.20))
+    parts = [('seg', Z), ('tape', Z), ('out', (ox, 0, 0)), ('fin', (ix, 0, 0)),
+             ('pin', (px, 0, 0)), ('waf', (0, 0, wz))]
     render(ax, parts)
 
 def explode_frame(ax, t):
     e = ease(2 * t) if t < 0.5 else ease(2 - 2 * t)     # out and back
-    parts = [('seg', Z), ('glue', Z), ('waf', (0, 0, 55 * e)), ('out', (80 * e, 0, 0)),
-             ('fin', (-65 * e, 0, 0)), ('nut', (-65 * e, 0, 45 * e)),
-             ('rod', (135 * e, 0, 45 * e)), ('washer', (155 * e, 0, 45 * e)),
-             ('knob', (172 * e, 0, 45 * e))]
+    parts = [('seg', Z), ('tape', Z), ('waf', (0, 0, 55 * e)), ('out', (80 * e, 0, 0)),
+             ('fin', (-65 * e, 0, 0)), ('pin', (135 * e, 0, 45 * e))]
     render(ax, parts, box=((90, 660), (-245, 245), (-35, 115)))
 
 def turntable_frame(ax, t):

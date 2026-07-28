@@ -61,16 +61,16 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   bottom) — keyhole_z() now DERIVES from the bore radius so the bore bottom
   stays exactly 0.1 mm above the SLAB TOP z1 at any hole_D (reproduces the
   old z1+2.6 at Ø5; the gear band top is lower still at z_bot+gear_F, so
-  the rod clears the teeth by ~5.6). Two reasons for the raised axis, both cure-jig-driven:
-  (1) the jig rod must pass through to an inboard fence; (2) rotating
-  hardware on the rod ends must swing over the bench. An M6 rod (Ø6.0)
-  slides through the printed Ø6.5 hole with NO reaming. Bore exits 0.1 mm
+  the rod clears the teeth by ~5.6). The raised axis exists so the jig pin
+  can pass through to an inboard fence (the second historical reason —
+  swing room for rotating closures — died with the clamp drivetrain,
+  2026-07-27 tape rework; nothing rotates on the pin any more). The
+  printed Ø6.2 pin (or an M6 rod, Ø6.0) slides through the printed Ø6.5
+  hole with NO reaming. Bore exits 0.1 mm
   ABOVE the gear flange (teeth untouched, mesh check still 0.000); the web
   under the pocket floor is now ~0.9 mm (was 2.4 at Ø5) — thin but
   unloaded; genus 1 proves it unbroken. The axis CANNOT go higher (web →
-  breakout), which is why an M6 WING NUT (~15 mm swing vs 13.35 clearance)
-  is banned — closure is the printed knob (10 mm swing) or a plain M6 nut
-  (5.8). Needs rise > zoff+hole_r+1.5 → θ ≥ ~4°; keyhole_z() in
+  breakout). Needs rise > zoff+hole_r+1.5 → θ ≥ ~4°; keyhole_z() in
   segment_stl.py is the single source of truth. A through hole makes the
   segment genus 1 — expected, not the pocket-tunnel bug. Segments printed
   with the old Ø5 (or old blind) hole: drill through from the outer face at
@@ -180,50 +180,51 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   gear flange. Rejected: two-piece planar-ring + bolted-saddle split (would
   have cut 124→67 g and raised joint margin to 2.7×, but adds a screw per
   station, breaking zero-hardware).
-- Bond: compliant adhesive ONLY (acrylic foam tape or SMP/MS-polymer).
+- Bond: ACRYLIC FOAM TAPE ONLY (2026-07-27, Nick: "no longer curing, just
+  taping" — the SMP/liquid path is RETIRED; docs keep it marked retired).
   Gravity shear 0.13 kPa vs ~500 kPa capability (~4000×); governing load is
   thermal: ΔT=20 K × Δα≈57 ppm/K × L_max=96 mm ≈ 110 µm slip → 10 % shear
   strain on a 1.1 mm bondline ≈ 6.0 kPa, ~47× gravity. Rigid epoxy is banned
   — it puts that slip into the Si. Full-surface adhesive adds nothing:
   τ_th scales with distance from the land centroid, NOT with area, so a
-  bigger patch is a worse patch.
+  bigger patch is a worse patch. Tape gives ONE landing per wafer — no
+  repositioning — which is why the jig became a drop funnel.
 - Jig (bench, reusable): registers on the segment's own dovetail socket +
   edge rails; downhill R150.3 arc fence + push pad self-center the wafer;
   press over the LAND CENTROID, never the unsupported wafer center.
-- CURE JIG (OP 012, scripts/cure_jig_stl.py — the SMP path; tape needs no
-  cure hold): two printed fences slide toward each other on ONE M6x1.0 rod
-  (Ø6.0, slides through the Ø6.5 keyhole unreamed; ~350 mm cut from a
-  36"/1 m stick — the one bought fastener) passed radially THROUGH the
-  keyhole. Outboard fence nose butts the outer arc face, inboard fence
-  prong butts the inner face above the gear flange; printed knob with a
-  captive M6 nut outboard (wing nut BANNED at M6 — see keyhole bullet),
-  captive hex nut in the inboard tower. Tightening seats BOTH fences on
-  the segment — the force loop is jig↔segment only, the wafer floats
-  between FOUR CAPTURE PEGS (2026-07-25, Nick's call: pegs, not wall
-  cutouts — X/Y only, gravity owns Z, part-agnostic, never
-  overconstrained; the wing/slot/lip architecture is GONE). Pegs: Ø8, two
-  per fence at ±22° off the radial meridian, flanks at PROJECTED-rim +
-  0.15 — the tilted wafer's plan rim is an ELLIPSE (y semi-axis r·cosθ,
-  0.57 mm shy of r at θ=5), and pegs placed on a plain r+slack circle gap
-  0.23 instead of 0.15 and the y-window drifts with tilt; deriving each
-  peg radius from the ellipse keeps flank gap = slack at any wafer Ø or
-  tilt. Capture: x ±0.15, y ~±slack/sin(22°) = ±0.40; on the tilted land
-  the wafer settles DOWNHILL onto the two down-slope pegs — that
-  two-point gravity seat IS the centring. Lift is FREE by design (nothing
-  overhangs the wafer; set down between the chamfered peg tips, lift
-  straight out). Inboard pegs sit ~215 from the halo axis — the wings
-  they replaced grazed the gear by 6 mm; pegs clear the spiral tips
-  (r246) by ~30. CENTRED ON THE WAFER by construction: the keyhole
-  meridian (a=0) IS the wafer-centre meridian, checked numerically. The
-  WHOLE drivetrain is modelled as solids and checked, not assumed — rod
-  at thread OD, hex nut on its pocket floor, M6 washer, printed knob +
-  its captive nut (swing vs bench checked). 18 boolean checks total
-  (incl. an explicit 'wafer +5 z lifts FREE' probe documenting the
-  z-by-gravity intent), script exits nonzero on any FAIL. Fence solids 94
-  cm³ outboard / 64 inboard (from 107/76 with wings). Sliced at 15% (the
-  jig print setting — no real load path): outboard 48.1 g/1h36, inboard
-  28.7 g/1h04, knob 2.5 g/23m.
-- Bond sequence: one segment at a time flat on bench, then assemble ring.
+- TAPE JIG (OP 012, scripts/cure_jig_stl.py — filename kept for CI/docs
+  continuity; 2026-07-27 tape rework, Nick: "simplify the jig"): the
+  clamp drivetrain (rod tension, captive nuts, washer, knob, nut tower)
+  is GONE — tape needs no cure hold, so nothing tightens. Two printed
+  fences register on the segment over ONE printed Ø6.2 D-flat locating
+  pin (331 mm, disc pull-head, prints lying on its flat, insert
+  FLAT-DOWN; an M6 rod from the cure-jig era also fits, looser) passed
+  radially THROUGH the Ø6.5 keyhole. Outboard fence nose butts the outer
+  arc face, inboard fence prong butts the inner face above the gear
+  flange; hand pressure holds them seated for the seconds the placement
+  takes. ZERO bought hardware. ORDER FLIPPED vs the SMP flow: jig
+  assembles FIRST (tape pads down, liners on → fences → pin → peel),
+  wafer drops LAST — with tape the wafer cannot slide to a gravity seat
+  after touchdown, so the FOUR CAPTURE PEGS (2026-07-25, Nick's call:
+  pegs, not wall cutouts — X/Y only, gravity owns Z, part-agnostic,
+  never overconstrained) act as a drop-in FUNNEL: the chamfered tips
+  lead the wafer in and the flanks centre it on the way DOWN. Pegs: Ø8,
+  two per fence at ±22° off the radial meridian, flanks at PROJECTED-rim
+  + 0.15 — the tilted wafer's plan rim is an ELLIPSE (y semi-axis
+  r·cosθ, 0.57 mm shy of r at θ=5), and pegs placed on a plain r+slack
+  circle gap 0.23 instead of 0.15 and the y-window drifts with tilt;
+  deriving each peg radius from the ellipse keeps flank gap = slack at
+  any wafer Ø or tilt. Capture: x ±0.15, y ~±slack/sin(22°) = ±0.40.
+  Lift is FREE by design (nothing overhangs the wafer). Inboard pegs sit
+  ~215 from the halo axis, clear of the tooth tips by ~30. CENTRED ON
+  THE WAFER by construction: the keyhole meridian (a=0) IS the
+  wafer-centre meridian, checked numerically. 14 boolean checks (incl.
+  the 'wafer +5 z lifts FREE' probe and a pin-withdrawal sweep), script
+  exits nonzero on any FAIL. Sliced PLA @10%: outboard 107.5 g/3h03,
+  inboard 39.2 g/1h20, pin 7.5 g/20m (fences grew with the deep-bevel
+  bridge deck — a lean pass is possible if Nick wants it).
+- Bond sequence: one segment at a time flat on bench (tape jig, one
+  landing each), then assemble ring.
 
 ## Statics (OP 015 in docs/engineering.html; solver validated against an
 ## independent Python model, all 20 readouts matching)
@@ -339,14 +340,16 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   viewer widget in docs/assets/viewer.js (used by index.html +
   viewer.html). All need CDN for three.js r128.
 - docs/spec-sheet.html — customer-facing capability & care spec.
-- docs/cure-jig.html — plain-language illustrated OP 012 instructions: 8
-  bonding steps + one-time setup, each with a render; 3 embedded MP4s
-  (turntable / explode / full assembly sequence) in docs/media/ (~3.5 MB
-  total). ALL media renders from the CAD via a matplotlib script (merged
-  single Poly3DCollection with per-face lambert shading — separate
-  collections z-sort wrongly). Regenerate with scripts/cure_jig_media.py
-  (needs matplotlib + numpy + ffmpeg; --stills skips the videos, ~4 min
-  with them); linked from engineering.html's OP 010 keyhole bullet.
+- docs/cure-jig.html — plain-language illustrated OP 012 TAPE-JIG
+  instructions (2026-07-27 rework, filename kept): 8 taping steps +
+  one-time setup, each with a render; 3 embedded MP4s (turntable /
+  explode / full assembly sequence — fences and pin FIRST, wafer drops
+  LAST) in docs/media/ (~3.5 MB total). ALL media renders from the CAD
+  via a matplotlib script (merged single Poly3DCollection with per-face
+  lambert shading — separate collections z-sort wrongly). Regenerate with
+  scripts/cure_jig_media.py (needs matplotlib + numpy + ffmpeg; --stills
+  skips the videos, ~4 min with them); linked from engineering.html's
+  OP 010 keyhole bullet.
 - docs/onshape-variables.html — 46 copy-paste OnShape variable expressions,
   live recompute. Includes the CLOSED-FORM hide window (quadratic in rho after
   normalising by r) — the traveler solves it by bisection, OnShape need not.
@@ -391,9 +394,9 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   1h28, shell 26.2 g / 56 min, wheels 6.1 g / 16 min each, static
   saddle 73.4 g / 1h59, pinion 1.9 g / 18 min @10%.
 - scripts/cure_jig_stl.py — OP 012 cure jig (see Frame design). Imports
-  segment_stl for params/geometry, emits cure_jig_{outboard,inboard,knob}.stl
-  print-ready plus cure_jig_fitcheck.stl (segment+wafer+fences+drivetrain,
-  view only), and self-verifies 19 interference/capture booleans — exits
+  segment_stl for params/geometry, emits cure_jig_{outboard,inboard,pin}.stl
+  print-ready plus cure_jig_fitcheck.stl (segment+wafer+fences+pin,
+  view only), and self-verifies 14 interference/capture booleans — exits
   nonzero on any FAIL. CSG gotcha it caught: two cutters unioned cap-to-cap
   on the same plane leave a folded seam (dup mesh edges) — overlap cutters
   instead. Homebrew python is PEP-668-managed; manifold3d lives in a venv,
@@ -438,8 +441,7 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   PETG@45 history: 91.8 deep bevel, 67.9 at the 4.5 face).
   Pinion 1.9 g / 18 min, top unit 53.7 g / 1h28 @15%, slotted shell
   26.2 g / 56 min, static saddle 73.4 g / 1h59, wheels 6.1 g each,
-  jig 61.0/29.1/2.4 g @10% (pre-B.6 geometry — reslice with the
-  tape-jig rework).
+  tape jig 107.5/39.2/7.5 g @10% (outboard/inboard/pin).
   Hanging on the two top idlers
   is the OP 015
   two-hang-point case: M well under the single-point 2.2 N·m, and the
@@ -455,7 +457,7 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   is a base64 bundle: fetch() is blocked under file://, so a double-clicked
   index.html falls back to loading it via <script src>, which file://
   allows; --verify byte-gates it against the committed manifest + STLs), and gates every configuration it
-  can show with boolean CSG: the cure-jig nominal suite, the jig open/close
+  can show with boolean CSG: the tape-jig nominal suite, the jig open/close
   stroke swept in steps, the wafer placement drop, and the glued ring
   (adjacent segments/wafers + a bidirectional 2.95–3.05 mm depth-clearance
   probe on the neighbour-wafer cut). Exits nonzero on FAIL. `--verify` is
@@ -535,8 +537,8 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   (crazes PETG/softens PLA; acetone on silicon is fine). Denatured alcohol
   or 91% IPA for prep.
 - Adhesives on the shelf at Home Depot: Scotch-Mount Extreme (acrylic foam,
-  ~1.1 mm), Loctite PL Premium Max 9 oz (SMP = MS-polymer), mineral
-  spirits for SMP cleanup.
+  ~1.1 mm) — THE bond (tape-only since 2026-07-27). Loctite PL Premium
+  Max 9 oz (SMP) + mineral spirits were the retired liquid path.
 
 ## Likely next tasks
 1. FIX THE DOVETAIL (2.0× margin) — two per face is the cheapest path.

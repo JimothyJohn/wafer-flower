@@ -68,42 +68,14 @@
    "name": "jig_inboard",
    "group": "inboard",
    "color": "#3E7CB1",
-   "volume_cm3": 157.465
+   "volume_cm3": 117.818
   },
   {
    "file": "rod.stl",
    "name": "rod",
    "group": "rod",
    "color": "#30343A",
-   "volume_cm3": 9.838
-  },
-  {
-   "file": "hex_nut.stl",
-   "name": "hex_nut",
-   "group": "inboard",
-   "color": "#4A5058",
-   "volume_cm3": 0.348
-  },
-  {
-   "file": "washer.stl",
-   "name": "washer",
-   "group": "rod",
-   "color": "#6A7078",
-   "volume_cm3": 0.129
-  },
-  {
-   "file": "knob.stl",
-   "name": "knob",
-   "group": "rod",
-   "color": "#D97742",
-   "volume_cm3": 3.778
-  },
-  {
-   "file": "knob_nut.stl",
-   "name": "knob_nut",
-   "group": "rod",
-   "color": "#4A5058",
-   "volume_cm3": 0.348
+   "volume_cm3": 10.057
   },
   {
    "file": "bracket_static.stl",
@@ -190,7 +162,7 @@
  "checks": [
   {
    "group": "nominal",
-   "name": "cure-jig drivetrain + capture suite (18 checks)",
+   "name": "tape-jig fence/pin + capture suite (14 checks)",
    "value_mm3": 0.0,
    "pass": true
   },
