@@ -17,16 +17,16 @@ lands)
 - 2026-07-22 viewer: add the drive module (plate/clamp/motor/pinion) to
   viewer_export.py + docs/viewer.html as a preset? Left out to keep the PR
   additive; the fitcheck STL covers it meanwhile.
-- 2026-07-26 drive axis ("shaft perpendicular to the arc, pinion flipped"):
-  a true mixer-style crossed-axis pinion meshing the current
-  viewer-facing cone must sit IN FRONT of the tooth band, and the wafer
-  field owns all of that space (wafer undersides pass ~2 mm in front of
-  the band face — measured, not a guess). Only two geometries close:
-  (A) crossed radial shaft with the ring cone FLIPPED to face the wall
-  (pinion nests from behind, fully inside the 76 mm standoff — but the
-  visible cone then points away from the viewer, the look you rejected
-  on 07-25), or (B) the current parallel-axis pair (pinion taper
-  opposite the ring's is what makes parallel axes mesh — it is not a
-  mistake, but it is not the mixer picture). Which trade do you want?
-  A = mixer mechanics, hidden working faces; B = visible 45° ring cone,
-  parallel shaft. Nothing shipped for the axis change yet.
+(2026-07-26 drive-axis fork answered same day: crossed radial shaft
+shipped as Rev B.5 — generation owns conjugacy, the small pinion clears
+the wafer field from the front.)
+
+- 2026-07-27 22PG-2430BL 720:1 envelope: bracket_stl.py carries
+  CATALOG-TYPICAL dims (body Ø24, nose Ø22×20, length 65, Ø4 D-shaft —
+  the RobotShop datasheet PDF is CDN-blocked from here; speed ~16 rpm
+  no-load is interpolated from the 19:1/630 rpm and 1370:1/8 rpm
+  siblings). Measure the purchased unit (body Ø + length, nose Ø +
+  length, shaft Ø + flat, mount holes) and re-run bracket_stl.py before
+  printing the shell. Also: it's a 24 V-class motor with an integrated
+  driver — what's the supply plan (24 V brick + PWM pot, or a
+  microcontroller)? USB 5 V won't run it.

@@ -14,11 +14,11 @@
   "gear_m": 5.6,
   "gear_sp": 0.0,
   "gear_pa": 20.0,
-  "pin_T": 10,
-  "pin_rho": 12.0,
-  "pin_face": 10.0,
+  "pin_T": 20,
+  "pin_rho": 8.0,
+  "pin_face": 7.0,
   "stand": -1.0,
-  "gear_bl": 0.6,
+  "gear_bl": 0.3,
   "gear_drive": "bevel45",
   "gear_F": 9.5,
   "ogrv_z0": 12.0,
@@ -39,15 +39,15 @@
   "facets": 512
  },
  "sector_deg": 40.0,
- "keyhole_z": -37.66086141214872,
- "z_bot": -56.01086141214872,
+ "keyhole_z": -24.310861412148725,
+ "z_bot": -42.660861412148726,
  "parts": [
   {
    "file": "segment.stl",
    "name": "segment",
    "group": "segment",
    "color": "#B9A87E",
-   "volume_cm3": 306.532
+   "volume_cm3": 231.042
   },
   {
    "file": "wafer.stl",
@@ -61,14 +61,14 @@
    "name": "jig_outboard",
    "group": "out",
    "color": "#D97742",
-   "volume_cm3": 598.948
+   "volume_cm3": 403.469
   },
   {
    "file": "jig_inboard.stl",
    "name": "jig_inboard",
    "group": "inboard",
    "color": "#3E7CB1",
-   "volume_cm3": 217.199
+   "volume_cm3": 157.465
   },
   {
    "file": "rod.stl",
@@ -110,21 +110,21 @@
    "name": "bracket_static",
    "group": "bracket",
    "color": "#8A6D3B",
-   "volume_cm3": 150.378
+   "volume_cm3": 144.351
   },
   {
    "file": "bracket_top.stl",
    "name": "bracket_top",
    "group": "bracket",
    "color": "#B86038",
-   "volume_cm3": 132.44
+   "volume_cm3": 87.092
   },
   {
    "file": "bracket_shell.stl",
    "name": "bracket_shell",
    "group": "bracket",
    "color": "#9A4A2E",
-   "volume_cm3": 8.926
+   "volume_cm3": 37.627
   },
   {
    "file": "wheel_l.stl",
@@ -145,7 +145,7 @@
    "name": "drive_pinion",
    "group": "bracket",
    "color": "#C2497B",
-   "volume_cm3": 5.247
+   "volume_cm3": 2.205
   },
   {
    "file": "my_frame_segment.stl",
@@ -257,7 +257,7 @@
   {
    "group": "assembly",
    "name": "segments butt at the joint (0.1 deg nudge contacts)",
-   "value_mm3": 616.6391,
+   "value_mm3": 430.073,
    "pass": true
   }
  ]

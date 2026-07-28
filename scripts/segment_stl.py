@@ -58,25 +58,32 @@ PARAMS = dict(
                         # conjugate spiral. Spiral thrust would fight the
                         # idler groove (the only axial restraint) — keep 0.
     gear_pa  = 20.0,    # pressure angle, degrees
-    pin_T    = 10,      # pinion tooth count. 108T ring / 10T = 10.8:1 —
-                        # pairs the Pololu #1596 at 5 V (13*5/6 = 10.83
-                        # no-load rpm) to 1.00 rpm at the ring (2026-07-26,
-                        # Nick: "pair it exactly with the rack count").
-    pin_rho  = 12.0,    # pinion mid-face pitch radius. FREE, not the
-                        # rolling value ring_pitch/ratio (26.9): conjugacy
-                        # is by generation under the imposed motion, so
-                        # only the COUNT is forced — the first crossed rev
-                        # used the rolling size and read "way out of
-                        # scale" (Nick). Small = motor right at the mesh.
-    pin_face = 10.0,    # pinion face length along its axis: engages the
+    pin_T    = 20,      # pinion tooth count. 108T ring / 20T = 5.4:1 —
+                        # the Pololu #1596 at 5 V (10.83 no-load rpm) gives
+                        # 2.01 rpm at the ring (2026-07-27, Nick: ~2 rpm is
+                        # fine, minimalist profile beats exact-1; pin_T 10
+                        # was the 1.00 rpm build). NOTE finer RACK teeth
+                        # would RAISE the profile: more ring teeth needs
+                        # more pinion teeth per ratio, and the pinion's
+                        # size floor is its printable tooth module
+                        # (2*pin_rho/pin_T >= ~0.8).
+    pin_rho  = 8.0,     # pinion mid-face pitch radius. FREE, not the
+                        # rolling value (conjugacy is by generation; only
+                        # the COUNT is forced). 8 with pin_T 20 = 0.8 mm
+                        # section module — the printable floor, and the
+                        # low-profile knob: the standoff is ~2.25*rho +
+                        # gear_F/2 + face/2 dominated.
+    pin_face = 7.0,     # pinion face length along its axis: engages the
                         # OUTER pin_face mm of the tooth radial envelope.
     stand    = -1.0,    # extra wafer standoff from the wall, mm. The
                         # crossed-axis pinion's body bulges in front of
                         # the tooth band; the wafers must clear it.
                         # -1 = DERIVE the minimum (bulge + 3) in Cfg —
                         # 78.2 at B.5 -> part 108 tall. Override to taste.
-    gear_bl  = 0.6,     # tooth thinning for printed backlash (the runner
-                        # is the cutter minus this).
+    gear_bl  = 0.3,     # tooth thinning for printed backlash (the runner
+                        # is the cutter minus this). 0.3, not the 0.6 of
+                        # the module-5.4 pinion era: at the 20T/0.8-module
+                        # pinion, 0.6 halves the tooth.
     gear_drive = 'bevel45', # 'bevel45': external beveloid ring, big end
                         # at the wall, generated conjugate to a parallel-
                         # axis pinion — see bevel_geom(). 'spur' is the
@@ -942,10 +949,10 @@ def pinion_profile(cf, T, backlash=None):
     return pts, dict(rp=rp, rb=rb, ra=ra, rf=rf, T=T)
 
 
-def build_pinion(cf, T=None, face=None, bore=3.2, flat=0.4, backlash=None):
+def build_pinion(cf, T=None, face=None, bore=4.2, flat=0.5, backlash=None):
     """The mating pinion. bevel45 (default): the beveloid pinion, big end
     at the front, axis PARALLEL to the halo axis, plus a Ø16 hub on the
-    wall side for the N20's 3 mm D-shaft (bore 3.2 with a 0.4 flat).
+    motor side for the 22PG-2430BL's 4 mm D-shaft (bore 4.2, 0.5 flat).
     'spur' legacy: straight spur. T = teeth/segment gives ratio N:1."""
     T = T or cf.tps
     if cf.g_bev and (T == cf.tps or T == cf.pin_T):

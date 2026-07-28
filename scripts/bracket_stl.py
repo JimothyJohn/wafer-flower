@@ -59,15 +59,20 @@ BRK = dict(
                        # (60 made the print 348 wide — H2S bed is 340)
     wall_gap = 6.0,    # ring wall face to drywall (the small pinion dips
                        # only ~1.2 behind the wall face)
-    back_t   = 6.0,    # wall plate thickness
+    back_t   = 5.0,    # wall plate thickness (lean pass)
     anchor_D = 5.0,    # drywall-anchor screw clearance (#8/#10 pan)
     anchor_gap = 50.0, # the two anchors sit this far apart, inline vertical
-    mot_w    = 10.0,   # Pololu #1596 micro metal body: 10 x 12 mm RECT
-    mot_h    = 12.0,   # cross section x ~26 long incl. gearbox; 3 mm
-    mot_L    = 26.0,   # D-shaft x9 (pinion bore 3.2 + 0.4 flat fits)
+    mot_D    = 24.0,   # 22PG-2430BL brushless planetary w/ integrated
+    nose_D   = 22.0,   # driver (2026-07-27, Nick's pick, 720:1): Ø24 motor
+    nose_L   = 20.0,   # body over a Ø22 gearbox nose, ~65 long total,
+    mot_L    = 65.0,   # Ø4 D-shaft (pinion bore 4.2 + 0.5 flat).
+                       # CATALOG-TYPICAL, NOT MEASURED — sibling models
+                       # (19:1 @630 rpm, 1370:1 @8 rpm, 24 V) interpolate
+                       # to ~16 rpm no-load at 720:1 -> ~3 rpm ring,
+                       # PWM'd down; MEASURE the purchased unit.
     mot_clr  = 0.4,    # pocket clearance per side
-    shell_t  = 3.0,    # motor shell wall
-    shaft_D  = 3.4,    # shaft pass-through bore
+    shell_t  = 2.4,    # motor shell wall (lean pass)
+    shaft_D  = 4.4,    # shaft pass-through bore
 )
 
 
@@ -170,19 +175,23 @@ def build_top(b):
     # wall plate spanning the wheel towers and reaching above the shell
     x2 = max(abs(w[0]) for w in b.wheels) + 18.0
     y_lo = min(w[1] for w in b.wheels) - 18.0
-    ya = b.hub_top + b.mot_L + 10.0
-    y_top = ya + b.anchor_gap + 8.0
-    # wide plate over the wheels/shell, narrow anchor strip above — a
-    # wide corner at y_top would poke past the hide radius (411 > 410)
-    body = box(-x2, x2, y_lo, ya - 2.0, b.wall_z, b.wall_z + b.back_t)
-    body += box(-16.0, 16.0, ya - 10.0, y_top, b.wall_z,
+    # anchors stay inline-vertical on the centreline, but SPAN the unit
+    # (one below the wheels, one just above the motor top): the 22PG is
+    # 65 long, so anchors-above-with-a-gap would reach plan r445 — past
+    # the ~416 hide window. The long baseline also resists the
+    # deflection torque better.
+    y_anc_hi = min(b.hub_top + b.mot_L + 6.0, 396.0)
+    y_top = y_anc_hi + 8.0
+    body = box(-x2, x2, y_lo, b.hub_top + 4.0, b.wall_z,
+               b.wall_z + b.back_t)
+    body += box(-16.0, 16.0, b.hub_top, y_top, b.wall_z,
                 b.wall_z + b.back_t)
-    for dy in (0.0, b.anchor_gap):
+    for ya_ in (y_lo + 12.0, y_anc_hi):
         body -= cyl(b.anchor_D / 2.0, b.back_t + 2.0, b.wall_z - 1.0,
-                    0.0, ya + dy, fn=48)
+                    0.0, ya_, fn=48)
     # wheel towers: bosses from the plate forward, captive M6 nut pockets
     for cx, cy in b.wheels:
-        body += cyl(10.0, b.w_lo + b.wheel_w + 2.0 - b.wall_z, b.wall_z,
+        body += cyl(9.0, b.w_lo + b.wheel_w + 2.0 - b.wall_z, b.wall_z,
                     cx, cy)
         body -= cyl(b.axle_D / 2.0, 60.0, b.wall_z - 1.0, cx, cy)
         body -= (prism(hex_poly(M6_NUT_AF, M6_NUT_CLR), 0.0, 6.0)
@@ -190,8 +199,8 @@ def build_top(b):
     # slide face for the shell ears: a deck at the meridian whose front
     # face sits just behind the shell's ear plane, with two captive M6
     # nuts; the ears' vertical slots ride on printed M6 screws
-    ear_x = b.mot_w / 2.0 + b.mot_clr + b.shell_t + 8.0
-    face_z = b.pin_z - (b.mot_h / 2.0 + b.mot_clr + b.shell_t) - 4.0
+    ear_x = b.mot_D / 2.0 + b.mot_clr + b.shell_t + 8.0
+    face_z = b.pin_z - (b.mot_D / 2.0 + b.mot_clr + b.shell_t) - 4.0
     # the deck starts ABOVE the tooth swing (teeth reach plan r 305.8)
     body += box(-ear_x - 8.0, ear_x + 8.0, 306.5,
                 b.hub_top + b.mot_L + 6.0, b.wall_z, face_z)
@@ -204,20 +213,27 @@ def build_top(b):
 
 
 def build_shell(b):
-    """The slotted motor shell: wraps the Pololu #1596 (shaft down
-    through the bottom opening onto the pinion hub) with two ears whose
-    VERTICAL SLOTS (slot_T travel) clamp to the top unit's slide face —
-    slide to set pinion-tooth preload, then tighten."""
-    w2 = b.mot_w / 2.0 + b.mot_clr
-    h2 = b.mot_h / 2.0 + b.mot_clr
-    sx = w2 + b.shell_t
-    sz = h2 + b.shell_t
-    y_mot0 = b.hub_top + 0.5
+    """The slotted motor shell: wraps the 22PG-2430BL (round: O22 gearbox
+    nose then O24 motor body, shaft down through the bottom opening onto
+    the pinion hub) with two ears whose VERTICAL SLOTS (slot_T travel)
+    clamp to the top unit's slide face — slide to set pinion-tooth
+    preload, then tighten. Open at the top: the motor's leads exit up."""
+    rb = b.mot_D / 2.0 + b.mot_clr               # body pocket radius
+    rn = b.nose_D / 2.0 + b.mot_clr              # nose pocket radius
+    sx = rb + b.shell_t                          # shell half-extents
+    sz = rb + b.shell_t
+    y_mot0 = b.hub_top + 0.5                     # nose bottom face
     y_mot1 = y_mot0 + b.mot_L
-    y_top = y_mot1 + b.shell_t
+    y_top = y_mot1 + 1.0                         # open top (leads out)
     shell = box(-sx, sx, y_mot0 - b.shell_t, y_top,
                 b.pin_z - sz, b.pin_z + sz)
-    shell -= box(-w2, w2, y_mot0, y_mot1 + 0.1, b.pin_z - h2, b.pin_z + h2)
+    pocket = (Manifold.cylinder(b.nose_L + 0.1, rn, rn, 96)
+              .rotate([-90.0, 0.0, 0.0])
+              .translate([0.0, y_mot0, b.pin_z]))
+    pocket += (Manifold.cylinder(b.mot_L - b.nose_L + 2.0, rb, rb, 96)
+               .rotate([-90.0, 0.0, 0.0])
+               .translate([0.0, y_mot0 + b.nose_L, b.pin_z]))
+    shell -= pocket
     shell -= (Manifold.cylinder(b.shell_t + 2.0, 9.0, 9.0, 64)
               .rotate([-90.0, 0.0, 0.0])
               .translate([0.0, y_mot0 - b.shell_t - 1.0, b.pin_z]))

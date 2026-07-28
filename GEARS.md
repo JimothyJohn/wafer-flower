@@ -1,7 +1,7 @@
 # GEARS.md — why these bevel gears work, and how to generate yours
 
 This is the clinic. It explains why the Wafer Halo's gear train — a 108-tooth
-45° bevel rack on the sculpture's OD, driven at 10.8:1 by a 10-tooth conical
+45° bevel rack on the sculpture's OD, driven at 5.4:1 by a 20-tooth conical
 pinion on a vertical shaft — meshes correctly *as generated*, why classical
 bevel-gear theory said it couldn't exist, and exactly which constraints are
 load-bearing versus free, so the same method can be re-targeted
@@ -21,10 +21,11 @@ The drive wants four things simultaneously:
 
 1. A **45° straight bevel rack** on the ring's outside diameter — the mixer
    look, working face toward the viewer (aesthetic, non-negotiable).
-2. A **10.8:1 ratio**, because the bought motor (Pololu #1596, 1000:1 micro
-   metal, 13 rpm no-load at 6 V) runs at 13 × 5/6 ≈ 10.83 rpm on 5 V USB,
-   and 10.83 ÷ 10.8 = **1.003 rpm** at the sculpture — the target speed with
-   no controller.
+2. A **~2 rpm target** at the sculpture, minimalist over exact. The 5.4:1
+   ratio (20T pinion) puts any small gearmotor in range: the 22PG-2430BL
+   720:1 (integrated driver, catalog-typical ~16 rpm no-load) lands ~3 rpm
+   and PWMs down to taste; the earlier Pololu #1596 at 5 V (10.83 rpm
+   no-load) would give 2.006 rpm on the same teeth.
 3. The pinion shaft **pointing straight down** (radial at 12 o'clock), motor
    directly above it.
 4. Packaging: silicon wafers own *all* space in front of the ring (their
@@ -37,8 +38,8 @@ and the cone angles are then *dictated* by the ratio:
 `tan δ₂ = sin Σ / (ratio + cos Σ)`. Consequences, all measured in this repo
 before being abandoned:
 
-- A **45°/45° pair only rolls at 1:1**. At 10.8:1 with 90° shafts the ring
-  cone must be ~84.7° (nearly a flat face gear) and the pinion ~5.3° (nearly
+- A **45°/45° pair only rolls at 1:1**. At 5.4:1 with 90° shafts the ring
+  cone must be ~79.5° (nearly a flat face gear) and the pinion ~10.5° (nearly
   a spur) — no mixer look.
 - Keeping the ring at 45° and solving for true rolling puts the shared apex
   **~300 mm in front of the wall** on the halo axis; the pinion and motor
@@ -115,19 +116,32 @@ pattern is phased so **every joint lands mid-space** (a space at azimuth 0,
 copies at `k·pitch` — see §5d).
 
 **Ratio = ring teeth ÷ pinion teeth, exactly.** Tooth-passing frequency
-must match at the mesh, so `108 / pin_T = ratio`. Wanting 10.8:1 forces
-`pin_T = 10`. This is the *only* thing the RPM goal fixes:
+must match at the mesh, so `108 / pin_T = ratio`. Wanting ~2 rpm forces
+`pin_T = 20` (5.4:1). This is the *only* thing the RPM goal fixes:
 
 ```python
 # segment_stl.py PARAMS
-pin_T    = 10,      # pinion tooth count. 108T ring / 10T = 10.8:1 —
-                    # pairs the Pololu #1596 at 5 V (13*5/6 = 10.83
-                    # no-load rpm) to 1.00 rpm at the ring
+pin_T    = 20,      # pinion tooth count. 108T ring / 20T = 5.4:1 —
+                    # the Pololu #1596 at 5 V (10.83 no-load rpm) gives
+                    # 2.01 rpm at the ring (2026-07-27, Nick: ~2 rpm is
+                    # fine, minimalist profile beats exact-1; pin_T 10
+                    # was the 1.00 rpm build). NOTE finer RACK teeth
+                    # would RAISE the profile: more ring teeth needs
+                    # more pinion teeth per ratio, and the pinion's
+                    # printability floor is its section module
+                    # (2*pin_rho/pin_T >= ~0.8).
 ```
+
+One subtlety worth internalizing: pinion tooth count and pinion *size* are
+coupled through printability, not kinematics. A 20T pinion at rho 8 has a
+0.8 mm section module — the FDM floor — so doubling the tooth count again
+(1 rpm-class ratios with finer rack teeth) would force a *bigger* pinion
+and a *taller* part. Coarse rack + few-but-chunky pinion teeth is the
+low-profile direction.
 
 Note what is *not* on this list: the pinion's size, and even its cone
 angle. That's the subject of the next section, and it's the difference
-between the Ø100 monster and the Ø41 pinion that shipped.
+between the Ø100 monster and the Ø25 pinion that shipped.
 
 ## 4. The freedom theorem: pinion size is a style knob
 
@@ -145,19 +159,22 @@ parameters, sized for packaging:
 
 ```python
 # segment_stl.py PARAMS
-pin_rho  = 12.0,    # pinion mid-face pitch radius. FREE, not the
-                    # rolling value ring_pitch/ratio (26.9): conjugacy
-                    # is by generation under the imposed motion, so
-                    # only the COUNT is forced — the first crossed rev
-                    # used the rolling size and read "way out of
-                    # scale" (Nick). Small = motor right at the mesh.
-pin_face = 10.0,    # pinion face length along its axis: engages the
+pin_rho  = 8.0,     # pinion mid-face pitch radius. FREE, not the
+                    # rolling value (conjugacy is by generation; only
+                    # the COUNT is forced). 8 with pin_T 20 = 0.8 mm
+                    # section module — the printable floor, and the
+                    # low-profile knob: the standoff is ~2.25*rho +
+                    # gear_F/2 + face/2 dominated.
+pin_face = 7.0,     # pinion face length along its axis: engages the
                     # OUTER pin_face mm of the tooth radial envelope.
 ```
 
-With rho = 12 the pinion is a Ø17→Ø41 cone, its axis 19.1 mm off the wall
-face, and the derived wafer standoff collapses from +78 to +31 mm (§7).
-The cost of abandoning rolling is extra sliding — already accepted.
+With rho = 8 the pinion is a Ø9.9→Ø25.3 cone, its axis 13.6 mm off the
+wall face, and the derived wafer standoff collapses to +17.6 mm (§7) —
+the rolling-size first cut was +78, the rho-12 rev +31. The floor is the
+0.8 mm section module (`2·pin_rho/pin_T`): below that FDM teeth stop
+resolving. The cost of abandoning rolling is extra sliding — already
+accepted at these mN·m loads.
 
 ## 5. The recipe
 
@@ -327,11 +344,13 @@ Two derived quantities tie the gear to the sculpture, both computed in
 - **`stand`** — the wafers must clear the pinion's front bulge, so the part
   grows exactly as much as the drive needs:
   `pin_bulge = pin_zax + (pin_x1 − pin_apex)·(1 + 2/pin_T)`, and
-  `stand = pin_bulge + 3 − gap₀`. At rho 12 that's +31 mm (it was +78 at
-  the rolling-sized pinion — shrinking the pinion shrank the sculpture).
-- **wall gap** — the pinion's lower teeth swing `(x1−apex)·1.2 − zax`
-  behind the ring's wall face (1.2 mm at shipped numbers); the mount holds
-  the ring 6 mm off the drywall and the wall-plane check proves it.
+  `stand = pin_bulge + 3 − gap₀`. At rho 8 that's +17.6 mm (+31 at rho 12,
+  +78 at the rolling-sized pinion — shrinking the pinion shrinks the
+  sculpture, until the 0.8 mm section-module print floor stops it).
+- **wall gap** — the pinion's lower teeth swing `(x1−apex)·(1+2/pin_T) −
+  zax` past the ring's wall face (at shipped numbers that's −0.9 mm: the
+  small pinion never crosses the wall plane); the mount holds the ring
+  6 mm off the drywall and the wall-plane check proves it either way.
 
 The mount side completes the mesh mechanics: the two bore idlers hang the
 ring **at the meshing meridian**, so the pinion presses against a hard
