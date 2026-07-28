@@ -86,11 +86,15 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   nut trap.
 - IDLER RETENTION GROOVE (2026-07-25, moved from the outer face):
   circumferential, in the INNER face at Ri — 2 deep, 1.5 straight ledge +
-  45° chamfer roof, 2.5 mm up from the flat bottom. The bracket's idler
-  wheel RIBS ride in it: the ring hangs on the wheel bodies (rolling on
-  the bore at Ri) and the groove walls are its only axial restraint
-  (±0.15 float, hard jam at +0.5 out; -z backs onto the rib ramp then the
-  bracket deck). grv_d=0 deletes it.
+  45° chamfer roof, 2.5 mm up from the flat bottom. The bracket idlers'
+  FLANGES ride in it (2026-07-27: bought F625ZZ flanged bearings, flange
+  Ø18×1.0 — replaced the printed Ø48 wheels' 1.2×1.6 ribs): the ring
+  hangs on the bearing bodies (rolling on the bore at Ri, 0.05 datum
+  standoff — exact tangency reads as µm facet-chord overlap in the
+  booleans) and the groove ledge walls are its axial restraint (±0.25
+  float, hard jam at +0.5 out; -z the 1.0-tall flange only meets the 45°
+  chamfer roof after ~1.35, so each tower carries a STOP PAD 0.5 behind
+  the ring's back face). grv_d=0 deletes it.
 - EXTERNAL BEVELOID GEAR (2026-07-25, third and final geometry — Nick:
   "the teeth are upside down, the pinion will engage from the top"; also
   straight teeth by joint call, gear_sp=0, 35 restores the spiral look):
@@ -158,19 +162,31 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   Pinion stays 0.9 in FRONT of the wall face at rho 8 (the rho-12 rev
   dipped 1.2 behind; wall_gap 6 covers either) and bulges 26.2 in front
   (stand owns it). MOUNTS
-  (2026-07-26 final, Nick: "wheels right underneath the motor… idling
-  to preload the motor pinion… needs mounting slots"): DYNAMIC = ONE
-  top unit — the ring HANGS on two Ø48 bore idlers (ribs in the INNER
-  groove, ±12° from top, directly under the motor: the wheels are the
-  radial datum AT the mesh meridian so engagement can't breathe), and
-  the motor shell mounts on ±8 mm VERTICAL SLOTS (printed M6 + captive
-  nuts) — slide to set pinion preload, clamp. STATIC = bottom saddle
-  nesting in the OUTER groove (ogrv_*: z_bot+12, 10×2, chamfered roof;
-  52° arc — 60° printed 348 wide vs the 340 bed). Internal engagement
-  hangs, external rests — proven both ways numerically. Two drywall
-  anchors inline vertical per mount; nothing behind the frame. 12
-  bracket checks gate it; the hide check measures exact mesh vertices
-  (bbox corners false-alarm on L-shaped parts).
+  (2026-07-26, Nick: "wheels right underneath the motor… idling to
+  preload the motor pinion… needs mounting slots"; idlers re-sized
+  2026-07-27, Nick: printed Ø48 "way too unnecessarily big" → bought
+  F625ZZ): DYNAMIC = ONE top unit — the ring HANGS on two F625ZZ
+  flanged-bearing idlers (flanges in the INNER groove, axles at x ±50 /
+  az ±11.7° directly under the motor: the bearings are the radial datum
+  AT the mesh meridian so engagement can't breathe; M5 screws into
+  captive printed M5 nuts), and the motor shell mounts on ±8 mm
+  VERTICAL SLOTS (printed M6 + captive nuts at grid points ±25, 350) —
+  slide to set pinion preload, clamp. STATIC = bottom saddle nesting in
+  the OUTER groove (ogrv_*: z_bot+12, 10×2, chamfered roof; 52° arc —
+  60° printed 348 wide vs the 340 bed). Internal engagement hangs,
+  external rests — proven both ways numerically. Two drywall anchors
+  inline vertical per mount; nothing behind the frame. HOLES ON THE
+  25 mm GRID (2026-07-27, Nick: breadboard mockup): every anchor (top
+  y 250/400, saddle y −325/−375 on a narrow strip — full width busts
+  the r410 hide bound at the corners) and slot screw sits on 25 mm
+  spacings; the WHEEL AXLES cannot (a bought OD pins them to the
+  d_c circle — y 241.9 off-grid; grid-snapping both coords needs a
+  custom printed wheel, Ø49 at (±50, 225), if ever wanted). The
+  pre-grid saddle put its anchors at −296/−346 OUTSIDE its −334..−308
+  plate — the holes subtracted NOTHING and it printed anchor-less
+  (genus 0 was the tell; an assert now guards it). 12 bracket checks
+  gate it; the hide check measures exact mesh vertices (bbox corners
+  false-alarm on L-shaped parts).
 - GEAR TOOTH COUNT MUST DIVIDE BY N or the pitch breaks at every joint.
   Module 5.6 nominal, N=9: 12T/segment = 108 (flush module 5.384) —
   every joint lands mid-space and the pattern tiles seamlessly.
@@ -218,10 +234,17 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   Lift is FREE by design (nothing overhangs the wafer). Inboard pegs sit
   ~215 from the halo axis, clear of the tooth tips by ~30. CENTRED ON
   THE WAFER by construction: the keyhole meridian (a=0) IS the
-  wafer-centre meridian, checked numerically. 14 boolean checks (incl.
+  wafer-centre meridian, checked numerically. BENCH HOLD-DOWNS on the
+  25 mm grid (2026-07-27, Nick: breadboard mockup): Ø5.4 through +
+  Ø10×3.5 counterbore pairs at y ±25 — outboard at x 325 (foot,
+  widened +6) and 500 (rear block), inboard at x 175 (base back face
+  moved to x_in−32 to fit it); both fences bolt to a 25 mm board AT
+  their nominal working separation, fence_w 60→64 for counterbore
+  wall. Pin shortened to 327 (tail at x_in−10, ~65 mm engaged — the
+  full-back tail hit 347 vs the 340 bed). 14 boolean checks (incl.
   the 'wafer +5 z lifts FREE' probe and a pin-withdrawal sweep), script
-  exits nonzero on any FAIL. Sliced PLA @10%: outboard 107.5 g/3h03,
-  inboard 39.2 g/1h20, pin 7.5 g/20m (fences grew with the deep-bevel
+  exits nonzero on any FAIL. Sliced PLA @10%: outboard 115.3 g/3h25,
+  inboard 47.8 g/1h35, pin 7.4 g/20m (fences grew with the deep-bevel
   bridge deck — a lean pass is possible if Nick wants it).
 - Bond sequence: one segment at a time flat on bench (tape jig, one
   landing each), then assemble ring.
@@ -368,11 +391,13 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   OUTWARD from the band (Ri+6 < g_fi puts a phantom ring in the pinion's
   path — 9.4 mm³).
 - scripts/bracket_stl.py — TOP IDLER BRACKET (2026-07-25 rewrite, was two
-  saddles; 2026-07-26 top-cluster; 2026-07-27 lean pass + 22PG): ONE
-  part bolts to the wall at 12 o'clock; two printed Ø48 idler wheels
-  (rib in the inner groove, spinning on printed M6 screws into captive
-  printed nuts) at ±12° right under the motor, plus the slotted motor
-  shell, all mount on it. The ring HANGS on the wheels (the OP 015
+  saddles; 2026-07-26 top-cluster; 2026-07-27 lean pass + 22PG + F625ZZ
+  idlers + 25 mm grid): ONE part bolts to the wall at 12 o'clock; two
+  BOUGHT F625ZZ flanged bearings (flange in the inner groove, M5 screws
+  into captive printed M5 nuts, 8 AF) right under the motor, plus the
+  slotted motor shell, all mount on it. build_wheel() models the
+  bearing for the checks/viewer — it is NOT a print (bracket_wheel.stl
+  deleted). The ring HANGS on the bearings (the OP 015
   two-hang-point case; dovetail S_joint 213 mm³ at dt_h=5) and is
   driven purely rotationally from the top by the 20T crossed pinion.
   MOTOR (2026-07-27, Nick's pick, replaces the Pololu #1596): 22PG-2430BL
@@ -384,15 +409,14 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   to ~16 rpm no-load → ~3 rpm ring, PWM to ~2) — MEASURE the purchased
   unit before printing the shell. Round-motor shell: cylinder pocket
   (nose then body), open top for leads, Ø9 hub opening, slotted ears
-  (±8 mm). Anchors span the unit inline-vertical (anchors-above pushed
-  plan r to 445 vs the 410 hide bound at the 65 mm body). 12
-  self-checks vs the full ring + wafers (seat, rib jam both ways, axial
-  float, clocking sweep, wafer field, hidden ≤ r410 via exact mesh
-  vertices, nothing behind the wall — INCLUDING THE PINION; the
-  plate-only version let the old radial-axis pinion sail 39 mm through
-  the drywall) — exits nonzero on FAIL. Sliced PLA @15%: top 53.7 g /
-  1h28, shell 26.2 g / 56 min, wheels 6.1 g / 16 min each, static
-  saddle 73.4 g / 1h59, pinion 1.9 g / 18 min @10%.
+  (±8 mm). Anchors span the unit inline-vertical on the 25 mm grid
+  (anchors-above pushed plan r to 445 vs the 410 hide bound at the
+  65 mm body; the grid'd saddle strip is narrow for the same reason).
+  12 self-checks vs the full ring + wafers (seat, flange jam both ways
+  incl. the tower stop pads, axial float, clocking sweep, wafer field,
+  hidden ≤ r410 via exact mesh vertices, nothing behind the wall —
+  INCLUDING THE PINION; the plate-only version let the old radial-axis
+  pinion sail 39 mm through the drywall) — exits nonzero on FAIL.
 - scripts/cure_jig_stl.py — OP 012 cure jig (see Frame design). Imports
   segment_stl for params/geometry, emits cure_jig_{outboard,inboard,pin}.stl
   print-ready plus cure_jig_fitcheck.stl (segment+wafer+fences+pin,
@@ -439,9 +463,11 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   build: 69.2 g/segment PLA @10% + 6 top shells (47.7 mm part), 2h20
   each, assembly 1.77 kg / 17.4 N (84.3 g at the 61 mm B.5 part;
   PETG@45 history: 91.8 deep bevel, 67.9 at the 4.5 face).
-  Pinion 1.9 g / 18 min, top unit 53.7 g / 1h28 @15%, slotted shell
-  26.2 g / 56 min, static saddle 73.4 g / 1h59, wheels 6.1 g each,
-  tape jig 107.5/39.2/7.5 g @10% (outboard/inboard/pin).
+  Pinion 1.9 g / 18 min, top unit 48.4 g / 1h16 @15%, slotted shell
+  27.1 g / 57 min, static saddle 79.0 g / 2h09 (idlers are BOUGHT
+  F625ZZ bearings now, nothing printed), tape jig 115.3/47.8/7.4 g
+  @10% (outboard/inboard/pin — grew with the grid hold-downs and the
+  64-wide fences).
   Hanging on the two top idlers
   is the OP 015
   two-hang-point case: M well under the single-point 2.2 N·m, and the

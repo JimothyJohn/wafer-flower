@@ -252,9 +252,11 @@ function buildScene(){
       // wheel_l is built at 270+25=295 deg, wheel_r at 245 (bracket_stl
       // wheels[] order) — mismatched pivots orbit each wheel around the
       // OTHER's axle
-      // wheels hang the ring from INSIDE the bore at 90±12 (wheels[]
-      // order: s_=+1 first -> 102 then 78), right under the motor
-      const WAZ=[102,78].map(a=>a*Math.PI/180), DC=P.Ri-24;
+      // idlers = F625ZZ bearings (Ø16) hanging the ring from INSIDE the
+      // bore, axles at x ±50 (25mm grid), azimuth derived — wheels[]
+      // order: -x side first (az 90+ then 90-)
+      const DC=P.Ri-8-0.05, WAZv=Math.asin(50/DC),
+            WAZ=[Math.PI/2+WAZv, Math.PI/2-WAZv];
       const foot=view!=='drive'?realMesh('bracket_static'):null;
       if(foot)group.add(foot);
       const topu=view==='drive'?realMesh('bracket_top'):null;
@@ -273,7 +275,7 @@ function buildScene(){
       if(view==='drive') ['wheel_l','wheel_r'].forEach((n,i)=>{
         const m=realMesh(n); if(!m)return;
         const g=pivot(m,DC*Math.cos(WAZ[i]),DC*Math.sin(WAZ[i]));
-        ANIM.spin.push({g:g,rate:P.Ri/24});   // bore contact co-rotates
+        ANIM.spin.push({g:g,rate:P.Ri/8});    // bore contact co-rotates
       });
       if(view==='drive'){
         // schematic 22PG-2430BL above the pinion, shaft straight down

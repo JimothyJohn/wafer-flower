@@ -80,7 +80,9 @@ JIG = dict(
                        # (per fence). Sets the tangential capture window:
                        # y ~ +/- slack / sin(peg_az) = 0.40 at defaults
     peg_c    = 3.0,    # peg rise above the local rim top
-    fence_w  = 60.0,   # tangential width of the fence cores
+    fence_w  = 64.0,   # tangential width of the fence cores (widened 60->64
+                       # 2026-07-27 so the Ø10 hold-down counterbores at
+                       # y=±25 keep 2 mm of wall to the fence edge)
     clr_und  = 2.0,    # min clearance to the wafer underside (covers 0.6 droop)
     boss_w   = 12.0,   # rib that roofs the rod bore under the wafer overhang
 )
@@ -98,9 +100,11 @@ class Jig:
         self.x_in   = cf.R - cf.r              # nominal rim, inboard / outboard
         self.x_out  = cf.R + cf.r
         self.x_back = self.x_out + 10.0        # outboard fence rear face
-        self.x_bk   = self.x_in - 16.0         # inboard fence back face (was
-                                               # -28 when it housed a captive
-                                               # nut; now just pin-bore body)
+        self.x_bk   = self.x_in - 32.0         # inboard fence back face (was
+                                               # -28 with the captive nut,
+                                               # -16 after the tape rework;
+                                               # -32 again so the grid
+                                               # hold-down at x=175 fits)
         az = math.radians(self.peg_az)
         # peg centres sit slack + peg radius outside the PROJECTED rim at
         # their own azimuth. The tilted wafer's plan rim is an ELLIPSE
@@ -153,6 +157,19 @@ def peg(j, px, py):
     return p + tip
 
 
+def holddown(j, f, hx, top):
+    """One pair of bench hold-down holes at (hx, ±25): Ø5.4 through, Ø10
+    counterbore sunk 3.5 below the local top face. Every hold-down in the
+    kit lands on the 25 mm grid (2026-07-27, Nick: breadboard mockup), so
+    both fences bolt to a 25 mm-pitch board AT their nominal working
+    separation."""
+    cf = j.cf
+    for sy in (25.0, -25.0):
+        f -= vcyl(2.7, cf.z_bot - 1.0, top - cf.z_bot + 2.0, hx, sy, fn=48)
+        f -= vcyl(5.0, top - 3.5, 4.0, hx, sy, fn=48)
+    return f
+
+
 def peg_arms(j, pegs):
     """Support arm + peg for each capture peg; arm half-width = the peg
     diameter so the peg never overhangs its own support."""
@@ -181,9 +198,17 @@ def build_outboard(j):
     x1 = j.x_back
     deck_lo, deck_hi = cf.z1 + 0.8, -3.5    # over the teeth, under the wafer
     f  = box(cf.Ro, x1, -j.w2, j.w2, deck_lo, deck_hi)                      # deck
-    f += box(xf, xf + 16.0, -j.w2, j.w2, cf.z_bot, deck_lo + 1.0)           # front foot
+    f += box(xf, xf + 22.0, -j.w2, j.w2, cf.z_bot, deck_lo + 1.0)           # front foot
     f += box(j.x_out - 30.0, x1, -j.w2, j.w2, cf.z_bot, j.under_top)        # rear block
     f += peg_arms(j, j.pegs_out)
+    # bench hold-downs on the 25 mm grid: one pair through the front foot,
+    # one through the rear block (both capped by the deck at z -3.5)
+    hx_f = 25.0 * math.ceil((xf + 5.0) / 25.0)
+    hx_r = 25.0 * round((j.x_out - 10.0) / 25.0)
+    assert xf + 5.0 <= hx_f <= xf + 17.0, f"foot hold-down x={hx_f} off the foot"
+    assert j.x_out - 25.0 <= hx_r <= x1 - 5.0, f"rear hold-down x={hx_r} off the block"
+    f = holddown(j, f, hx_f, deck_hi)
+    f = holddown(j, f, hx_r, deck_hi)
     # nose finger: butts the outer arc face above the tooth band. +0.05
     # standoff so the different chord phases of this 512-gon and the
     # segment's 160-point arc don't overlap.
@@ -211,7 +236,10 @@ def build_inboard(j):
     prong = box(x0 + 2.0, cf.Ri + 2.0, -14.0, 14.0, j.prong_bot, j.prong_top)
     f += prong ^ vcyl(cf.Ri - 0.05, cf.z_bot - 1.0, 60.0)   # 0.05 datum standoff
     f -= xcyl(j.bore_r, x0 - 2.0, cf.Ri + 4.0, j.zc)
-    return f
+    # bench hold-downs on the 25 mm grid, through the base
+    hx_i = 25.0 * math.floor((x1 - 5.0) / 25.0)
+    assert x0 + 5.0 <= hx_i <= x1 - 5.0, f"inboard hold-down x={hx_i} off the base"
+    return holddown(j, f, hx_i, j.under_top)
 
 
 def build_pin(j):
@@ -226,7 +254,11 @@ def build_pin(j):
     from the cure-jig era works identically, a touch looser.
     Returns (pin_in_place, printable_pin, length)."""
     pr = j.bore_r - 0.15                       # Ø6.2 at the Ø6.5 bore
-    x0 = j.x_bk + 2.0                          # seats just shy of the back face
+    x0 = j.x_in - 10.0                         # tail: ~65 mm engaged in the
+                                               # inboard bore, and the pin
+                                               # stays under the 340 mm bed
+                                               # (x_bk moved back for the
+                                               # grid hold-down)
     x1 = j.x_back + 3.0                        # proud of the outboard rear
     pin = xcyl(pr, x0, x1, j.zc) + xcyl(8.0, x1, x1 + 4.0, j.zc)
     flat = j.zc - (pr - 0.5)                   # 0.5 mm off the shaft bottom
