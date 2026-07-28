@@ -305,6 +305,12 @@ T3 adhesive shear + 10–30 °C thermal cycling (THE gate), T4 land flatness
 T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 
 ## Repo contents
+- GEARS.md — the bevel-gear clinic (2026-07-27, Nick's ask): why the
+  generated crossed pair works, which constraints are load-bearing (tooth
+  counts) vs free (pinion size), the full recipe with code citations, the
+  trap ledger, and the re-targeting checklist. Every number in it is
+  verified against the live Cfg; update it when the gear architecture
+  changes.
 - DESIGN.md — Nick's high-level design guide (recovered from an untracked
   root file 2026-07-25; his authorship, edit freely): H2S fabrication,
   spiral-bevel-rack drivetrain concept.
