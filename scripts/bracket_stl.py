@@ -41,20 +41,27 @@ from segment_stl import (PARAMS, Cfg, prism, box, arc, hex_poly, build_ring,
                          M6_NUT_AF, M6_NUT_CLR)
 
 BRK = dict(
-    wheel_az = 12.0,   # idler azimuth, deg either side of TOP-dead-centre —
-                       # tight under the motor (2026-07-26, Nick: "right
-                       # underneath the motor… idling to preload the motor
-                       # pinion"). The wheels fix the ring's radial datum
-                       # AT the meshing meridian, so tooth engagement can't
-                       # breathe.
-    wheel_R  = 24.0,   # idler body radius: bodies on the BORE at Ri, rib
-                       # in the INNER groove — internal engagement at the
-                       # top HANGS the ring (external can only rest it)
-    wheel_w  = 5.2,    # body width; rib rides the inner groove ledge
-    rib_w    = 1.2,
-    rib_h    = 1.6,
-    axle_D   = 6.8,    # wheel bore: spins on a printed M6 screw shank
+    wheel_ax = 50.0,   # idler axle x off the meridian: axle-to-axle 100 mm
+                       # (4×25 — Nick 2026-07-27: hole spacings in 25 mm
+                       # increments for breadboard mockup). The azimuth is
+                       # DERIVED (asin(ax/d_c) ≈ 11.7° — still right under
+                       # the motor, 2026-07-26 intent unchanged); axle y is
+                       # geometry-LOCKED at sqrt(d_c²−ax²) ≈ 241.9, off-grid
+                       # by nature: a bought wheel's OD pins the axle to the
+                       # circle d_c = Ri − OD/2. (Grid-snapping BOTH axle
+                       # coords needs a custom wheel radius — printed Ø49 at
+                       # (±50, 225) is the way back if ever wanted.)
+    brg_OD   = 16.0,   # idler = F625ZZ flanged ball bearing, 5×16×5 with
+    brg_W    = 5.0,    #   flange Ø18×1.0 (2026-07-27, Nick: printed Ø48
+    brg_FD   = 18.0,   #   wheels "way too unnecessarily big" — bought
+    brg_FW   = 1.0,    #   bearings instead; dims verified on robotdigg +
+    brg_bore = 5.0,    #   amazon listings). Body rolls the bore at Ri; the
+                       #   FLANGE is the rib in the inner groove (1.0 in the
+                       #   1.5 ledge: ±0.25 float, 1.0 jam overlap). M5 axle
+                       #   (printed m5_screw.stl or a store M5 pan).
     slot_T   = 16.0,   # shell mounting-slot travel (radial) for preload
+    slot_yc  = 350.0,  # slot screw y — snapped to the 25 mm grid
+    ear_x    = 25.0,   # slot screw x = ±ear_x — on the 25 mm grid
     arc_span = 52.0,   # static saddle arc, deg of groove it cradles
                        # (60 made the print 348 wide — H2S bed is 340)
     wall_gap = 6.0,    # ring wall face to drywall (the small pinion dips
@@ -76,6 +83,9 @@ BRK = dict(
 )
 
 
+M5_NUT_AF = 8.0    # ISO 4032 M5 nut across flats (printed_hardware m5_nut)
+
+
 def cyl(r, h, z0, cx=0.0, cy=0.0, fn=128):
     return Manifold.cylinder(h, r, r, fn).translate([cx, cy, z0])
 
@@ -86,17 +96,22 @@ class Brk:
         for k, v in p.items(): setattr(self, k, v)
         self.cf = cf
         self.bg = bevel_geom(cf)
-        # wheel centres: bodies tangent to the bore at Ri, at +/-wheel_az
-        # from TOP — the ring HANGS on them, right under the motor
+        # wheel centres: bearing bodies tangent to the bore at Ri, axles at
+        # x = ±wheel_ax (grid) — the ring HANGS on them, under the motor
         self.o_floor = cf.Ro - cf.ogrv_d                # (static saddle datum)
-        self.d_c = cf.Ri - self.wheel_R
-        self.wheels = []
-        for s_ in (1, -1):
-            a = math.radians(90.0 + s_ * self.wheel_az)
-            self.wheels.append((self.d_c * math.cos(a), self.d_c * math.sin(a)))
+        self.wheel_R = self.brg_OD / 2.0
+        # 0.05 datum standoff (same convention as the saddle and jig
+        # noses): exact tangency reads as µm-deep facet-chord overlap in
+        # the boolean float check
+        self.d_c = cf.Ri - self.wheel_R - 0.05
+        self.wheel_az = math.degrees(math.asin(self.wheel_ax / self.d_c))
+        yw = math.sqrt(self.d_c ** 2 - self.wheel_ax ** 2)
+        self.wheels = [(-self.wheel_ax, yw), (self.wheel_ax, yw)]
         self.g0 = cf.z_bot + cf.grv_z0                  # inner groove floor z
-        self.rib_lo = self.g0 + (cf.grv_h - self.rib_w) / 2.0
-        self.w_lo = cf.z_bot + 0.3                      # body z start
+        # flange centred in the groove ledge; the bearing hangs FLANGE
+        # FORWARD off its M5 axle, body contacting the bore below the groove
+        self.rib_lo = self.g0 + (cf.grv_h - self.brg_FW) / 2.0
+        self.w_lo = self.rib_lo + self.brg_FW - self.brg_W   # body z start
         self.deck_z = cf.z_bot - 0.8                    # deck front face
         self.wall_z = cf.z_bot - self.wall_gap          # drywall plane
         # top drive: pinion axis is the vertical line x=0 at this z
@@ -117,13 +132,25 @@ def build_foot(b):
     a0 = math.radians(270.0 - b.arc_span / 2.0)
     a1 = math.radians(270.0 + b.arc_span / 2.0)
     x2 = 320.0 * math.sin(math.radians(b.arc_span / 2.0)) + 14.0
-    y_out = -334.0
-    body = box(-x2, x2, y_out, -308.0, b.wall_z, b.wall_z + b.back_t)
-    body += box(-x2, x2, y_out, -308.0, b.wall_z, b.deck_z)
-    ya = (y_out - 308.0) / 2.0
-    for dy in (b.anchor_gap / 2.0, -b.anchor_gap / 2.0):
+    # main plate, plus a NARROW strip reaching past both grid anchors —
+    # a full-width plate down to the lower anchor puts its corners at
+    # plan r 417, past the 410 hide bound (the top unit's anchor strip
+    # is narrow for the same reason)
+    y_out = 25.0 * math.floor((-308.0 - 12.0) / 25.0) - b.anchor_gap - 12.0
+    body = box(-x2, x2, -334.0, -308.0, b.wall_z, b.wall_z + b.back_t)
+    body += box(-16.0, 16.0, y_out, -330.0, b.wall_z, b.wall_z + b.back_t)
+    body += box(-x2, x2, -334.0, -308.0, b.wall_z, b.deck_z)
+    # anchors on the 25 mm grid (breadboard mockup), inline vertical.
+    # NOTE the pre-grid version put them at (y_out−308)/2 ± gap/2 =
+    # −296/−346 — OUTSIDE the −334..−308 plate, so the holes subtracted
+    # NOTHING and the saddle printed with no anchor holes at all (genus 0
+    # was the tell). The assert below keeps that from regressing.
+    ya_top = 25.0 * math.floor((-308.0 - 12.0) / 25.0)          # -325
+    for ya_ in (ya_top, ya_top - b.anchor_gap):
+        assert y_out + 8.0 < ya_ < -308.0 - 8.0, \
+            f"saddle anchor y={ya_} misses the plate ({y_out}..-308)"
         body -= cyl(b.anchor_D / 2.0, b.back_t + 2.0, b.wall_z - 1.0,
-                    0.0, ya + dy, fn=48)
+                    0.0, ya_, fn=48)
     body += prism(arc(b.o_floor + 0.05, a0, a1, 96) +
                   arc(308.0 + 6.0, a1, a0, 96), o_lo, ow)
     body += prism(arc(308.0, a0, a1, 96) +
@@ -133,11 +160,13 @@ def build_foot(b):
 
 
 def build_wheel(b):
-    """Bore-riding idler: body on Ri, rib in the INNER groove (axial
-    keeper). Local frame: wall side at z=0."""
-    w = cyl(b.wheel_R, b.wheel_w, 0.0)
-    w += cyl(b.wheel_R + b.rib_h, b.rib_w, b.rib_lo - b.w_lo)
-    w -= cyl(b.axle_D / 2.0, b.wheel_w + 2.0, -1.0, fn=64)
+    """Bore-riding idler = BOUGHT F625ZZ flanged bearing (modelled for the
+    checks and the viewer — NOT a print): body on Ri, flange in the INNER
+    groove (axial keeper). Local frame: wall side at z=0, flange at the
+    front face."""
+    w = cyl(b.brg_OD / 2.0, b.brg_W, 0.0)
+    w += cyl(b.brg_FD / 2.0, b.brg_FW, b.brg_W - b.brg_FW)
+    w -= cyl(b.brg_bore / 2.0, b.brg_W + 2.0, -1.0, fn=64)
     return w
 
 
@@ -180,35 +209,48 @@ def build_top(b):
     # 65 long, so anchors-above-with-a-gap would reach plan r445 — past
     # the ~416 hide window. The long baseline also resists the
     # deflection torque better.
-    y_anc_hi = min(b.hub_top + b.mot_L + 6.0, 396.0)
+    # anchors on the 25 mm grid (Nick 2026-07-27: breadboard mockup):
+    # lower = first grid line on the plate below the wheels; upper = first
+    # grid line clear of the shell top, capped by the hide window (strip
+    # top y_anc_hi+8 must stay under plan r 410)
+    y_anc_lo = 25.0 * math.ceil((y_lo + 12.0) / 25.0)
+    y_shell_top = b.hub_top + 0.5 + b.mot_L + 1.0 + 2.0
+    y_anc_hi = 25.0 * math.ceil(y_shell_top / 25.0)
+    assert math.hypot(16.0, y_anc_hi + 8.0) <= 410.0, \
+        f"grid anchor y={y_anc_hi} pushes the strip past the hide window"
     y_top = y_anc_hi + 8.0
     body = box(-x2, x2, y_lo, b.hub_top + 4.0, b.wall_z,
                b.wall_z + b.back_t)
     body += box(-16.0, 16.0, b.hub_top, y_top, b.wall_z,
                 b.wall_z + b.back_t)
-    for ya_ in (y_lo + 12.0, y_anc_hi):
+    for ya_ in (y_anc_lo, y_anc_hi):
         body -= cyl(b.anchor_D / 2.0, b.back_t + 2.0, b.wall_z - 1.0,
                     0.0, ya_, fn=48)
-    # wheel towers: bosses from the plate forward, captive M6 nut pockets
+    # wheel towers: bosses from the plate forward to the bearing's back
+    # face; the F625ZZ hangs flange-forward on an M5 screw threaded into a
+    # captive printed M5 nut (8 mm AF)
     for cx, cy in b.wheels:
-        body += cyl(9.0, b.w_lo + b.wheel_w + 2.0 - b.wall_z, b.wall_z,
-                    cx, cy)
-        body -= cyl(b.axle_D / 2.0, 60.0, b.wall_z - 1.0, cx, cy)
-        body -= (prism(hex_poly(M6_NUT_AF, M6_NUT_CLR), 0.0, 6.0)
+        body += cyl(6.0, b.w_lo - b.wall_z, b.wall_z, cx, cy)
+        body -= cyl(2.7, 60.0, b.wall_z - 1.0, cx, cy)
+        body -= (prism(hex_poly(M5_NUT_AF, M6_NUT_CLR), 0.0, 6.0)
                  .translate([cx, cy, b.wall_z + 2.0]))
+        # toward-wall stop pad: a face 0.5 behind the ring's back annulus
+        # (the F625 flange only meets the groove's 45° chamfer roof after
+        # ~1.35 mm — too soft/late to be the -z stop the old tall rib was)
+        body += box(cx - 6.0, cx + 6.0, 252.0, 262.0,
+                    b.wall_z, cf.z_bot - 0.5)
     # slide face for the shell ears: a deck at the meridian whose front
     # face sits just behind the shell's ear plane, with two captive M6
-    # nuts; the ears' vertical slots ride on printed M6 screws
-    ear_x = b.mot_D / 2.0 + b.mot_clr + b.shell_t + 8.0
+    # nuts; the ears' vertical slots ride on printed M6 screws at the
+    # grid points (±ear_x, slot_yc)
     face_z = b.pin_z - (b.mot_D / 2.0 + b.mot_clr + b.shell_t) - 4.0
     # the deck starts ABOVE the tooth swing (teeth reach plan r 305.8)
-    body += box(-ear_x - 8.0, ear_x + 8.0, 306.5,
+    body += box(-b.ear_x - 8.0, b.ear_x + 8.0, 306.5,
                 b.hub_top + b.mot_L + 6.0, b.wall_z, face_z)
-    for sx_ in (ear_x, -ear_x):
-        body -= cyl(3.4, 60.0, b.wall_z - 1.0, sx_, b.hub_top + b.mot_L / 2.0)
+    for sx_ in (b.ear_x, -b.ear_x):
+        body -= cyl(3.4, 60.0, b.wall_z - 1.0, sx_, b.slot_yc)
         body -= (prism(hex_poly(M6_NUT_AF, M6_NUT_CLR), 0.0, 6.0)
-                 .translate([sx_, b.hub_top + b.mot_L / 2.0,
-                             b.wall_z + 2.0]))
+                 .translate([sx_, b.slot_yc, b.wall_z + 2.0]))
     return body
 
 
@@ -239,10 +281,11 @@ def build_shell(b):
               .translate([0.0, y_mot0 - b.shell_t - 1.0, b.pin_z]))
     # ears: vertical plates flanking the shell, slotted for the slide.
     # They OVERLAP the shell wall by 1 mm in x and z — cap-to-cap unions
-    # on a shared plane weld OPEN (the coplanar-seam trap).
-    ear_x = sx + 8.0
+    # on a shared plane weld OPEN (the coplanar-seam trap). Slot lines sit
+    # at the grid points (±ear_x, slot_yc) to match the top unit's screws.
+    ear_x = b.ear_x
     ear_z0 = b.pin_z - sz - 4.0                  # against the slide face
-    yc = b.hub_top + b.mot_L / 2.0
+    yc = b.slot_yc
     for s_ in (1.0, -1.0):
         x_in, x_out = (sx - 1.0, ear_x + 6.0) if s_ > 0 else \
                       (-ear_x - 6.0, -sx + 1.0)
@@ -272,8 +315,9 @@ def main():
 
     assert cf.ogrv_w > 0, "segment has no outer mount groove (ogrv_w=0)"
     assert cf.grv_d > 0, "segment has no inner groove for the idlers"
-    assert b.rib_h < cf.grv_d - 0.2, "rib bottoms out in the inner groove"
-    assert b.rib_w < cf.grv_h - 0.2, "rib wider than the groove ledge"
+    fl_h = (b.brg_FD - b.brg_OD) / 2.0
+    assert fl_h < cf.grv_d - 0.2, "bearing flange bottoms out in the groove"
+    assert b.brg_FW < cf.grv_h - 0.2, "bearing flange wider than the ledge"
 
     foot_static = build_foot(b)
     wheels = [wheel_at(b, k) for k in (0, 1)]
@@ -287,10 +331,11 @@ def main():
     W = cf.N * (0.128 + 0.085) * 9.81  # N: Si + ~85 g/segment PLA@10
     print(f"Wafer Halo wall mounts  ·  dynamic: ONE top unit (ring hangs on "
           f"bore idlers right under the motor); static: bottom saddle")
-    print(f"  top     wheels Ø{2*b.wheel_R:.0f} at ±{b.wheel_az:.0f}° from "
-          f"top INSIDE the bore (preload datum at the mesh meridian); "
-          f"Pololu #1596 shell on ±{b.slot_T/2:.0f} mm SLOTS for pinion "
-          f"preload, shaft DOWN, ratio {cf.pin_ratio:.1f}:1 — 1.00 rpm @5 V; "
+    print(f"  top     idlers = 2× F625ZZ flanged bearings (Ø{b.brg_OD:.0f}, "
+          f"flange Ø{b.brg_FD:.0f} in the groove) on M5 axles at x ±"
+          f"{b.wheel_ax:.0f} (az ±{b.wheel_az:.1f}°) INSIDE the bore; 22PG "
+          f"shell on ±{b.slot_T/2:.0f} mm SLOTS at (±{b.ear_x:.0f}, "
+          f"{b.slot_yc:.0f}), ratio {cf.pin_ratio:.1f}:1 ~2 rpm PWM'd; "
           f"ring hangs ~{W:.1f} N")
     dip = (b.bg['x1'] - b.bg['apex']) * 1.2 - b.bg['zax']
     print(f"  wall    drywall at z = {b.wall_z:.1f}; the pinion swings "
@@ -366,7 +411,6 @@ def main():
              'dynamic top unit: print wall-face down'),
             ('bracket_shell.stl', [shell.translate([0, 0, dz])],
              'slotted motor shell: print ears-down, slide to preload'),
-            ('bracket_wheel.stl', [build_wheel(b)], 'print x2, flat'),
             ('bracket_fitcheck.stl',
              bodies + wafer_list + [foot_static, wheels[0], wheels[1],
                                     top, shell, pin],

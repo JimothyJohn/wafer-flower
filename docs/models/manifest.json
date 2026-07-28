@@ -61,56 +61,56 @@
    "name": "jig_outboard",
    "group": "out",
    "color": "#D97742",
-   "volume_cm3": 403.469
+   "volume_cm3": 427.472
   },
   {
    "file": "jig_inboard.stl",
    "name": "jig_inboard",
    "group": "inboard",
    "color": "#3E7CB1",
-   "volume_cm3": 117.818
+   "volume_cm3": 154.591
   },
   {
    "file": "rod.stl",
    "name": "rod",
    "group": "rod",
    "color": "#30343A",
-   "volume_cm3": 10.057
+   "volume_cm3": 9.941
   },
   {
    "file": "bracket_static.stl",
    "name": "bracket_static",
    "group": "bracket",
    "color": "#8A6D3B",
-   "volume_cm3": 144.351
+   "volume_cm3": 152.632
   },
   {
    "file": "bracket_top.stl",
    "name": "bracket_top",
    "group": "bracket",
    "color": "#B86038",
-   "volume_cm3": 87.092
+   "volume_cm3": 78.398
   },
   {
    "file": "bracket_shell.stl",
    "name": "bracket_shell",
    "group": "bracket",
    "color": "#9A4A2E",
-   "volume_cm3": 37.627
+   "volume_cm3": 39.132
   },
   {
    "file": "wheel_l.stl",
    "name": "wheel_l",
    "group": "bracket",
    "color": "#6A7078",
-   "volume_cm3": 9.516
+   "volume_cm3": 0.96
   },
   {
    "file": "wheel_r.stl",
    "name": "wheel_r",
    "group": "bracket",
    "color": "#6A7078",
-   "volume_cm3": 9.516
+   "volume_cm3": 0.96
   },
   {
    "file": "drive_pinion.stl",
