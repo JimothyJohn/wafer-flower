@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wafer Halo — Cure Jig, Step by Step (OP 012)</title>
+<title>Wafer Halo — Tape Jig, Step by Step (OP 012)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -60,27 +60,28 @@ a{color:var(--teal)}
   <div class="oxide-rule"></div>
   <div class="head-main">
     <div class="eyebrow">Wafer Halo · OP 012</div>
-    <h1>Cure Jig — Step by Step</h1>
+    <h1>Tape Jig — Step by Step</h1>
     <div class="head-meta">
-      <span>parts <b>2 printed fences + knob + 1 rod</b></span>
-      <span>tools <b>none while bonding</b></span>
-      <span>force on wafer <b>zero</b></span>
+      <span>parts <b>2 printed fences + 1 printed pin</b></span>
+      <span>bought hardware <b>none</b></span>
+      <span>force on wafer <b>zero (until the press)</b></span>
       <span>centring <b>±0.15 / ±0.40 mm</b></span>
       <span>source <b class="mono">scripts/cure_jig_stl.py</b></span>
     </div>
   </div>
 </header>
 
-<p style="max-width:74ch">This jig holds a wafer <b>dead-centred on its segment while the glue cures</b>.
-Two printed fences slide toward each other on one threaded rod that passes straight
-through the segment's keyhole — the same axis that runs under the centre of the wafer.
-Tighten one knob and both fences seat against the <em>segment</em>, never the wafer:
-the wafer just floats between four pegs — X and Y held, Z left to gravity — squeezed by nothing.</p>
+<p style="max-width:74ch">This jig lands a wafer <b>dead-centred on its taped segment in one try</b>.
+Acrylic foam tape grabs on first contact — there is no cure hold and no repositioning —
+so the jig's whole job is to make sure the wafer arrives aligned <em>before</em> it touches:
+two printed fences register on the segment over one pin through the keyhole, and their
+four chamfered pegs form a funnel the wafer drops through. Nothing clamps, nothing
+tightens; the old cure-jig drivetrain (rod tension, nuts, washer, knob) is gone.</p>
 
 <figure class="vidwrap">
   <video src="media/turntable.mp4" autoplay loop muted playsinline></video>
   <span class="vidtag">video · full assembly</span>
-  <figcaption>One segment, one wafer, two fences, one rod. Everything renders straight from the CAD.</figcaption>
+  <figcaption>One segment, one wafer, two fences, one pin. Everything renders straight from the CAD.</figcaption>
 </figure>
 
 <!-- ============================================================ -->
@@ -88,22 +89,21 @@ the wafer just floats between four pegs — X and Y held, Z left to gravity — 
   <div class="op-head"><span class="op-chip">A</span><h2>What you need</h2></div>
 
   <figure><img src="media/parts.png" alt="Exploded view of all parts">
-  <figcaption>Everything in the kit, exploded.</figcaption></figure>
+  <figcaption>Everything in the kit, exploded. All of it printed.</figcaption></figure>
 
   <table>
     <tr><th>Part</th><th>Where</th><th>Notes</th></tr>
-    <tr><td>Outboard fence</td><td class="mono">stl/cure_jig_outboard.stl</td><td class="dim">48 g · 1 h 36 m at 15 % infill — no real load path, don't print it dense</td></tr>
-    <tr><td>Inboard fence</td><td class="mono">stl/cure_jig_inboard.stl</td><td class="dim">29 g · 1 h 04 m at 15 %</td></tr>
-    <tr><td>M6 × 1.0 threaded rod, cut to <b>350&nbsp;mm</b></td><td>Home Depot, 36" / 1 m stick</td><td class="dim">hacksaw + deburr the cut end so it threads. The one piece you must buy.</td></tr>
-    <tr><td>M6 hex nut ×2</td><td>Home Depot</td><td class="dim">one lives inside the inboard fence — you'll never touch it again; one seats in the printed knob</td></tr>
-    <tr><td>M6 washer + printed knob <span class="mono">stl/cure_jig_knob.stl</span></td><td>washer: Home Depot</td><td class="dim">the knob (2.5 g, 23 m) IS the closure — an M6 wing nut swings ~15 mm and hits the bench, don't buy one</td></tr>
+    <tr><td>Outboard fence</td><td class="mono">stl/cure_jig_outboard.stl</td><td class="dim">print at 10–15 % infill — no real load path, don't print it dense</td></tr>
+    <tr><td>Inboard fence</td><td class="mono">stl/cure_jig_inboard.stl</td><td class="dim">same settings</td></tr>
+    <tr><td>Locating pin</td><td class="mono">stl/cure_jig_pin.stl</td><td class="dim">Ø6.2 D-section × 331 mm, prints lying on its flat. An M6 rod from the cure-jig days also works, a touch looser.</td></tr>
+    <tr><td>Acrylic foam tape</td><td>Scotch-Mount Extreme, ~1.1&nbsp;mm</td><td class="dim">two 13×13 pads per station — small on purpose, see <a href="engineering.html">engineering</a> (shrinking the bond <em>improves</em> the thermal case)</td></tr>
     <tr><td>91% IPA or denatured alcohol</td><td>&nbsp;</td><td class="dim">cleaning. Never acetone on the print.</td></tr>
   </table>
 
   <figure class="vidwrap">
     <video src="media/explode.mp4" autoplay loop muted playsinline></video>
     <span class="vidtag">video · how it goes together</span>
-    <figcaption>Wing nut → outboard fence → keyhole → inboard fence → captive nut. One closed loop, and the wafer is not part of it.</figcaption>
+    <figcaption>Outboard fence → keyhole → inboard fence, pin through all three. The wafer never joins the stack — it drops through the funnel at the end.</figcaption>
   </figure>
 </section>
 
@@ -112,7 +112,7 @@ the wafer just floats between four pegs — X and Y held, Z left to gravity — 
   <div class="op-head"><span class="op-chip">B</span><h2>One-time setup</h2></div>
   <div class="step"><div class="txt">
     <div class="n">B1</div><h3>Check the keyhole</h3>
-    <p>The keyhole prints at <b>Ø6.5</b> and an M6 rod slides straight through — no reaming
+    <p>The keyhole prints at <b>Ø6.5</b> and the pin slides straight through — no reaming
     in the normal case; if yours printed snug, one pass with a <b>6.5&nbsp;mm bit</b> clears it.
     It's the radial hole in the outer face, 13.35&nbsp;mm above the bottom, all the way through.</p>
     <p class="dim">Segments printed before the M6 change (Ø5 hole, or the old blind hole) —
@@ -120,22 +120,21 @@ the wafer just floats between four pegs — X and Y held, Z left to gravity — 
   </div><figure style="margin:0"><img src="media/step1_segment.png" alt="Segment alone on the bench"></figure></div>
 
   <div class="step"><div class="txt">
-    <div class="n">B2</div><h3>Cut the rod, drop in the nut</h3>
-    <p>Cut the rod to <b>350&nbsp;mm</b>. Push one hex nut into the six-sided pocket in the back of the
-    inboard fence — flats vertical, it only goes in one way, and the rod holds it captive forever.
-    Press the second nut into the printed knob.</p>
-    <p class="dim">Dry-run the whole assembly once without a wafer so the first real bond is boring.</p>
-  </div><figure style="margin:0"><img src="media/step5_inboard.png" alt="Nut and inboard fence"></figure></div>
+    <div class="n">B2</div><h3>Dry-run once</h3>
+    <p>Assemble the jig on a bare segment and drop a wafer through the funnel with <b>no tape</b>.
+    You'll feel the pegs centre it on the way down and see it lift straight back out — that's
+    the whole motion, and the first taped bond stays boring.</p>
+  </div><figure style="margin:0"><img src="media/step6_wafer.png" alt="Wafer dropping through the peg funnel"></figure></div>
 </section>
 
 <!-- ============================================================ -->
 <section class="op">
-  <div class="op-head"><span class="op-chip">C</span><h2>Bonding a wafer</h2></div>
+  <div class="op-head"><span class="op-chip">C</span><h2>Taping a wafer</h2></div>
 
   <figure class="vidwrap">
     <video src="media/assemble.mp4" autoplay loop muted playsinline></video>
     <span class="vidtag">video · the whole sequence, 8 s</span>
-    <figcaption>Wafer on, outer fence, inner fence, rod, done. That's the entire procedure.</figcaption>
+    <figcaption>Outer fence, inner fence, pin, wafer last. That's the entire procedure.</figcaption>
   </figure>
 
   <div class="step"><div class="txt">
@@ -144,78 +143,82 @@ the wafer just floats between four pegs — X and Y held, Z left to gravity — 
   </div><figure style="margin:0"><img src="media/step1_segment.png" alt="Step 1"></figure></div>
 
   <div class="step"><div class="txt">
-    <div class="n">02</div><h3>Glue in the pocket</h3>
-    <p><b>Two short beads of PL Premium Max</b>, in the recessed pocket, near its middle. Don't overfill —
-    the pocket is the depth stop, and more glue is <em>worse</em>, not better.</p>
-    <p class="dim">Tape path? You don't need this jig — tape grabs instantly. This jig is for glue that needs a day.</p>
-  </div><figure style="margin:0"><img src="media/step2_glue.png" alt="Step 2"></figure></div>
+    <div class="n">02</div><h3>Tape in the pocket — liners ON</h3>
+    <p><b>Two 13×13 pads</b>, in the recessed pocket, split radially about its middle.
+    Press the pads onto the <em>plastic</em> firmly. <b>Leave the top liners on</b> —
+    the jig still has to slide in around the segment.</p>
+    <p class="dim">More tape is worse, not better: thermal stress grows with pad spread, not shrinks.</p>
+  </div><figure style="margin:0"><img src="media/step2_tape.png" alt="Step 2"></figure></div>
 
   <div class="step"><div class="txt">
-    <div class="n">03</div><h3>Set the wafer down</h3>
-    <p>Hold it by the <b>edges only</b> and set it on the segment. Within a millimetre is plenty —
-    <b>the jig does the centring, not you.</b> Don't press anywhere.</p>
-  </div><figure style="margin:0"><img src="media/step3_wafer.png" alt="Step 3"></figure></div>
+    <div class="n">03</div><h3>Slide in the outer fence</h3>
+    <p>From outside, on the keyhole axis, until its nose <b>stops hard against the segment</b>.</p>
+  </div><figure style="margin:0"><img src="media/step3_outboard.png" alt="Step 3"></figure></div>
 
   <div class="step"><div class="txt">
-    <div class="n">04</div><h3>Slide in the outer fence</h3>
-    <p>From outside, on the keyhole axis, until its nose <b>stops hard against the segment</b>.
-    The two chamfered pegs arrive just past the wafer edge.</p>
-  </div><figure style="margin:0"><img src="media/step4_outboard.png" alt="Step 4"></figure></div>
-
-  <div class="step"><div class="txt">
-    <div class="n">05</div><h3>Slide in the inner fence</h3>
+    <div class="n">04</div><h3>Slide in the inner fence</h3>
     <p>Same move from the middle of the ring, until its prong <b>stops against the segment's inner wall</b>.</p>
-  </div><figure style="margin:0"><img src="media/step5_inboard.png" alt="Step 5"></figure></div>
+  </div><figure style="margin:0"><img src="media/step4_inboard.png" alt="Step 4"></figure></div>
 
   <div class="step"><div class="txt">
-    <div class="n">06</div><h3>Rod through, thread it in</h3>
-    <p>Push the rod in from the outside: <b>fence → keyhole → fence</b>, then spin it a few turns
-    into the captive nut.</p>
-  </div><figure style="margin:0"><img src="media/step6_rod.png" alt="Step 6"></figure></div>
+    <div class="n">05</div><h3>Pin through, flat down</h3>
+    <p>Push the pin in from the outside: <b>fence → keyhole → fence</b>, D-flat <b>down</b>
+    (the pull head shows you the orientation). Nothing threads, nothing tightens — the pin
+    just locks the fences onto the segment's axis. Keep light hand pressure holding both
+    noses seated for the next two steps.</p>
+  </div><figure style="margin:0"><img src="media/step5_pin.png" alt="Step 5"></figure></div>
 
   <div class="step"><div class="txt">
-    <div class="n">07</div><h3>Washer, knob, finger-tight</h3>
-    <p>Washer on, knob on, and stop at <b>finger-tight</b>. You are seating two plastic noses
-    against a plastic segment — there is nothing to torque.</p>
-  </div><figure style="margin:0"><img src="media/step7_tighten.png" alt="Step 7"></figure></div>
+    <div class="n">06</div><h3>Peel the liners</h3>
+    <p>Reach in from above and peel both top liners. The tape is now live —
+    <b>from here the wafer gets one landing</b>.</p>
+  </div><figure style="margin:0"><img src="media/step2_tape.png" alt="Step 6"></figure></div>
 
   <div class="step"><div class="txt">
-    <div class="n">08</div><h3>Walk away for 24 hours</h3>
-    <p>Then back the rod out, slide both fences straight off, and move to the next segment.
-    The jig is reusable for all nine.</p>
-  </div><figure style="margin:0"><img src="media/hero.png" alt="Step 8"></figure></div>
+    <div class="n">07</div><h3>Lower the wafer through the funnel</h3>
+    <p>Hold it by the <b>edges only</b>, roughly centred over the pegs, and lower it straight down.
+    The chamfered tips lead it in and the flanks centre it <b>on the way down</b> —
+    ±0.15&nbsp;mm radially, ±0.40&nbsp;mm sideways — so it lands aligned on the tape.</p>
+  </div><figure style="margin:0"><img src="media/step6_wafer.png" alt="Step 7"></figure></div>
+
+  <div class="step"><div class="txt">
+    <div class="n">08</div><h3>Press over the land, then lift the jig away</h3>
+    <p>Press firmly <b>over the land only</b> — the arc the segment actually supports — for a few
+    seconds; foam tape wants pressure, not time. Slide the pin out, part the fences, done.
+    The jig is reusable for all nine stations.</p>
+  </div><figure style="margin:0"><img src="media/step7_press.png" alt="Step 8"></figure></div>
 
   <div class="flag"><span class="tag">The three rules</span><br>
   <b>Edges only</b> — never grip the wafer's faces. <b>Never press the middle</b> — the centre is
   197&nbsp;mm of unsupported glass-brittle silicon; 2–3&nbsp;N of point load there is the breaking
-  allowable. <b>Finger-tight only</b> — the jig clamps the segment, and the segment doesn't care,
-  but a wrench buys you nothing.</div>
+  allowable. <b>One landing</b> — tape does not reposition; if a drop goes visibly wrong, peel the
+  wafer off slowly by the edge nearest the pads, replace the tape, and go again.</div>
 </section>
 
 <!-- ============================================================ -->
 <section class="op">
   <div class="op-head"><span class="op-chip">D</span><h2>Why it centres itself</h2></div>
 
-  <p>The keyhole sits on the <b>wafer-centre meridian</b>, so the rod runs directly beneath the
+  <p>The keyhole sits on the <b>wafer-centre meridian</b>, so the pin runs directly beneath the
   centre of the wafer, and the four peg flanks sit at projected-rim + 0.15&nbsp;mm about that same
-  centre. When the fences hit their stops, the peg pocket <em>is</em> the nominal wafer position:
-  <b>±0.15&nbsp;mm radially, about ±0.40&nbsp;mm sideways</b> — and because the land is tilted,
-  gravity settles the wafer downhill onto the same two down-slope pegs every time. That two-point
-  seat is the centring: X and Y constrained, Z free (nothing overhangs the wafer), never
-  overconstrained, and every dimension re-derives from the wafer Ø and tilt.</p>
+  centre. When the fences hit their stops, the peg funnel <em>is</em> the nominal wafer position:
+  <b>±0.15&nbsp;mm radially, about ±0.40&nbsp;mm sideways</b>. With glue the wafer used to settle
+  into that window after touchdown; with tape the same flanks do the work on the way <em>down</em> —
+  X and Y constrained, Z free (nothing overhangs the wafer), never overconstrained, and every
+  dimension re-derives from the wafer Ø and tilt.</p>
 
-  <figure><img src="media/sec_drivetrain.png" alt="Cross-section through the drivetrain">
-  <figcaption>Straight down the middle: nut — fence — keyhole — fence — washer — knob, one axis under the wafer centre.</figcaption></figure>
+  <figure><img src="media/sec_drivetrain.png" alt="Cross-section through the jig axis">
+  <figcaption>Straight down the middle: fence — keyhole — fence, one pin under the wafer centre. Nothing tightens.</figcaption></figure>
 
-  <figure><img src="media/sec_capture.png" alt="Close-up of the rim slot">
-  <figcaption>The capture zone, up close. The rim never touches anything unless it tries to leave.</figcaption></figure>
+  <figure><img src="media/sec_capture.png" alt="Close-up of a peg pair">
+  <figcaption>Through a peg pair: chamfered tip, 0.15 mm flank gap, support arm passing under the rim.</figcaption></figure>
 
   <div class="note"><span class="tag">Zero force, on purpose</span><br>
-  Tightening the knob pulls both fences onto the <em>segment</em> — the force loop closes
-  through printed plastic and never enters the silicon. The wafer sits in 0.15&nbsp;mm of air on
-  every side, held in X/Y by the pegs while gravity owns Z. Every clearance and every capture
-  direction is boolean-checked by <span class="mono">scripts/cure_jig_stl.py</span> (18 checks)
-  each time it's regenerated.</div>
+  The fences register on the <em>segment</em> — printed plastic against printed plastic — and the
+  only force the silicon ever sees is your deliberate press over the supported land. The wafer
+  descends through 0.15&nbsp;mm of air on every side, held in X/Y by the pegs while gravity owns Z.
+  Every clearance and every capture direction is boolean-checked by
+  <span class="mono">scripts/cure_jig_stl.py</span> (14 checks) each time it's regenerated.</div>
 
   <p class="dim" style="margin-top:22px">Back to the <a href="index.html">overview</a> ·
   <a href="production.html">production</a> · <a href="engineering.html">engineering</a> ·
