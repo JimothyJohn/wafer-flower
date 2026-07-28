@@ -59,7 +59,7 @@ let view='assembly', autoDist=true;   // autoDist stops honouring the fit once y
 // segments+wafers; ANIM.spin holds {g, rate} pivots (pinion, idler wheels)
 // that turn at their true kinematic ratios off the ring angle.
 const ANIM={ring:null, spin:[]};
-const DRIVE_W=0.10;                   // ring rad/s in the drive view (~1 rpm)
+const DRIVE_W=0.21;                   // ring rad/s in the drive view (~2 rpm)
 function placeCam(){
   camera.position.set(dist*Math.sin(pol)*Math.cos(az), dist*Math.sin(pol)*Math.sin(az), dist*Math.cos(pol));
   camera.up.set(0,0,1); camera.lookAt(0,0,0);
@@ -129,9 +129,9 @@ function geoCtx(){
   const yMax=Ro*Math.sin(H);
   // wafer standoff: the crossed pinion's big end bulges in front of the
   // wall face; the wafers move forward to clear it (segment_stl Cfg)
-  const Gz=gearSpec(), rhoZ=12, faceP=10;
+  const Gz=gearSpec(), rhoZ=8, faceP=7;      // pin_rho / pin_face (20T: 1+2/T = 1.1)
   const apexZ=(Gz.tip*Gz.kb-faceP/2)-rhoZ;
-  const bulge=GEAR_F/2+rhoZ*1.2+(Gz.tip*Gz.kb-apexZ)*1.2;
+  const bulge=GEAR_F/2+rhoZ*1.1+(Gz.tip*Gz.kb-apexZ)*1.1;
   const gap0=yMax*Math.tan(th)+P.bond+P.tmin-(P.wt/2+P.D/2*Math.sin(th));
   const STAND=Math.max(0,bulge+3-gap0);
   const zBot=-(yMax*Math.tan(th)+P.bond+P.tmin+STAND);
@@ -245,9 +245,9 @@ function buildScene(){
         g.position.set(cx,cy,0); m.position.set(-cx,-cy,0); g.add(m);
         group.add(g); return g;};
       // B.5 crossed-drive geometry (mirrors segment_stl/bracket_stl):
-      // pinion on a VERTICAL (radial) axis at 12 o'clock, ratio 10.8:1;
+      // pinion on a VERTICAL (radial) axis at 12 o'clock, ratio 5.4:1;
       // the ring rests on wheels riding the OUTER groove at the bottom
-      const G3=gearSpec(), RHO=12, ZAX=GEAR_F/2+RHO*1.2;
+      const G3=gearSpec(), RHO=8, ZAX=GEAR_F/2+RHO*1.1;
       const pinZ=zBot+ZAX;
       // wheel_l is built at 270+25=295 deg, wheel_r at 245 (bracket_stl
       // wheels[] order) — mismatched pivots orbit each wheel around the
@@ -268,7 +268,7 @@ function buildScene(){
         // vertical-axis pivot: rotate about world Y through (x=0, z=pinZ)
         const g=new THREE.Group();
         g.position.set(0,0,pinZ); pin.position.set(0,0,-pinZ); g.add(pin);
-        group.add(g); ANIM.spin.push({g:g,rate:10.8,axis:'y'});
+        group.add(g); ANIM.spin.push({g:g,rate:5.4,axis:'y'});
       }
       if(view==='drive') ['wheel_l','wheel_r'].forEach((n,i)=>{
         const m=realMesh(n); if(!m)return;
@@ -276,10 +276,10 @@ function buildScene(){
         ANIM.spin.push({g:g,rate:P.Ri/24});   // bore contact co-rotates
       });
       if(view==='drive'){
-        // schematic Pololu #1596 above the pinion, shaft straight down
-        const mot=new THREE.Mesh(new THREE.BoxGeometry(10,26,12),
+        // schematic 22PG-2430BL above the pinion, shaft straight down
+        const mot=new THREE.Mesh(new THREE.CylinderGeometry(12,12,65,24),
           new THREE.MeshPhongMaterial({color:0x707880,shininess:60}));
-        mot.position.set(0,G3.tip_front+6.5+13,pinZ);
+        mot.position.set(0,G3.tip_front+8+32.5,pinZ);
         group.add(mot);
         ANIM.ring=rg;
       }
@@ -694,7 +694,7 @@ function viewNote(){
     el.innerHTML=real?tag+'OP 012 cure jig, seated: two fences on one M6 rod through the keyhole; the wafer floats edge-captured with zero clamp load.'
       :'The cure jig is CAD at the shipped parameters only — press <b>Rev B.3 build</b> to see the real fences, or regenerate them for these values via the command line below.';
   else if(view==='drive')
-    el.innerHTML=real?tag+'Drivetrain, live: the N20 + 12T beveloid pinion drive the ring from the top (9:1, counter-rotating) while it rides the two grooved idler wheels below on the bore (rolling spin-up ~10.6×). The bracket plate is ghosted so the motor shows; the real N20 envelope is parametric — measure the purchased unit.'
+    el.innerHTML=real?tag+'Drivetrain, live: the 22PG-2430BL (720:1, integrated driver) + 20T crossed bevel pinion drive the ring from the top (108/20 = 5.4:1, ~2 rpm PWM-dialed) while it hangs on the two idler wheels riding the inner groove right under the motor. The bracket plate is ghosted so the motor shows; the 22PG envelope is catalog-typical — measure the purchased unit.'
       :'The drivetrain is CAD at the shipped parameters only — press <b>Rev B.3 build</b> to watch the real ring run.';
   else if(view==='station')
     el.innerHTML=tag+'One segment with its wafer — the unit you bond on the bench. <b>'+

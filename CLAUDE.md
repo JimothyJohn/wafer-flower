@@ -14,14 +14,20 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   θ only buys standoff depth (26.9 mm @ 5° → 52.9 @ 10° → 78.4 @ 15°) at
   ~4% assembly mass and ~5% dovetail margin per degree (slicer-measured
   masses). Pick on looks.
-- CURRENT PARAMS (Rev B.5 crossed-drive, 2026-07-26): θ=5°, R_pitch=350,
-  band Ri=255 w=30, t_min=15, gear_F=9.5, bondline 1.1, pin_T=10,
-  pin_rho=12 pin_face=10, stand=DERIVED 31.0 (the crossed pinion bulges
-  39.5 in front of the wall face; the wafers move forward to clear it).
-  Part is 61.0 mm tall. The FIRST crossed rev used the textbook rolling
-  pitch (rho 26.9 -> pinion Ø100, part 108) and Nick called it "way out
-  of scale" — conjugacy is by GENERATION, so only the tooth count is
-  forced and rho is a free style/packaging knob. Total wall depth ~67.
+- CURRENT PARAMS (Rev B.6 low-profile, 2026-07-27): θ=5°, R_pitch=350,
+  band Ri=255 w=30, t_min=15, gear_F=9.5, bondline 1.1, pin_T=20,
+  pin_rho=8 pin_face=7 gear_bl=0.3, stand=DERIVED 17.6 (the crossed
+  pinion bulges 26.2 in front of the wall face; the wafers move forward
+  to clear it). Part is 47.7 mm tall, total wall depth ~54. Nick
+  2026-07-27: "minimalist" beats exact-1-rpm — 20T gives 5.4:1 (~2 rpm).
+  The FIRST crossed rev used the textbook rolling pitch (rho 26.9 ->
+  pinion Ø100, part 108) and Nick called it "way out of scale" —
+  conjugacy is by GENERATION, so only the tooth count is forced and rho
+  is a free packaging knob DOWN TO the 0.8 mm section-module print floor
+  (2·pin_rho/pin_T ≥ ~0.8 — rho 8 at 20T sits exactly on it; gear_bl
+  must drop 0.6 → 0.3 there or backlash halves the tooth). Finer RACK
+  teeth RAISE the profile: more pinion teeth per ratio → bigger pinion
+  floor. History: rho 12/10T was 61.0 tall, wall ~67.
 - θ=5 IS FORCED by the 30 mm thickness cap at N=9 (θ=7.5 → 32.1, θ=10 → 39.6).
   N=12 would allow θ=10 at 27.9 mm if the deeper look is wanted back.
 - The 30 mm cap + t_min 10 FIXED the worst margin: dovetail 2.0× → 4.5×
@@ -134,27 +140,30 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   1e-5 rad (facet wobble reads as 1e-4 joint interference), build_segment
   drops <0.01 mm³ specks at source (phantom STEP solids), cutters
   overshoot both faces (over=0.5 — coplanar-cap sliver trap).
-- CROSSED DRIVE (Rev B.5, 2026-07-26, Nick: "shaft perpendicular to the
-  arc… pinion flipped… top bracket only exists when we want to drive
-  it"): the 10T 45° pinion sits on a RADIAL axis at 12 o'clock (shaft
-  straight down, Pololu #1596 above it in a shell), ratio 108/10 =
-  10.8:1 — pairs 5 V USB (13×5/6 = 10.83 no-load rpm) to 1.00 rpm at
-  the ring. Conjugacy is by CSG generation under the imposed motion (a
-  true rolling 45/45 pair exists only at 1:1 — heavy sliding, mN·m
-  loads, fine); mesh sweep 0.00000. SMALL pinion (pin_rho 12, tips
-  Ø17→Ø41, face 10 engaging the OUTER 10 mm of the envelope): rho is
-  FREE because generation owns conjugacy — the rolling-size first cut
-  (Ø100) was Nick-rejected. The visible deep-bevel tooth pattern is
-  restored by a COSMETIC parallel-axis sweep over the full face (extra
-  removal only adds clearance, so the mesh gate is untouched; both
-  patterns tile k*pitch so they align). Pinion dips 1.2 behind the wall
-  face (wall_gap 6) and bulges 39.5 in front (stand owns it). MOUNTS
+- CROSSED DRIVE (Rev B.5 2026-07-26 → B.6 low-profile 2026-07-27, Nick:
+  "shaft perpendicular to the arc… pinion flipped… top bracket only
+  exists when we want to drive it"; then "minimalist… ~2 rpm"): the 20T
+  45° pinion sits on a RADIAL axis at 12 o'clock (shaft straight down,
+  22PG-2430BL above it in a shell), ratio 108/20 = 5.4:1 — ~2 rpm from
+  an ~11 rpm shaft (the retired Pololu #1596 at 5 V gave 2.006 exactly).
+  Conjugacy is by CSG generation under the imposed motion (a true
+  rolling 45/45 pair exists only at 1:1 — heavy sliding, mN·m loads,
+  fine); mesh sweep 0.00000. SMALL pinion (pin_rho 8, tips Ø9.9→Ø25.3,
+  face 7 engaging the OUTER 7 mm of the envelope): rho is FREE because
+  generation owns conjugacy — the rolling-size first cut (Ø100) was
+  Nick-rejected; floor is the 0.8 mm section module. The visible
+  deep-bevel tooth pattern is restored by a COSMETIC parallel-axis
+  sweep over the full face (extra removal only adds clearance, so the
+  mesh gate is untouched; both patterns tile k*pitch so they align).
+  Pinion stays 0.9 in FRONT of the wall face at rho 8 (the rho-12 rev
+  dipped 1.2 behind; wall_gap 6 covers either) and bulges 26.2 in front
+  (stand owns it). MOUNTS
   (2026-07-26 final, Nick: "wheels right underneath the motor… idling
   to preload the motor pinion… needs mounting slots"): DYNAMIC = ONE
   top unit — the ring HANGS on two Ø48 bore idlers (ribs in the INNER
   groove, ±12° from top, directly under the motor: the wheels are the
   radial datum AT the mesh meridian so engagement can't breathe), and
-  the Pololu shell mounts on ±8 mm VERTICAL SLOTS (printed M6 + captive
+  the motor shell mounts on ±8 mm VERTICAL SLOTS (printed M6 + captive
   nuts) — slide to set pinion preload, clamp. STATIC = bottom saddle
   nesting in the OUTER groove (ogrv_*: z_bot+12, 10×2, chamfered roof;
   52° arc — 60° printed 348 wide vs the 340 bed). Internal engagement
@@ -163,11 +172,10 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   bracket checks gate it; the hide check measures exact mesh vertices
   (bbox corners false-alarm on L-shaped parts).
 - GEAR TOOTH COUNT MUST DIVIDE BY N or the pitch breaks at every joint.
-  Module 5.6, N=9: 10T/segment = 90 (pitch Ø504, cone tips r246→256)
-  needs Ri≈255 — every joint lands mid-slot and the pattern tiles
-  seamlessly. Calculator flags the fit live (r_gearok, hide check on the
-  cone's front tips) and renders the spiral tooth band schematically.
-  10T spiral pinion → exactly 9:1, radial axis.
+  Module 5.6 nominal, N=9: 12T/segment = 108 (flush module 5.384) —
+  every joint lands mid-space and the pattern tiles seamlessly.
+  Calculator flags the fit live (r_gearok, hide check on the cone's
+  front tips). 20T crossed pinion → 108/20 = 5.4:1, radial axis.
 - DESIGN FORK RESOLVED (user's call): keep the one-piece wedge and add the
   gear flange. Rejected: two-piece planar-ring + bolted-saddle split (would
   have cut 124→67 g and raised joint margin to 2.7×, but adds a screw per
@@ -357,26 +365,31 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   OUTWARD from the band (Ri+6 < g_fi puts a phantom ring in the pinion's
   path — 9.4 mm³).
 - scripts/bracket_stl.py — TOP IDLER BRACKET (2026-07-25 rewrite, was two
-  saddles): ONE part bolts to the wall at 12 o'clock; two printed Ø48
-  idler wheels (rib in the inner groove, spinning on printed M6 screws
-  into captive printed nuts) and the gearmotor + 12T pinion all
-  mount on it. The ring HANGS on the wheels (±25° from top — the OP 015
-  two-hang-point case; dovetail S_joint 213 mm³ at dt_h=5) and is driven purely rotationally from the top. The
-  pinion (2026-07-25 rework) is a BEVELOID on an AXIAL axis at r=325.5 —
-  motor points out of the wall; MOTOR IS BOUGHT (2026-07-26): Pololu
-  #1596 micro metal 1000:1 LP 6V, 13 rpm/40 mA, 5.5 kg·cm stall, 10×12
-  RECTANGULAR body ×26 (round pockets cannot hold it — 15.6 diagonal),
-  3 mm D-shaft ×9 (pinion bore 3.2 + 0.4 flat fits). Nick runs it at 5 V
-  USB (~10.8 rpm shaft → ~1.2 rpm ring); target 1.0 rpm ring via PWM.
-  Body + Ø16 pinion hub inside the
-  plate_t=76 standoff (2026-07-25, Nick: doubled from 38 for motor room;
-  axial motor pocket behind a Ø21 deck recess). 9
+  saddles; 2026-07-26 top-cluster; 2026-07-27 lean pass + 22PG): ONE
+  part bolts to the wall at 12 o'clock; two printed Ø48 idler wheels
+  (rib in the inner groove, spinning on printed M6 screws into captive
+  printed nuts) at ±12° right under the motor, plus the slotted motor
+  shell, all mount on it. The ring HANGS on the wheels (the OP 015
+  two-hang-point case; dovetail S_joint 213 mm³ at dt_h=5) and is
+  driven purely rotationally from the top by the 20T crossed pinion.
+  MOTOR (2026-07-27, Nick's pick, replaces the Pololu #1596): 22PG-2430BL
+  720:1 brushless planetary with INTEGRATED driver (PWM + direction +
+  9 PPR FG), 24 V class — NOT USB 5 V. BRK params mot_D 24 / nose_D 22 /
+  nose_L 20 / mot_L 65 / Ø4 D-shaft (pinion bore 4.2 + 0.5 flat) are
+  CATALOG-TYPICAL, NOT MEASURED (the RobotShop datasheet PDF is
+  CDN-blocked; siblings 19:1@630 rpm and 1370:1@8 rpm interpolate 720:1
+  to ~16 rpm no-load → ~3 rpm ring, PWM to ~2) — MEASURE the purchased
+  unit before printing the shell. Round-motor shell: cylinder pocket
+  (nose then body), open top for leads, Ø9 hub opening, slotted ears
+  (±8 mm). Anchors span the unit inline-vertical (anchors-above pushed
+  plan r to 445 vs the 410 hide bound at the 65 mm body). 12
   self-checks vs the full ring + wafers (seat, rib jam both ways, axial
-  float, clocking sweep, hidden ≤ r410, nothing behind the wall — NOW
-  INCLUDING THE PINION; the plate-only version let the old radial-axis
-  pinion sail 39 mm through the drywall) — exits nonzero on FAIL.
-  Sliced: plate 532.5 g / 16h02 @45% (30% is fine — no real load
-  path), wheels 7.7 g / 19 min each, pinion 23.1 g (deep face).
+  float, clocking sweep, wafer field, hidden ≤ r410 via exact mesh
+  vertices, nothing behind the wall — INCLUDING THE PINION; the
+  plate-only version let the old radial-axis pinion sail 39 mm through
+  the drywall) — exits nonzero on FAIL. Sliced PLA @15%: top 53.7 g /
+  1h28, shell 26.2 g / 56 min, wheels 6.1 g / 16 min each, static
+  saddle 73.4 g / 1h59, pinion 1.9 g / 18 min @10%.
 - scripts/cure_jig_stl.py — OP 012 cure jig (see Frame design). Imports
   segment_stl for params/geometry, emits cure_jig_{outboard,inboard,knob}.stl
   print-ready plus cure_jig_fitcheck.stl (segment+wafer+fences+drivetrain,
@@ -419,13 +432,15 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   the solid skins dominate. Sliced mass is exactly linear in infill %:
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
   35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted; PETG-
-  calibrated — PLA runs ~2% lighter still). CURRENT B.4
-  build: 84.3 g/segment PLA @10% + 6 top shells (61 mm part), 2h43
-  each, assembly 1.91 kg / 18.7 N (48.6 g at the 30 mm B.4 part;
+  calibrated — PLA runs ~2% lighter still). CURRENT B.6
+  build: 69.2 g/segment PLA @10% + 6 top shells (47.7 mm part), 2h20
+  each, assembly 1.77 kg / 17.4 N (84.3 g at the 61 mm B.5 part;
   PETG@45 history: 91.8 deep bevel, 67.9 at the 4.5 face).
-  Pinion 3.8 g / 21 min, top unit 69.6 g / 1h51 @15%, slotted shell
-  7.7 g, static saddle 74.8 g, wheels 6.1 g each, jig
-  61.0/29.1/2.4 g @10%. Hanging on the two top idlers
+  Pinion 1.9 g / 18 min, top unit 53.7 g / 1h28 @15%, slotted shell
+  26.2 g / 56 min, static saddle 73.4 g / 1h59, wheels 6.1 g each,
+  jig 61.0/29.1/2.4 g @10% (pre-B.6 geometry — reslice with the
+  tape-jig rework).
+  Hanging on the two top idlers
   is the OP 015
   two-hang-point case: M well under the single-point 2.2 N·m, and the
   dovetail carries S_joint 213 mm³ (dt_h=5) — margin >3×. Traveler

@@ -22,15 +22,15 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
 
       2. Halo Crossed Pinion — the Rev B.5 drive pinion: a 45-deg cone
          (apex toward the halo centre) on a RADIAL axis — vertical at
-         12 o'clock, motor above it, shaft straight down. 10 teeth
-         against the 108T ring gives 10.8:1, which pairs the Pololu
-         #1596 at 5 V (13 x 5/6 = 10.83 no-load rpm) to 1.00 rpm at the
-         ring. Hub and D-bore on the big (top) end.
+         12 o'clock, motor above it, shaft straight down. 20 teeth
+         against the 108T ring gives 5.4:1 — ~2 rpm at the ring from any
+         ~11-16 rpm gearmotor (22PG-2430BL 720:1 with integrated driver,
+         PWM-dialed). Hub and D-bore on the big (top) end.
 
     Why not Gear Lab directly? Gear Lab's bevel gears are spherical
     involutes for INTERSECTING shafts sized for true rolling — and a
     true-rolling 45/45 pair only exists at 1:1. The halo pair runs at
-    10.8:1 with the flanks GENERATED conjugate to the imposed motion in
+    5.4:1 with the flanks GENERATED conjugate to the imposed motion in
     the Python model (heavy sliding, mN.m loads — fine). These features
     build the same envelopes analytically for CAD work; the generated
     Python parts remain the authority for anything that prints.
@@ -39,7 +39,8 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
     Python model GENERATES the ring as the swept envelope of its cutter.
     The two agree at the mid-face and diverge by a few hundredths toward
     the faces; at this drive's ~mN.m loads that is cosmetic. Keep the
-    backlash parameter >= 0.4 mm for printed parts (the repo ships 0.6).
+    backlash parameter >= 0.3 mm for printed parts (the repo ships 0.3 —
+    at the pinion's 0.8 mm section module, 0.6 would halve the tooth).
 
     Parameter map (OnShape name -> segment_stl.py PARAMS):
       Segments N        -> N          (9)
@@ -51,7 +52,7 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
                                        the deep-bevel base tmin=15)
       Spiral angle      -> gear_sp    (0 = straight)
       Pressure angle    -> gear_pa    (20 deg)
-      Backlash          -> gear_bl    (0.6 mm, applied to the pinion)
+      Backlash          -> gear_bl    (0.3 mm, applied to the pinion)
       Pinion teeth      -> tps        (derived: teeth per segment)
 
     FLUSH MODULE: tooth count is quantised in steps of N, so the module
@@ -87,17 +88,17 @@ export function haloGearSpec(segN is number, ri is ValueWithUnits,
         "webIR" : ro - 2 * millimeter,         // web overlaps 2 mm into band
         "kb" : kb,
         "ringMid" : pitchR + faceH / 2,
-        // crossed-drive pinion numbers (segment_stl Cfg, pin_T = 10,
-        // pin_rho = 12, pin_face = 10): rho is FREE, not the rolling
+        // crossed-drive pinion numbers (segment_stl Cfg, pin_T = 20,
+        // pin_rho = 8, pin_face = 7): rho is FREE, not the rolling
         // value — conjugacy is by generation, so only the tooth count
-        // is forced, and small = the motor sits right at the mesh
-        "pinT" : 10,
-        "rho" : 12 * millimeter,
-        "face" : 10 * millimeter,
+        // is forced; 8 with 20T is the 0.8 mm section-module print floor
+        "pinT" : 20,
+        "rho" : 8 * millimeter,
+        "face" : 7 * millimeter,
         "x1" : (pitchR + m) * kb,
-        "x0" : (pitchR + m) * kb - 10 * millimeter,
-        "apex" : (pitchR + m) * kb - 5 * millimeter - 12 * millimeter,
-        "zax" : faceH / 2 + 12 * millimeter * 1.2
+        "x0" : (pitchR + m) * kb - 7 * millimeter,
+        "apex" : (pitchR + m) * kb - 3.5 * millimeter - 8 * millimeter,
+        "zax" : faceH / 2 + 8 * millimeter * 1.1
     };
 }
 
@@ -275,7 +276,7 @@ export const haloBeveloidBand = defineFeature(function(context is Context, id is
 // ---------------------------------------------------------------------------
 annotation {
     "Feature Type Name" : "Halo Crossed Pinion",
-    "Feature Type Description" : "The Rev B.5 drive pinion: 10T 45-deg cone, apex toward the halo centre, on a RADIAL axis (vertical at 12 o'clock, motor above, shaft down). Built about +Z (apex at z=0, big end + hub up); mate its axis radial with the small end at the reported ring radius and the axis the reported height off the ring's wall plane. Analytic involute sections — the Python-generated parts are the authority for printing."
+    "Feature Type Description" : "The Rev B.5 drive pinion: 20T 45-deg cone, apex toward the halo centre, on a RADIAL axis (vertical at 12 o'clock, motor above, shaft down). Built about +Z (apex at z=0, big end + hub up); mate its axis radial with the small end at the reported ring radius and the axis the reported height off the ring's wall plane. Analytic involute sections — the Python-generated parts are the authority for printing."
 }
 export const haloCrossedPinion = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
@@ -294,8 +295,8 @@ export const haloCrossedPinion = defineFeature(function(context is Context, id i
         isAngle(definition.pa, { (degree) : [14, 20, 28] } as AngleBoundSpec);
         annotation { "Name" : "Spiral angle" }
         isAngle(definition.spiral, { (degree) : [-45, 0, 45] } as AngleBoundSpec);
-        annotation { "Name" : "Backlash", "Description" : "Tooth thinning for printed clearance; the repo ships 0.6 mm." }
-        isLength(definition.backlash, { (millimeter) : [0, 0.6, 1.5] } as LengthBoundSpec);
+        annotation { "Name" : "Backlash", "Description" : "Tooth thinning for printed clearance; the repo ships 0.3 mm." }
+        isLength(definition.backlash, { (millimeter) : [0, 0.3, 1.5] } as LengthBoundSpec);
         annotation { "Name" : "Hub length" }
         isLength(definition.hubLen, { (millimeter) : [0, 5, 20] } as LengthBoundSpec);
         annotation { "Name" : "Bore diameter", "Description" : "3.2 for an N20 3 mm D-shaft." }
@@ -382,7 +383,7 @@ export const haloCrossedPinion = defineFeature(function(context is Context, id i
         reportInfo(context, id,
                    spec.pinT ~ "T crossed pinion, ratio "
                    ~ roundToPrecision(spec.teeth / spec.pinT, 1)
-                   ~ ":1 (1.00 rpm at 5 V). Mount its axis RADIAL — vertical"
+                   ~ ":1 (~2 rpm, PWM-dialed). Mount its axis RADIAL — vertical"
                    ~ " at 12 o'clock, shaft down — with the small end at ring"
                    ~ " radius " ~ roundToPrecision(spec.x0 / millimeter, 1)
                    ~ " and the axis " ~ roundToPrecision(spec.zax / millimeter, 1)
