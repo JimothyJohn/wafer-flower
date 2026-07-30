@@ -27,6 +27,20 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
          ~11-16 rpm gearmotor (22PG-2430BL 720:1 with integrated driver,
          PWM-dialed). Hub and D-bore on the big (top) end.
 
+      3. Halo Straight Bevel Arc — a CLASSICAL spherical-involute straight
+         bevel gear for INTERSECTING shafts, cut to any arc angle (40 deg
+         default for one frame segment; 360 = full gear). Gear Lab can
+         only emit full-360 gears — this is the partial-arc counterpart:
+         make the pinion in Gear Lab (or anywhere), make the segment's
+         teeth here with the same module (big end), tooth counts, shaft
+         angle and pressure angle, and the flanks are conjugate spherical
+         involutes. Both arc ends land mid-space (the segment-joint
+         convention). Built with the apex at the ORIGIN, axis +Z, big end
+         up; mate so both apexes coincide at the shaft angle. The math
+         mirrors scripts/bevel_calc_app.py, whose --selftest validates
+         every relation used here (base cone sin(db)=sin(d)cos(a), roll
+         arc cos(d)=cos(db)cos(phi), Ligata & Zhang eq. 1 flank).
+
     Why not Gear Lab directly? Gear Lab's bevel gears are spherical
     involutes for INTERSECTING shafts sized for true rolling — and a
     true-rolling 45/45 pair only exists at 1:1. The halo pair runs at
@@ -162,6 +176,128 @@ function sectionOf(pts is array, scale is number, twist is number) returns array
     for (var p in pts)
         out = append(out, vector(scale * (p[0] * c - p[1] * s),
                                  scale * (p[0] * s + p[1] * c)));
+    return out;
+}
+
+// ---------------------------------------------------------------------------
+// Shared math — spherical-involute straight bevel (mirrors bevel_calc_app.py;
+// that file's --selftest is the numeric authority for these relations).
+// All angles in these helpers are PLAIN NUMBERS in radians; trig is called
+// with an explicit * radian and inverse trig converted back with / radian.
+// ---------------------------------------------------------------------------
+
+// Roll arc phi to reach cone angle dx from the base cone db:
+// cos(dx) = cos(db) * cos(phi); 0 below the base cone (roll_arc in the app).
+function sphRollArc(dx is number, db is number) returns number
+{
+    const c = cos(dx * radian) / cos(db * radian);
+    if (c >= 1)
+        return 0;
+    return acos(clamp(c, -1, 1)) / radian;
+}
+
+// Azimuth of the involute point about the gear axis, measured from the
+// involute start meridian (involute_azimuth in the app):
+// psi = phi/sin(db) - atan(tan(phi)/sin(db)).
+function sphInvAzimuth(db is number, phi is number) returns number
+{
+    const sb = sin(db * radian);
+    return phi / sb - atan2(tan(phi * radian) * meter, sb * meter) / radian;
+}
+
+// All critical angles for one straight bevel gear + its mate (solve_gear /
+// solve_pair in the app, spherical base-cone formula only). sigma/alpha are
+// radians; m is a length. Returns plain-radian angles and lengths.
+export function haloBevelSpec(z is number, zMate is number, sigma is number,
+                              m is ValueWithUnits, alpha is number,
+                              haC is number, hfC is number) returns map
+{
+    // pitch cone split: tan(delta) = sin(sigma) / (zMate/z + cos(sigma))
+    const delta = atan2(sin(sigma * radian) * meter,
+                        (zMate / z + cos(sigma * radian)) * meter) / radian;
+    const r = 0.5 * m * z;                        // big-end pitch radius
+    const re = r / sin(delta * radian);           // outer cone distance
+    const addAng = atan2((haC * (m / re)) * meter, 1 * meter) / radian;
+    const dedAng = atan2((hfC * (m / re)) * meter, 1 * meter) / radian;
+    const db = asin(sin(delta * radian) * cos(alpha * radian)) / radian;
+    const da = delta + addAng;
+    const df = delta - dedAng;
+    const phiP = sphRollArc(delta, db);
+    const phiA = sphRollArc(da, db);
+    // mate shares Re (apexes meet) so it sees the same addendum angle
+    const d2 = sigma - delta;
+    const db2 = asin(sin(d2 * radian) * cos(alpha * radian)) / radian;
+    const phiP2 = sphRollArc(d2, db2);
+    const phiA2 = sphRollArc(d2 + addAng, db2);
+    return {
+        "delta" : delta, "db" : db, "da" : da, "df" : df,
+        "r" : r, "re" : re,
+        "psiP" : sphInvAzimuth(db, phiP),
+        "rootBelowBase" : df < db,
+        // Tredgold undercut limit (virtual spur): z/cos(delta) >= 2ha*/sin^2(a)
+        "zv" : z / cos(delta * radian),
+        "zvMate" : zMate / cos(d2 * radian),
+        "zvMin" : 2 * haC / (sin(alpha * radian) * sin(alpha * radian)),
+        // exact spherical contact ratio of the pair (contact_ratio_spherical)
+        "eps" : (z * (phiA - phiP) / sin(db * radian)
+                 + zMate * (phiA2 - phiP2) / sin(db2 * radian)) / (2 * PI)
+    };
+}
+
+// One flank of one tooth, root -> tip, as [rUnit, halfAngle] pairs on the
+// UNIT transverse plane z = 1: a flank point at cone angle dx projects to
+// radius tan(dx) at azimuth (tooth centre -/+ halfAngle). Straight-bevel
+// flanks are cones through the apex, so EVERY transverse section is this
+// profile scaled by its plane's z — the loft edges lie exactly on the
+// apex rays and the flank surfaces come out exact, not approximated.
+function bevelFlankSamples(spec is map, halfTooth is number, steps is number) returns array
+{
+    const sb = sin(spec.db * radian);
+    const betaLo = sphRollArc(max(spec.df, spec.db), spec.db) / sb;
+    const betaHi = sphRollArc(spec.da, spec.db) / sb;
+    var flank = [];
+    if (spec.rootBelowBase)  // non-involute strip: radial drop to the root cone
+        flank = append(flank, [tan(spec.df * radian), halfTooth + spec.psiP]);
+    for (var i = 0; i <= steps; i += 1)
+    {
+        const beta = betaLo + (betaHi - betaLo) * i / steps;
+        const phi = beta * sb;
+        const dx = acos(cos(phi * radian) * cos(spec.db * radian)) / radian;
+        const psi = beta - atan2(tan(phi * radian) * meter, sb * meter) / radian;
+        flank = append(flank, [tan(dx * radian), halfTooth - (psi - spec.psiP)]);
+    }
+    return flank;
+}
+
+// Chain nTeeth teeth on the unit plane, centres at aStart + (k+0.5)*pitch —
+// both ends land mid-space, the segment-joint convention (as toothArcPoints).
+function bevelToothArc(flank is array, teeth is number, nTeeth is number,
+                       aStart is number) returns array
+{
+    const pitchAng = 2 * PI / teeth;
+    var pts = [];
+    for (var k = 0; k < nTeeth; k += 1)
+    {
+        const ctr = aStart + (k + 0.5) * pitchAng;
+        for (var f in flank)                        // trailing flank, root -> tip
+            pts = append(pts, vector(f[0] * cos((ctr - f[1]) * radian),
+                                     f[0] * sin((ctr - f[1]) * radian)));
+        for (var i = size(flank) - 1; i >= 0; i -= 1)  // leading, tip -> root
+        {
+            const f = flank[i];
+            pts = append(pts, vector(f[0] * cos((ctr + f[1]) * radian),
+                                     f[0] * sin((ctr + f[1]) * radian)));
+        }
+    }
+    return pts;
+}
+
+// Uniform scale of a 2D point array (the homothetic transverse section).
+function scalePts(pts is array, s is number) returns array
+{
+    var out = [];
+    for (var p in pts)
+        out = append(out, vector(p[0] * s, p[1] * s));
     return out;
 }
 
@@ -388,4 +524,164 @@ export const haloCrossedPinion = defineFeature(function(context is Context, id i
                    ~ " radius " ~ roundToPrecision(spec.x0 / millimeter, 1)
                    ~ " and the axis " ~ roundToPrecision(spec.zax / millimeter, 1)
                    ~ " mm in front of the ring's wall plane.");
+    });
+
+// ---------------------------------------------------------------------------
+// Feature 3: classical spherical-involute straight bevel gear, any arc angle
+// ---------------------------------------------------------------------------
+annotation {
+    "Feature Type Name" : "Halo Straight Bevel Arc",
+    "Feature Type Description" : "Classical spherical-involute straight bevel gear cut to an arc (40 deg default = one frame segment; 360 = full gear), both arc ends mid-space. Apex at the ORIGIN, axis +Z, big end up, arc centred on +X; spherical end faces about the apex. Mate a Gear Lab (or any spherical-involute) pinion with the same big-end module, tooth counts, shaft angle and pressure angle, apexes coincident. Math authority: scripts/bevel_calc_app.py --selftest."
+}
+export const haloStraightBevelArc = defineFeature(function(context is Context, id is Id, definition is map)
+    precondition
+    {
+        annotation { "Name" : "Teeth (this gear)" }
+        isInteger(definition.z, { (unitless) : [12, 108, 400] } as IntegerBoundSpec);
+        annotation { "Name" : "Mate teeth" }
+        isInteger(definition.zMate, { (unitless) : [6, 20, 400] } as IntegerBoundSpec);
+        annotation { "Name" : "Module (big end)", "Description" : "Outer transverse module — must match the mate's. The halo flush module is 5.384 mm." }
+        isLength(definition.m, { (millimeter) : [0.5, 5.384, 12] } as LengthBoundSpec);
+        annotation { "Name" : "Shaft angle" }
+        isAngle(definition.sigma, { (degree) : [30, 90, 150] } as AngleBoundSpec);
+        annotation { "Name" : "Pressure angle" }
+        isAngle(definition.pa, { (degree) : [14, 20, 28] } as AngleBoundSpec);
+        annotation { "Name" : "Arc angle", "Description" : "Snapped to a whole number of teeth, ends mid-space. 40 deg = one halo segment (12 of 108 teeth); 360 = full gear." }
+        isAngle(definition.arc, { (degree) : [2, 40, 360] } as AngleBoundSpec);
+        annotation { "Name" : "Face width", "Description" : "Along the pitch-cone element (the halo band is 30 mm)." }
+        isLength(definition.face, { (millimeter) : [2, 30, 150] } as LengthBoundSpec);
+        annotation { "Name" : "Rim depth", "Description" : "Radial-on-sphere depth of solid rim kept below the root cone; the inner rim wall is a cone from the apex." }
+        isLength(definition.rim, { (millimeter) : [0.5, 5, 60] } as LengthBoundSpec);
+        annotation { "Name" : "Backlash", "Description" : "Tooth thinning at the big-end pitch circle. Repo convention keeps backlash on the PINION (band ships 0 on the ring) — leave 0 unless the pinion carries none." }
+        isLength(definition.backlash, { (millimeter) : [0, 0, 1.5] } as LengthBoundSpec);
+        annotation { "Name" : "Addendum factor (ha*)" }
+        isReal(definition.haC, { (unitless) : [0.6, 1.0, 1.5] } as RealBoundSpec);
+        annotation { "Name" : "Dedendum factor (hf*)" }
+        isReal(definition.hfC, { (unitless) : [0.8, 1.25, 2.0] } as RealBoundSpec);
+    }
+    {
+        const spec = haloBevelSpec(definition.z, definition.zMate,
+                                   definition.sigma / radian, definition.m,
+                                   definition.pa / radian,
+                                   definition.haC, definition.hfC);
+        if (spec.da >= PI / 2)
+            throw regenError("Tip cone angle is >= 90 deg — not a valid bevel. Reduce the tooth ratio, addendum factor, or shaft angle.");
+        if (definition.face >= 0.9 * spec.re)
+            throw regenError("Face width >= 90% of the outer cone distance ("
+                             ~ roundToPrecision(spec.re / millimeter, 1)
+                             ~ " mm) — the band would swallow the apex.");
+        const dWeb = spec.df - (definition.rim / spec.re);
+        if (dWeb <= 0.02)
+            throw regenError("Rim depth reaches the gear axis — reduce it.");
+
+        const halfTooth = PI / (2 * definition.z)
+                          - (definition.backlash / 2) / spec.r;
+        if (halfTooth <= 0)
+            throw regenError("Backlash eats the whole tooth at this module/count — reduce it.");
+        const flank = bevelFlankSamples(spec, halfTooth, 8);
+
+        // teeth in the arc: snapped to whole teeth, both ends mid-space
+        var nT = round(definition.z * (definition.arc / degree) / 360);
+        if (nT < 1) { nT = 1; }
+        if (nT > definition.z) { nT = definition.z; }
+        const fullRing = nT == definition.z;
+        const pitchAng = 2 * PI / definition.z;
+        const aStart = fullRing ? -PI : -nT * pitchAng / 2;
+        const aEnd = aStart + nT * pitchAng;
+        var outline = bevelToothArc(flank, definition.z, nT, aStart);
+
+        // close through the rim cone (unit-plane radius tan(dWeb))
+        const rWeb = tan(dWeb * radian);
+        if (fullRing)
+        {
+            // near-closed annulus seam (1e-4 rad), same as the band feature
+            for (var i = 0; i <= 256; i += 1)
+            {
+                const a = aEnd - 1e-4 - (2 * PI - 2e-4) * i / 256;
+                outline = append(outline, vector(rWeb * cos(a * radian),
+                                                 rWeb * sin(a * radian)));
+            }
+        }
+        else
+        {
+            // sector: radial edge in, rim arc back, radial edge out
+            for (var i = 0; i <= 64; i += 1)
+            {
+                const a = aEnd - (aEnd - aStart) * i / 64;
+                outline = append(outline, vector(rWeb * cos(a * radian),
+                                                 rWeb * sin(a * radian)));
+            }
+        }
+
+        // Cone-from-apex solid: loft two homothetic transverse sections that
+        // OVERSHOOT the band both ways (cutter-overshoot idiom — transverse
+        // planes cut a near-crown gear at a grazing angle, so the loft alone
+        // would shear the band), then trim to the two spheres about the apex
+        // for textbook spherical end faces at ANY cone angle.
+        const zLo = 0.98 * (spec.re - definition.face) * cos(spec.da * radian);
+        const zHi = 1.02 * spec.re * cos(dWeb * radian);
+        const low  = sketchClosedPoly(context, id, "low",
+                                      scalePts(outline, zLo / millimeter), zLo);
+        const high = sketchClosedPoly(context, id, "high",
+                                      scalePts(outline, zHi / millimeter), zHi);
+        opLoft(context, id + "loft", {
+            "profileSubqueries" : [low, high],
+            "bodyType" : ToolBodyType.SOLID
+        });
+        opDeleteBodies(context, id + "clean", {
+            "entities" : qUnion([
+                qCreatedBy(id + "low", EntityType.BODY)->qBodyType(BodyType.WIRE),
+                qCreatedBy(id + "high", EntityType.BODY)->qBodyType(BodyType.WIRE)])
+        });
+
+        // outer trim: subtract the shell beyond the outer sphere (radius Re)
+        const rBig = zHi / cos(spec.da * radian) + 10 * millimeter;
+        fSphere(context, id + "shellO", {
+            "center" : vector(0, 0, 0) * millimeter, "radius" : rBig });
+        fSphere(context, id + "shellI", {
+            "center" : vector(0, 0, 0) * millimeter, "radius" : spec.re });
+        opBoolean(context, id + "shell", {
+            "tools" : qCreatedBy(id + "shellI", EntityType.BODY),
+            "targets" : qCreatedBy(id + "shellO", EntityType.BODY),
+            "operationType" : BooleanOperationType.SUBTRACTION
+        });
+        opBoolean(context, id + "trimO", {
+            "tools" : qCreatedBy(id + "shellO", EntityType.BODY),
+            "targets" : qCreatedBy(id + "loft", EntityType.BODY),
+            "operationType" : BooleanOperationType.SUBTRACTION
+        });
+        // inner trim: subtract the inner sphere (radius Re - face)
+        fSphere(context, id + "boreS", {
+            "center" : vector(0, 0, 0) * millimeter,
+            "radius" : spec.re - definition.face });
+        opBoolean(context, id + "trimI", {
+            "tools" : qCreatedBy(id + "boreS", EntityType.BODY),
+            "targets" : qCreatedBy(id + "loft", EntityType.BODY),
+            "operationType" : BooleanOperationType.SUBTRACTION
+        });
+
+        var msg = "Straight bevel arc: " ~ nT ~ " of " ~ definition.z
+            ~ " teeth (" ~ roundToPrecision(nT * 360 / definition.z, 2)
+            ~ " deg), big-end module " ~ roundToPrecision(definition.m / millimeter, 3)
+            ~ " mm. Pitch cone " ~ roundToPrecision(spec.delta * 180 / PI, 2)
+            ~ " deg (base " ~ roundToPrecision(spec.db * 180 / PI, 2)
+            ~ ", root " ~ roundToPrecision(spec.df * 180 / PI, 2)
+            ~ ", tip " ~ roundToPrecision(spec.da * 180 / PI, 2)
+            ~ "), outer cone distance " ~ roundToPrecision(spec.re / millimeter, 1)
+            ~ " mm, big-end pitch r " ~ roundToPrecision(spec.r / millimeter, 1)
+            ~ " mm. Apex at ORIGIN, axis +Z — mate with apexes coincident. "
+            ~ "Spherical contact ratio vs the " ~ definition.zMate ~ "T mate: "
+            ~ roundToPrecision(spec.eps, 3) ~ ".";
+        if (spec.eps < 1.2)
+            msg = msg ~ " WARNING: contact ratio < 1.2 (below 1.0 motion is not continuous).";
+        if (spec.zv < spec.zvMin)
+            msg = msg ~ " WARNING: this gear undercuts (z_v " ~ roundToPrecision(spec.zv, 1)
+                ~ " < " ~ roundToPrecision(spec.zvMin, 1) ~ ").";
+        if (spec.zvMate < spec.zvMin)
+            msg = msg ~ " WARNING: the MATE undercuts (z_v " ~ roundToPrecision(spec.zvMate, 1)
+                ~ " < " ~ roundToPrecision(spec.zvMin, 1) ~ ") — Gear Lab may profile-shift it; match tip/root clearances by eye.";
+        if (spec.rootBelowBase)
+            msg = msg ~ " Note: root cone below base cone — the strip below the base circle is radial, not involute (fillet territory).";
+        msg = msg ~ " Root is sharp — add a fillet in CAD if wanted (~0.25*m).";
+        reportInfo(context, id, msg);
     });
