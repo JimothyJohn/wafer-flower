@@ -40,6 +40,15 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
          mirrors scripts/bevel_calc_app.py, whose --selftest validates
          every relation used here (base cone sin(db)=sin(d)cos(a), roll
          arc cos(d)=cos(db)cos(phi), Ligata & Zhang eq. 1 flank).
+         UI idioms borrowed from the real Gear Lab (its public wrapper is
+         checked out at scripts/onshape/gearlab.fs — the implementation
+         behind it lives in a private versioned Onshape module, which is
+         WHY the arc feature is built here instead of patched there):
+         placement by picked plane/vertex with flip, Adjust Angle to
+         clock the teeth into mesh, root fillet as a module factor,
+         involute-steps control, remember-previous-value hints, grouped
+         advanced settings. The report line prints the Gear Lab settings
+         to give the MATING pinion so the two stay conjugate.
 
     Why not Gear Lab directly? Gear Lab's bevel gears are spherical
     involutes for INTERSECTING shafts sized for true rolling — and a
@@ -301,6 +310,40 @@ function scalePts(pts is array, s is number) returns array
     return out;
 }
 
+// Root-fillet blend (Gear Lab-style fillet, approximate): replace each
+// listed vertex P of a closed polyline with a sampled quadratic bezier
+// from P1 = P + d toward the previous vertex to P2 = P + d toward the
+// next, control point P. Distance is clamped to 45% of either neighbour
+// segment so the outline stays simple. On the unit plane d scales with z
+// like everything else — the fillet is conical from the apex, as a
+// bevel-gear fillet should be.
+function blendCorners(pts is array, idxs is array, d is number) returns array
+{
+    const n = size(pts);
+    var out = [];
+    for (var i = 0; i < n; i += 1)
+    {
+        if (!isIn(i, idxs))
+        {
+            out = append(out, pts[i]);
+            continue;
+        }
+        const p = pts[i];
+        const va = pts[(i - 1 + n) % n] - p;
+        const vb = pts[(i + 1) % n] - p;
+        const la = norm(va);
+        const lb = norm(vb);
+        const p1 = p + va * (min(d, 0.45 * la) / la);
+        const p2 = p + vb * (min(d, 0.45 * lb) / lb);
+        for (var t = 0; t <= 4; t += 1)
+        {
+            const u = t / 4;
+            out = append(out, (1 - u) * (1 - u) * p1 + 2 * u * (1 - u) * p + u * u * p2);
+        }
+    }
+    return out;
+}
+
 // Draw a closed polyline region on a z-offset plane and return its region.
 function sketchClosedPoly(context is Context, id is Id, name is string,
                           pts is array, z is ValueWithUnits) returns Query
@@ -536,28 +579,55 @@ annotation {
 export const haloStraightBevelArc = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
+        // placement picker in the Gear Lab manner (its buildManual_alignGeometry)
+        annotation { "Name" : "Placement", "Filter" : GeometryType.PLANE || EntityType.VERTEX,
+                     "MaxNumberOfPicks" : 1,
+                     "Description" : "Optional: a plane or planar face (apex at its origin, axis along its normal) or a vertex (apex there, axis +Z). Leave empty to build with the apex at the world origin, axis +Z." }
+        definition.placement is Query;
+        annotation { "Name" : "Flip axis", "UIHint" : UIHint.OPPOSITE_DIRECTION }
+        definition.placeFlip is boolean;
+
         annotation { "Name" : "Teeth (this gear)" }
-        isInteger(definition.z, { (unitless) : [12, 108, 400] } as IntegerBoundSpec);
+        isInteger(definition.z, { (unitless) : [12, 108, 1000] } as IntegerBoundSpec);
         annotation { "Name" : "Mate teeth" }
-        isInteger(definition.zMate, { (unitless) : [6, 20, 400] } as IntegerBoundSpec);
-        annotation { "Name" : "Module (big end)", "Description" : "Outer transverse module — must match the mate's. The halo flush module is 5.384 mm." }
+        isInteger(definition.zMate, { (unitless) : [6, 20, 1000] } as IntegerBoundSpec);
+        annotation { "Name" : "Module (big end)", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Outer transverse module — must match the mate's. The halo flush module is 5.384 mm." }
         isLength(definition.m, { (millimeter) : [0.5, 5.384, 12] } as LengthBoundSpec);
-        annotation { "Name" : "Shaft angle" }
+        annotation { "Name" : "Shaft angle", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE }
         isAngle(definition.sigma, { (degree) : [30, 90, 150] } as AngleBoundSpec);
-        annotation { "Name" : "Pressure angle" }
+        annotation { "Name" : "Pressure angle", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE }
         isAngle(definition.pa, { (degree) : [14, 20, 28] } as AngleBoundSpec);
-        annotation { "Name" : "Arc angle", "Description" : "Snapped to a whole number of teeth, ends mid-space. 40 deg = one halo segment (12 of 108 teeth); 360 = full gear." }
+        annotation { "Name" : "Arc angle", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Snapped to a whole number of teeth, ends mid-space. 40 deg = one halo segment (12 of 108 teeth); 360 = full gear." }
         isAngle(definition.arc, { (degree) : [2, 40, 360] } as AngleBoundSpec);
-        annotation { "Name" : "Face width", "Description" : "Along the pitch-cone element (the halo band is 30 mm)." }
+        annotation { "Name" : "Face width", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Along the pitch-cone element (the halo band is 30 mm)." }
         isLength(definition.face, { (millimeter) : [2, 30, 150] } as LengthBoundSpec);
-        annotation { "Name" : "Rim depth", "Description" : "Radial-on-sphere depth of solid rim kept below the root cone; the inner rim wall is a cone from the apex." }
+        annotation { "Name" : "Rim depth", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Radial-on-sphere depth of solid rim kept below the root cone; the inner rim wall is a cone from the apex." }
         isLength(definition.rim, { (millimeter) : [0.5, 5, 60] } as LengthBoundSpec);
-        annotation { "Name" : "Backlash", "Description" : "Tooth thinning at the big-end pitch circle. Repo convention keeps backlash on the PINION (band ships 0 on the ring) — leave 0 unless the pinion carries none." }
+        annotation { "Name" : "Backlash", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Tooth thinning at the big-end pitch circle. Repo convention keeps backlash on the PINION (band ships 0 on the ring) — leave 0 unless the pinion carries none." }
         isLength(definition.backlash, { (millimeter) : [0, 0, 1.5] } as LengthBoundSpec);
-        annotation { "Name" : "Addendum factor (ha*)" }
-        isReal(definition.haC, { (unitless) : [0.6, 1.0, 1.5] } as RealBoundSpec);
-        annotation { "Name" : "Dedendum factor (hf*)" }
-        isReal(definition.hfC, { (unitless) : [0.8, 1.25, 2.0] } as RealBoundSpec);
+
+        annotation { "Name" : "Root fillet", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE }
+        definition.fillet is boolean;
+        if (definition.fillet)
+        {
+            annotation { "Group Name" : "Fillet Settings", "Driving Parameter" : "fillet", "Collapsed By Default" : false }
+            {
+                annotation { "Name" : "Distance (x module)", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Root-corner blend distance as a multiple of the module (approximate bezier blend; scales toward the apex, so it is conical like the flanks)." }
+                isReal(definition.filletDf, { (unitless) : [0.05, 0.3, 0.45] } as RealBoundSpec);
+            }
+        }
+
+        annotation { "Group Name" : "Advanced Settings" }
+        {
+            annotation { "Name" : "Adjust angle", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Rotates the tooth pattern about the axis without moving the body — clock the teeth into mesh with the mate." }
+            isAngle(definition.adjustAngle, ANGLE_360_ZERO_DEFAULT_BOUNDS);
+            annotation { "Name" : "Addendum factor (ha*)", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE }
+            isReal(definition.haC, { (unitless) : [0.6, 1.0, 1.5] } as RealBoundSpec);
+            annotation { "Name" : "Dedendum factor (hf*)", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE }
+            isReal(definition.hfC, { (unitless) : [0.8, 1.25, 2.0] } as RealBoundSpec);
+            annotation { "Name" : "Involute steps", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE }
+            isInteger(definition.invsteps, { (unitless) : [4, 8, 40] } as IntegerBoundSpec);
+        }
     }
     {
         const spec = haloBevelSpec(definition.z, definition.zMate,
@@ -578,15 +648,17 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
                           - (definition.backlash / 2) / spec.r;
         if (halfTooth <= 0)
             throw regenError("Backlash eats the whole tooth at this module/count — reduce it.");
-        const flank = bevelFlankSamples(spec, halfTooth, 8);
+        const flank = bevelFlankSamples(spec, halfTooth, definition.invsteps);
 
-        // teeth in the arc: snapped to whole teeth, both ends mid-space
+        // teeth in the arc: snapped to whole teeth, both ends mid-space;
+        // adjustAngle clocks the pattern about the axis (Gear Lab idiom)
         var nT = round(definition.z * (definition.arc / degree) / 360);
         if (nT < 1) { nT = 1; }
         if (nT > definition.z) { nT = definition.z; }
         const fullRing = nT == definition.z;
         const pitchAng = 2 * PI / definition.z;
-        const aStart = fullRing ? -PI : -nT * pitchAng / 2;
+        const aStart = (fullRing ? -PI : -nT * pitchAng / 2)
+                       + definition.adjustAngle / radian;
         const aEnd = aStart + nT * pitchAng;
         var outline = bevelToothArc(flank, definition.z, nT, aStart);
 
@@ -611,6 +683,23 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
                 outline = append(outline, vector(rWeb * cos(a * radian),
                                                  rWeb * sin(a * radian)));
             }
+        }
+
+        // optional root fillet: blend the two root corners of every tooth
+        // (tooth k's first and last outline points; the closure arcs were
+        // appended after the teeth, so these indices are stable)
+        if (definition.fillet)
+        {
+            const perTooth = 2 * size(flank);
+            var corners = [];
+            for (var k = 0; k < nT; k += 1)
+            {
+                corners = append(corners, k * perTooth);
+                corners = append(corners, k * perTooth + perTooth - 1);
+            }
+            // module on the unit plane (module scales with cone distance)
+            const mUnit = 2 * tan(spec.delta * radian) / definition.z;
+            outline = blendCorners(outline, corners, definition.filletDf * mUnit);
         }
 
         // Cone-from-apex solid: loft two homothetic transverse sections that
@@ -660,6 +749,30 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
             "operationType" : BooleanOperationType.SUBTRACTION
         });
 
+        // optional placement on picked geometry (Gear Lab's alignment idiom):
+        // plane/planar face -> apex at its origin, axis along its normal;
+        // vertex -> apex there, axis +Z. Flip reverses the axis.
+        if (size(evaluateQuery(context, definition.placement)) > 0)
+        {
+            var cSys = undefined;
+            try silent
+            {
+                const pl = evPlane(context, { "face" : definition.placement });
+                cSys = coordSystem(pl.origin, pl.x,
+                                   definition.placeFlip ? -pl.normal : pl.normal);
+            }
+            if (cSys == undefined)
+            {
+                const pt = evVertexPoint(context, { "vertex" : definition.placement });
+                cSys = coordSystem(pt, vector(1, 0, 0),
+                                   definition.placeFlip ? vector(0, 0, -1) : vector(0, 0, 1));
+            }
+            opTransform(context, id + "place", {
+                "bodies" : qCreatedBy(id + "loft", EntityType.BODY),
+                "transform" : toWorld(cSys)
+            });
+        }
+
         var msg = "Straight bevel arc: " ~ nT ~ " of " ~ definition.z
             ~ " teeth (" ~ roundToPrecision(nT * 360 / definition.z, 2)
             ~ " deg), big-end module " ~ roundToPrecision(definition.m / millimeter, 3)
@@ -669,9 +782,15 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
             ~ ", tip " ~ roundToPrecision(spec.da * 180 / PI, 2)
             ~ "), outer cone distance " ~ roundToPrecision(spec.re / millimeter, 1)
             ~ " mm, big-end pitch r " ~ roundToPrecision(spec.r / millimeter, 1)
-            ~ " mm. Apex at ORIGIN, axis +Z — mate with apexes coincident. "
+            ~ " mm. Apex at the placement origin (world origin if none), axis"
+            ~ " along the placement normal — mate with apexes coincident. "
             ~ "Spherical contact ratio vs the " ~ definition.zMate ~ "T mate: "
-            ~ roundToPrecision(spec.eps, 3) ~ ".";
+            ~ roundToPrecision(spec.eps, 3) ~ ". Gear Lab settings for the mate:"
+            ~ " Teeth " ~ definition.zMate
+            ~ ", same Module/Pressure Angle, Bevel Angle "
+            ~ roundToPrecision((definition.sigma / radian - spec.delta) * 180 / PI, 2)
+            ~ " deg, Helix 0, Tooth Width "
+            ~ roundToPrecision(definition.face / definition.m, 2) ~ " modules.";
         if (spec.eps < 1.2)
             msg = msg ~ " WARNING: contact ratio < 1.2 (below 1.0 motion is not continuous).";
         if (spec.zv < spec.zvMin)

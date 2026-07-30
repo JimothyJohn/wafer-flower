@@ -3,15 +3,37 @@
 `wafer_halo_beveloid.fs` gives OnShape native, procedural generation of the
 gear at the segment edge (straight or spiral), in the style of Anthony Lu's
 **Gear Lab** FeatureScript. Paste it into a Feature Studio (New tab →
-Feature Studio), commit, and the two features appear in the Part Studio
+Feature Studio), commit, and the features appear in the Part Studio
 toolbar under the custom-features flyout.
 
-## The two features
+`gearlab.fs` (if present, untracked) is a checkout of Gear Lab's public
+top-level wrapper for reference: its `export import` line pulls the whole
+implementation from a private versioned Onshape module, which is why arc
+support lives in our FeatureScript instead of a Gear Lab patch.
+
+## The three features
 
 | Feature | What it builds | How to use it |
 |---|---|---|
-| **Halo Beveloid Band** | One segment's 40° external tooth band: 45° cone big-at-wall, flush root at the band OD, joints mid-space. | Build at origin (wall face on XY, sector centred on +X), then boolean-union onto the segment body. `Full ring` gives all N sectors for assembly checks. |
+| **Halo Beveloid Band** | One segment's 40° external tooth band: 45° cone big-at-wall, flush root at the band OD, joints mid-space. (The GENERATED crossed-beveloid tooth form — mates the Halo Crossed Pinion, NOT a Gear Lab bevel.) | Build at origin (wall face on XY, sector centred on +X), then boolean-union onto the segment body. `Full ring` gives all N sectors for assembly checks. |
 | **Halo Crossed Pinion** | The Rev B.5 drive pinion: 20T 45° cone (Ø9.9→Ø25.3 tips), apex toward the halo centre, hub + D-bore on the big end. | Mate its axis **radial** — vertical at 12 o'clock, motor above, shaft down — small end at the reported ring radius, axis ~13.6 mm in front of the ring's wall plane. Ratio 5.4:1 → ~2 rpm, PWM-dialed. |
+| **Halo Straight Bevel Arc** | A CLASSICAL spherical-involute straight bevel gear (intersecting shafts — the tooth system Gear Lab makes) cut to any arc: 40° default = 12 of 108 teeth, ends mid-space; 360° = full gear. Flanks are exact cones through the apex; end faces are true spheres about it. | Defaults are the halo pair (108/20, module 5.384, Σ 90°, α 20°, face 30). Optionally pick a plane/vertex as **Placement** (apex at its origin, axis along its normal, flip available); else it builds apex at the world origin, axis +Z. Make the pinion in Gear Lab with the settings the info banner prints (teeth, same module/PA, Bevel Angle = Σ − δ, tooth width in modules), mate the two apexes coincident at the shaft angle, and use **Adjust angle** to clock the teeth into mesh. Root fillet (× module) and involute steps are in the dialog; backlash stays on the pinion by repo convention. |
+
+## Installing the custom feature in any project
+
+1. Open (or create) an Onshape document to hold your FeatureScripts — a
+   dedicated "My FeatureScripts" document is best, so every project can
+   link to one place.
+2. New tab → **Feature Studio**, paste ALL of `wafer_halo_beveloid.fs`,
+   and let it save (fix-ups: the file targets FS/std 1803; accept
+   Onshape's "update to latest version" offer if it nags).
+3. Same document: the features appear immediately in that Part Studio's
+   custom-feature flyout (the rightmost toolbar icon).
+   Other documents: create a **Version** of the FeatureScript document
+   first (Versions and history → Create version) — then in any Part
+   Studio: custom-feature flyout → **Other documents** → search your
+   FeatureScript document → pick the feature. Onshape pins the version;
+   bump it from the same menu after edits.
 
 Both features default to the shipped Rev B.3 numbers (N=9, Ri=255, bw=30,
 module 5.6 nominal → 5.384 flush, face 9.5, PA 20°, straight teeth). Spiral
