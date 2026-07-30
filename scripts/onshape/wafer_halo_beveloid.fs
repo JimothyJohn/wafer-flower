@@ -320,10 +320,13 @@ function scalePts(pts is array, s is number) returns array
 function blendCorners(pts is array, idxs is array, d is number) returns array
 {
     const n = size(pts);
+    var mark = makeArray(n, false);
+    for (var i in idxs)
+        mark[i] = true;
     var out = [];
     for (var i = 0; i < n; i += 1)
     {
-        if (!isIn(i, idxs))
+        if (mark[i] != true)
         {
             out = append(out, pts[i]);
             continue;
@@ -383,11 +386,11 @@ export const haloBeveloidBand = defineFeature(function(context is Context, id is
         isLength(definition.bw, { (millimeter) : [10, 30, 200] } as LengthBoundSpec);
         annotation { "Name" : "Nominal module" }
         isLength(definition.mNom, { (millimeter) : [1, 5.6, 12] } as LengthBoundSpec);
-        annotation { "Name" : "Face height (gear_F)", "Description" : "Axial height of the tooth band. On the halo this must clear the neighbour wafer's clearance plane (~4.8 mm at the shipped build) — the Python gate is the authority." }
+        annotation { "Name" : "Face height (gear_F)", "Description" : "Axial height of the tooth band. On the halo this must clear the neighbour wafer's clearance plane (~4.8 mm at the shipped build) - the Python gate is the authority." }
         isLength(definition.faceH, { (millimeter) : [2, 9.5, 14] } as LengthBoundSpec);
         annotation { "Name" : "Pressure angle" }
         isAngle(definition.pa, { (degree) : [14, 20, 28] } as AngleBoundSpec);
-        annotation { "Name" : "Spiral angle", "Description" : "0 = straight. The wall section is rotated by tan(spiral)*face/pitchR — matches the Python twist-extrude." }
+        annotation { "Name" : "Spiral angle", "Description" : "0 = straight. The wall section is rotated by tan(spiral)*face/pitchR - matches the Python twist-extrude." }
         isAngle(definition.spiral, { (degree) : [-45, 0, 45] } as AngleBoundSpec);
         annotation { "Name" : "Full ring (all N sectors)", "UIHint" : UIHint.DISPLAY_SHORT }
         definition.fullRing is boolean;
@@ -440,7 +443,7 @@ export const haloBeveloidBand = defineFeature(function(context is Context, id is
             "entities" : qCreatedBy(id + "front", EntityType.BODY)->qBodyType(BodyType.WIRE)
         });
 
-        reportInfo(context, id,
+        reportFeatureInfo(context, id,
                    "Halo band: " ~ spec.teeth ~ "T (" ~ spec.tps ~ "/segment), "
                    ~ "flush module " ~ roundToPrecision(spec.m / millimeter, 3)
                    ~ " mm, tips r" ~ roundToPrecision(spec.tipR * spec.kb / millimeter, 1)
@@ -455,7 +458,7 @@ export const haloBeveloidBand = defineFeature(function(context is Context, id is
 // ---------------------------------------------------------------------------
 annotation {
     "Feature Type Name" : "Halo Crossed Pinion",
-    "Feature Type Description" : "The Rev B.5 drive pinion: 20T 45-deg cone, apex toward the halo centre, on a RADIAL axis (vertical at 12 o'clock, motor above, shaft down). Built about +Z (apex at z=0, big end + hub up); mate its axis radial with the small end at the reported ring radius and the axis the reported height off the ring's wall plane. Analytic involute sections — the Python-generated parts are the authority for printing."
+    "Feature Type Description" : "The Rev B.5 drive pinion: 20T 45-deg cone, apex toward the halo centre, on a RADIAL axis (vertical at 12 o'clock, motor above, shaft down). Built about +Z (apex at z=0, big end + hub up); mate its axis radial with the small end at the reported ring radius and the axis the reported height off the ring's wall plane. Analytic involute sections - the Python-generated parts are the authority for printing."
 }
 export const haloCrossedPinion = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
@@ -559,7 +562,7 @@ export const haloCrossedPinion = defineFeature(function(context is Context, id i
             });
         }
 
-        reportInfo(context, id,
+        reportFeatureInfo(context, id,
                    spec.pinT ~ "T crossed pinion, ratio "
                    ~ roundToPrecision(spec.teeth / spec.pinT, 1)
                    ~ ":1 (~2 rpm, PWM-dialed). Mount its axis RADIAL — vertical"
@@ -591,7 +594,7 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
         isInteger(definition.z, { (unitless) : [12, 108, 1000] } as IntegerBoundSpec);
         annotation { "Name" : "Mate teeth" }
         isInteger(definition.zMate, { (unitless) : [6, 20, 1000] } as IntegerBoundSpec);
-        annotation { "Name" : "Module (big end)", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Outer transverse module — must match the mate's. The halo flush module is 5.384 mm." }
+        annotation { "Name" : "Module (big end)", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Outer transverse module - must match the mate's. The halo flush module is 5.384 mm." }
         isLength(definition.m, { (millimeter) : [0.5, 5.384, 12] } as LengthBoundSpec);
         annotation { "Name" : "Shaft angle", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE }
         isAngle(definition.sigma, { (degree) : [30, 90, 150] } as AngleBoundSpec);
@@ -603,7 +606,7 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
         isLength(definition.face, { (millimeter) : [2, 30, 150] } as LengthBoundSpec);
         annotation { "Name" : "Rim depth", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Radial-on-sphere depth of solid rim kept below the root cone; the inner rim wall is a cone from the apex." }
         isLength(definition.rim, { (millimeter) : [0.5, 5, 60] } as LengthBoundSpec);
-        annotation { "Name" : "Backlash", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Tooth thinning at the big-end pitch circle. Repo convention keeps backlash on the PINION (band ships 0 on the ring) — leave 0 unless the pinion carries none." }
+        annotation { "Name" : "Backlash", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Tooth thinning at the big-end pitch circle. Repo convention keeps backlash on the PINION (band ships 0 on the ring) - leave 0 unless the pinion carries none." }
         isLength(definition.backlash, { (millimeter) : [0, 0, 1.5] } as LengthBoundSpec);
 
         annotation { "Name" : "Root fillet", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE }
@@ -619,8 +622,8 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
 
         annotation { "Group Name" : "Advanced Settings" }
         {
-            annotation { "Name" : "Adjust angle", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Rotates the tooth pattern about the axis without moving the body — clock the teeth into mesh with the mate." }
-            isAngle(definition.adjustAngle, ANGLE_360_ZERO_DEFAULT_BOUNDS);
+            annotation { "Name" : "Adjust angle", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE, "Description" : "Rotates the tooth pattern about the axis without moving the body - clock the teeth into mesh with the mate." }
+            isAngle(definition.adjustAngle, { (degree) : [-360, 0, 360] } as AngleBoundSpec);
             annotation { "Name" : "Addendum factor (ha*)", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE }
             isReal(definition.haC, { (unitless) : [0.6, 1.0, 1.5] } as RealBoundSpec);
             annotation { "Name" : "Dedendum factor (hf*)", "UIHint" : UIHint.REMEMBER_PREVIOUS_VALUE }
@@ -652,7 +655,7 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
 
         // teeth in the arc: snapped to whole teeth, both ends mid-space;
         // adjustAngle clocks the pattern about the axis (Gear Lab idiom)
-        var nT = round(definition.z * (definition.arc / degree) / 360);
+        var nT = floor(definition.z * (definition.arc / degree) / 360 + 0.5);
         if (nT < 1) { nT = 1; }
         if (nT > definition.z) { nT = definition.z; }
         const fullRing = nT == definition.z;
@@ -725,9 +728,9 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
 
         // outer trim: subtract the shell beyond the outer sphere (radius Re)
         const rBig = zHi / cos(spec.da * radian) + 10 * millimeter;
-        fSphere(context, id + "shellO", {
+        opSphere(context, id + "shellO", {
             "center" : vector(0, 0, 0) * millimeter, "radius" : rBig });
-        fSphere(context, id + "shellI", {
+        opSphere(context, id + "shellI", {
             "center" : vector(0, 0, 0) * millimeter, "radius" : spec.re });
         opBoolean(context, id + "shell", {
             "tools" : qCreatedBy(id + "shellI", EntityType.BODY),
@@ -740,7 +743,7 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
             "operationType" : BooleanOperationType.SUBTRACTION
         });
         // inner trim: subtract the inner sphere (radius Re - face)
-        fSphere(context, id + "boreS", {
+        opSphere(context, id + "boreS", {
             "center" : vector(0, 0, 0) * millimeter,
             "radius" : spec.re - definition.face });
         opBoolean(context, id + "trimI", {
@@ -802,5 +805,5 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
         if (spec.rootBelowBase)
             msg = msg ~ " Note: root cone below base cone — the strip below the base circle is radial, not involute (fillet territory).";
         msg = msg ~ " Root is sharp — add a fillet in CAD if wanted (~0.25*m).";
-        reportInfo(context, id, msg);
+        reportFeatureInfo(context, id, msg);
     });
