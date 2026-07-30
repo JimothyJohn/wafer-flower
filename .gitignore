@@ -3,3 +3,7 @@ gcode/
 __pycache__/
 *.pyc
 0*.log
+
+# Gear Lab public wrapper checkout (third-party, Anthony Lu) — reference only,
+# not redistributed; `git add -f` if licensing is cleared. See scripts/onshape/README.md.
+scripts/onshape/gearlab.fs
