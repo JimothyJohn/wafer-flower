@@ -807,3 +807,63 @@ export const haloStraightBevelArc = defineFeature(function(context is Context, i
         msg = msg ~ " Root is sharp — add a fillet in CAD if wanted (~0.25*m).";
         reportFeatureInfo(context, id, msg);
     });
+
+// ---------------------------------------------------------------------------
+// Feature 4: cut ANY full gear down to an arc — the Gear Lab companion.
+// Gear Lab's implementation (GearLabMain.fs) lives in a private document,
+// so partial arcs cannot be patched into it; instead, generate the full
+// gear with Gear Lab and cut it here. The teeth stay exactly Gear Lab's —
+// no gear math happens in this feature at all.
+// ---------------------------------------------------------------------------
+annotation {
+    "Feature Type Name" : "Gear Arc Cut",
+    "Feature Type Description" : "Keep only an arc of a full gear (or any body): intersects the selected body with a sector wedge about the world Z axis through the origin, centred on +X. Build the gear at the origin (Gear Lab manual build, no alignment geometry), cut, THEN transform/mate the result. Use Offset here (or Gear Lab's Adjust Angle) to land both cut planes mid-space between teeth."
+}
+export const gearArcCut = defineFeature(function(context is Context, id is Id, definition is map)
+    precondition
+    {
+        annotation { "Name" : "Body to cut", "Filter" : EntityType.BODY, "MaxNumberOfPicks" : 1 }
+        definition.gearBody is Query;
+        annotation { "Name" : "Arc angle", "Description" : "Angular span to KEEP, centred on +X (plus Offset)." }
+        isAngle(definition.arc, { (degree) : [1, 40, 359] } as AngleBoundSpec);
+        annotation { "Name" : "Offset", "Description" : "Rotates the kept sector about Z - clock the cut planes into tooth gaps." }
+        isAngle(definition.offset, { (degree) : [-360, 0, 360] } as AngleBoundSpec);
+    }
+    {
+        if (size(evaluateQuery(context, definition.gearBody)) != 1)
+            throw regenError("Select exactly one body to cut.");
+
+        // sector wedge: origin + a big arc, extruded well past any gear
+        const half = (definition.arc / radian) / 2;
+        const mid = definition.offset / radian;
+        const R = 2000;                       // mm — far outside any gear here
+        var pts = [vector(0, 0)];
+        for (var i = 0; i <= 64; i += 1)
+        {
+            const a = mid - half + 2 * half * i / 64;
+            pts = append(pts, vector(R * cos(a * radian), R * sin(a * radian)));
+        }
+        sketchClosedPoly(context, id, "wedge", pts, -1000 * millimeter);
+        opExtrude(context, id + "wex", {
+            "entities" : qSketchRegion(id + "wedge"),
+            "direction" : vector(0, 0, 1),
+            "endBound" : BoundingType.BLIND,
+            "endDepth" : 2000 * millimeter
+        });
+        opBoolean(context, id + "keep", {
+            "tools" : qUnion([definition.gearBody,
+                              qCreatedBy(id + "wex", EntityType.BODY)]),
+            "operationType" : BooleanOperationType.INTERSECTION
+        });
+        opDeleteBodies(context, id + "clean", {
+            "entities" : qCreatedBy(id + "wedge", EntityType.BODY)->qBodyType(BodyType.WIRE)
+        });
+
+        reportFeatureInfo(context, id,
+            "Kept " ~ roundToPrecision(definition.arc / degree, 2)
+            ~ " deg about world Z through the origin, centred "
+            ~ roundToPrecision(definition.offset / degree, 2)
+            ~ " deg off +X. For N teeth in the arc use arc = N*(360/z) and"
+            ~ " clock Offset so both cut planes land mid-space. Cut BEFORE"
+            ~ " transforming the gear off the origin.");
+    });
