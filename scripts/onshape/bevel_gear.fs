@@ -30,8 +30,10 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
     straight trapezoid sides - transverse involute at the big end, apex-
     scaled along the face (the Tredgold-style approximation; Gear Lab's
     spherical involute differs by hundredths of a mm at the face ends).
-    Not modeled yet vs Gear Lab: root fillet, tip chamfer, and undercut
-    relief for low-tooth-count pinions.
+    Step 5: root fillet, radius 0.38 m (ISO rack tip radius), clamped to
+    the root land - a 5-facet tangent arc rounding the slot cutter's root
+    corners, apex-scaled with the profile. Not modeled yet vs Gear Lab:
+    tip chamfer, undercut relief for low-tooth-count pinions.
 
     Onshape paste rules learned the hard way (do not regress):
     - annotation strings must be printable ASCII (no em-dashes, no unicode minus)
@@ -282,25 +284,85 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
             // sector joints land mid-slot; slots then march by one pitch.
             const phi0 = -half;
             const K = 10;                               // involute facets per flank
-            var flank = [];                             // [radius, halfAngle] pairs, root -> tip
+
+            // Canonical frame: slot centered on the +X axis (rotated out to
+            // phi0 at the end, mirrored for the -side). In this frame the
+            // root chord is parallel to the Y axis. +side flank, root -> tip.
+            var flankPts = [];
             if (rRoot < rb)
-                flank = append(flank, [rRoot, slotHalfAngle(rb)]);   // radial stub below base circle
+                flankPts = append(flankPts, vector(
+                    rRoot * cos(slotHalfAngle(rb) * radian),
+                    rRoot * sin(slotHalfAngle(rb) * radian)));
             for (var i = 0; i <= K; i += 1)
             {
                 const r = rStart + (rTipOv - rStart) * i / K;
-                flank = append(flank, [r, slotHalfAngle(r)]);
+                const g = slotHalfAngle(r);
+                flankPts = append(flankPts, vector(r * cos(g * radian), r * sin(g * radian)));
             }
-            // Closed outline: +side flank root -> tip, tip chord, -side flank
-            // tip -> root (mirror), root chord back to the start.
+
+            // Step 5: root fillet, radius 0.38 m (ISO rack tip radius),
+            // clamped so the two corner arcs never overlap on the root land.
+            // The sharp corner between the root chord and the near-straight
+            // flank start becomes a 5-facet tangent arc; the CUTTER loses
+            // area at the corner, so the TOOTH root gains the fillet. It
+            // lives in the big-end profile, so it apex-scales with the rest.
+            var plusPts = flankPts;
+            const pf0 = flankPts[0];
+            const uDir = vector(0, -1);                 // along the root chord, away from the corner
+            var vDir = flankPts[1] - pf0;
+            vDir = vDir / norm(vDir);                   // along the flank, away from the corner
+            const phiC = acos(dot(uDir, vDir));
+            var rho = 0.38 * m;
+            var tOff = rho / tan(phiC / 2);
+            if (tOff > 0.9 * pf0[1])                    // pf0[1] = half the root chord
+            {
+                rho = rho * 0.9 * pf0[1] / tOff;
+                tOff = 0.9 * pf0[1];
+            }
+            if (rho > 0.02 * millimeter)
+            {
+                const Tc = pf0 + uDir * tOff;           // tangency on the root chord
+                const Tf = pf0 + vDir * tOff;           // tangency on the flank
+                var bis = uDir + vDir;
+                bis = bis / norm(bis);
+                const Cc = pf0 + bis * (rho / sin(phiC / 2));
+                const a0 = atan2(Tc[1] - Cc[1], Tc[0] - Cc[0]);
+                const a1 = atan2(Tf[1] - Cc[1], Tf[0] - Cc[0]);
+                var sweep = a1 - a0;
+                if (sweep > 180 * degree)
+                    sweep = sweep - 360 * degree;
+                if (sweep < -180 * degree)
+                    sweep = sweep + 360 * degree;
+                const kf = 5;
+                var pts = [Tc];
+                for (var i = 1; i < kf; i += 1)
+                {
+                    const a = a0 + sweep * i / kf;
+                    pts = append(pts, Cc + vector(cos(a), sin(a)) * rho);
+                }
+                pts = append(pts, Tf);
+                // Rejoin the involute above the arc (tiny kink, sub-print-scale).
+                const rJoin = norm(Tf);
+                for (var i = 0; i < size(flankPts); i += 1)
+                {
+                    if (norm(flankPts[i]) > rJoin + 0.01 * millimeter)
+                        pts = append(pts, flankPts[i]);
+                }
+                plusPts = pts;
+            }
+
+            // Closed outline in world orientation: +side root -> tip, tip
+            // chord, mirrored -side tip -> root, root chord closes it.
+            var rot = function(p)
+            {
+                return vector(p[0] * cos(phi0) - p[1] * sin(phi0),
+                              p[0] * sin(phi0) + p[1] * cos(phi0));
+            };
             var outline = [];
-            for (var i = 0; i < size(flank); i += 1)
-                outline = append(outline, vector(
-                    flank[i][0] * cos(phi0 + flank[i][1] * radian),
-                    flank[i][0] * sin(phi0 + flank[i][1] * radian)));
-            for (var i = size(flank) - 1; i >= 0; i -= 1)
-                outline = append(outline, vector(
-                    flank[i][0] * cos(phi0 - flank[i][1] * radian),
-                    flank[i][0] * sin(phi0 - flank[i][1] * radian)));
+            for (var i = 0; i < size(plusPts); i += 1)
+                outline = append(outline, rot(plusPts[i]));
+            for (var i = size(plusPts) - 1; i >= 0; i -= 1)
+                outline = append(outline, rot(vector(plusPts[i][0], -plusPts[i][1])));
 
             const scales = [s0, s1];
             const zs = [-ov, def.height + ov];
