@@ -91,6 +91,9 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
         annotation { "Name" : "Height" }
         isLength(def.height, { (millimeter) : [0.1, 15, 10000] } as LengthBoundSpec);
 
+        annotation { "Name" : "Base depth", "Description" : "Solid teeth-free backing added BELOW the big-end face. Near-face-gear rings (90 deg shafts at high ratio) need a thin tooth Height - the base gives the part its body. 0 = none." }
+        isLength(def.baseDepth, { (millimeter) : [0, 0, 1000] } as LengthBoundSpec);
+
         annotation { "Name" : "Arc angle", "Description" : "360 divided by the number of segments in the full ring (9 wafers -> 40 deg). 360 makes the full gear." }
         isAngle(def.arcAngle, { (degree) : [0.1, 40, 360] } as AngleBoundSpec);
 
@@ -146,6 +149,7 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
             "outerRadius" : def.outerRadius,
             "innerRadius" : def.innerRadius,
             "height" : def.height,
+            "baseDepth" : def.baseDepth,
             "arcAngle" : def.arcAngle,
             "coneAngle" : ringCone,
             "teeth" : def.teeth,
@@ -169,6 +173,7 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                 "outerRadius" : rPp * blankK(deltaP, zp),
                 "innerRadius" : def.pinionBore,
                 "height" : def.pinionHeight,
+                "baseDepth" : 0 * millimeter,
                 "arcAngle" : 360 * degree,
                 "coneAngle" : deltaP,
                 "teeth" : zp,
@@ -199,8 +204,8 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
     });
 
 // The whole single-gear pipeline (blank, wall cone, bore, tooth slots).
-// g: outerRadius, innerRadius, height, arcAngle, coneAngle, teeth,
-// pressureAngle. Bodies are created under the passed id.
+// g: outerRadius, innerRadius, height, baseDepth, arcAngle, coneAngle,
+// teeth, pressureAngle. Bodies are created under the passed id.
 function buildGear(context is Context, id is Id, g is map)
 {
     const Ro = g.outerRadius;
@@ -645,6 +650,63 @@ function buildGear(context is Context, id is Id, g is map)
             qCreatedBy(id + "slotSk1", EntityType.BODY)
         ])
     });
+
+    // Base (Gear Lab idiom): solid teeth-free backing below the big end,
+    // bored to match, unioned onto the toothed body. The tooth cutters'
+    // 1 mm overshoot below z = 0 notches the base's outermost rim ring -
+    // that is the tooth roots blending into the backing, expected.
+    if (g.baseDepth > 0 * millimeter)
+    {
+        opExtrude(context, id + "baseExtrude", {
+            "entities" : qSketchRegion(id + "profile"),
+            "direction" : vector(0, 0, -1),
+            "endBound" : BoundingType.BLIND,
+            "endDepth" : g.baseDepth
+        });
+        if (Ri > 0 * millimeter)
+        {
+            var baseBoreSk = newSketch(context, id + "baseBoreProfile", {
+                "sketchPlane" : qCreatedBy(makeId("Front"), EntityType.FACE)
+            });
+            skLineSegment(baseBoreSk, "axisEdge", {
+                "start" : vector(0 * millimeter, -g.baseDepth - ov),
+                "end"   : vector(0 * millimeter, ov)
+            });
+            skLineSegment(baseBoreSk, "top", {
+                "start" : vector(0 * millimeter, ov),
+                "end"   : vector(Ri, ov)
+            });
+            skLineSegment(baseBoreSk, "wall", {
+                "start" : vector(Ri, ov),
+                "end"   : vector(Ri, -g.baseDepth - ov)
+            });
+            skLineSegment(baseBoreSk, "bottom", {
+                "start" : vector(Ri, -g.baseDepth - ov),
+                "end"   : vector(0 * millimeter, -g.baseDepth - ov)
+            });
+            skSolve(baseBoreSk);
+            opRevolve(context, id + "baseBoreCut", {
+                "entities" : qSketchRegion(id + "baseBoreProfile"),
+                "axis" : line(vector(0, 0, 0) * millimeter, vector(0, 0, 1)),
+                "angleForward" : 360 * degree
+            });
+            opBoolean(context, id + "subtractBaseBore", {
+                "tools" : qCreatedBy(id + "baseBoreCut", EntityType.BODY),
+                "targets" : qCreatedBy(id + "baseExtrude", EntityType.BODY),
+                "operationType" : BooleanOperationType.SUBTRACTION
+            });
+            opDeleteBodies(context, id + "deleteBaseBoreSketch", {
+                "entities" : qCreatedBy(id + "baseBoreProfile", EntityType.BODY)
+            });
+        }
+        opBoolean(context, id + "attachBase", {
+            "tools" : qUnion([
+                qCreatedBy(id + "extrude", EntityType.BODY),
+                qCreatedBy(id + "baseExtrude", EntityType.BODY)
+            ]),
+            "operationType" : BooleanOperationType.UNION
+        });
+    }
 
     // Leave only the solid behind.
     opDeleteBodies(context, id + "deleteSketch", {
