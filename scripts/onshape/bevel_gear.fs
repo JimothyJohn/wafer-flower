@@ -13,9 +13,11 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
     BOTTOM (z = 0): Ro at z = 0 shrinking to Ro - height * tan(coneAngle)
     at the top. 0 deg = straight wall. The inner wall stays cylindrical.
 
-    Step 3: tooth slots. The blank's outer cone is the TIP surface, so the
-    module is DERIVED, not input: m = 2 * Ro / (teeth + 2) (pitch radius
-    Ro - m at the big end, addendum m, dedendum 1.25 m, slot depth 2.25 m).
+    Step 3: tooth slots. Teeth counts the teeth ON THIS ARC (Nick's call -
+    the whole model's teeth, not a per-circle abstraction); the full-circle
+    equivalent zFull = teeth * 360 / arc drives the module, which is
+    DERIVED, not input: m = 2 * Ro / (zFull + 2) (pitch radius Ro - m at
+    the big end, addendum m, dedendum 1.25 m, slot depth 2.25 m).
     Each slot is a trapezoid defined in the big-end plane (z = 0) and
     lofted between two horizontal sections SCALED ABOUT THE CONE APEX
     (axis point z = Ro / tan(coneAngle)), so flanks are planes through the
@@ -32,7 +34,7 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
 
 annotation {
     "Feature Type Name" : "Arc Segment",
-    "Feature Type Description" : "Bevel gear / arc rack segment: coned blank (big end at bottom) with straight bevel tooth slots converging on the cone apex. Inner radius 0 fills it solid; arc angle 360 makes the full gear. Module is derived: m = 2 * Ro / (teeth + 2)."
+    "Feature Type Description" : "Bevel gear / arc rack segment: coned blank (big end at bottom) with straight bevel tooth slots converging on the cone apex. Inner radius 0 fills it solid; arc angle 360 makes the full gear. Teeth counts the teeth on this arc; module is derived: m = 2 * Ro / (teeth * 360 / arc + 2)."
 }
 export const arcSegment = defineFeature(function(context is Context, id is Id, def is map)
     precondition
@@ -57,8 +59,8 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
 
         if (def.cutTeeth)
         {
-            annotation { "Name" : "Teeth", "Description" : "Tooth count for the FULL circle; a sector carries arc / (360 / teeth) of them. Keep divisible by the segment count so joints land mid-slot." }
-            isInteger(def.teeth, { (unitless) : [4, 20, 1000] } as IntegerBoundSpec);
+            annotation { "Name" : "Teeth", "Description" : "Number of teeth ON THIS ARC (joint faces land mid-slot). Full-circle equivalent = teeth * 360 / arc angle - match the pinion to that for the ratio." }
+            isInteger(def.teeth, { (unitless) : [1, 12, 1000] } as IntegerBoundSpec);
 
             annotation { "Name" : "Pressure angle" }
             isAngle(def.pressureAngle, { (degree) : [5, 20, 45] } as AngleBoundSpec);
@@ -209,9 +211,9 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
         // Step 3: tooth slots.
         if (def.cutTeeth)
         {
-            const Z = def.teeth;
-            const m = 2 * Ro / (Z + 2);                 // derived module (tips at Ro)
-            const pitchAngle = 360 * degree / Z;
+            const pitchAngle = def.arcAngle / def.teeth;
+            const zFull = (360 * degree) / pitchAngle;  // full-circle tooth count (fractional is allowed)
+            const m = 2 * Ro / (zFull + 2);             // derived module (tips at Ro)
             const rPitch = Ro - m;
             const rRoot = Ro - 2.25 * m;
             const rTipOv = Ro + ov;                     // overshoot beyond the cone face
@@ -238,13 +240,14 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                 // Largest module whose slot root still clears the bore at the
                 // top face, and the tooth count that produces it.
                 const mMax = (Ro - Ri / s1) / 2.25;
-                var msg = "Tooth slots cut through to the bore: " ~ Z
-                    ~ " teeth (per full 360 deg - a sector carries a fraction of them) give module "
+                var msg = "Tooth slots cut through to the bore: " ~ def.teeth
+                    ~ " teeth on this arc give module "
                     ~ (floor(m / millimeter * 100 + 0.5) / 100) ~ " mm, slot depth "
                     ~ (floor(2.25 * m / millimeter * 100 + 0.5) / 100) ~ " mm. ";
                 if (mMax > 0 * millimeter)
-                    msg = msg ~ "This blank needs at least " ~ ceil(2 * Ro / mMax - 2)
-                        ~ " teeth, or a smaller inner radius.";
+                    msg = msg ~ "This blank needs at least "
+                        ~ ceil((2 * Ro / mMax - 2) * def.arcAngle / (360 * degree))
+                        ~ " teeth on this arc, or a smaller inner radius.";
                 else
                     msg = msg ~ "No tooth count fits this wall - thicken it or reduce the cone angle or height.";
                 throw regenError(msg);
@@ -289,12 +292,11 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                 "bodyType" : BodyType.SOLID
             });
 
-            // How many slots land on this arc (inclusive of both joints).
-            var nSlots;
+            // A slot at each joint face plus one per tooth between them; on a
+            // full circle the last slot would duplicate the first.
+            var nSlots = def.teeth + 1;
             if (isFull)
-                nSlots = Z;
-            else
-                nSlots = floor(def.arcAngle / pitchAngle + 1e-6) + 1;
+                nSlots = def.teeth;
 
             if (nSlots > 1)
             {
