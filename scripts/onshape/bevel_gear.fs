@@ -32,8 +32,22 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
     spherical involute differs by hundredths of a mm at the face ends).
     Step 5: root fillet, radius 0.38 m (ISO rack tip radius), clamped to
     the root land - a 5-facet tangent arc rounding the slot cutter's root
-    corners, apex-scaled with the profile. Not modeled yet vs Gear Lab:
-    tip chamfer, undercut relief for low-tooth-count pinions.
+    corners, mapped with the profile.
+
+    Step 6 (Nick's pair-architecture pick: ISO intersecting-axes bevel):
+    Tredgold geometry. For coned gears the profile is drawn on the
+    developed BACK CONE (virtual spur: Zv = zFull / cos(delta) teeth at
+    slant Rv = rPitch / cos(delta)), addendum m / dedendum 1.25 m measured
+    ALONG the back cone, then wrapped (development angle compresses by
+    cos(delta)) and projected through the PITCH apex onto the loft planes.
+    The visible wall is the TIP cone: pitch angle + theta_a where
+    tan(theta_a) = 2 sin(delta) / zFull (ISO 23509 standard taper), so the
+    wall reads slightly steeper than the input cone angle. Pitch radius
+    from the wall anchor: rP = Ro / kBlank, module m = 2 rP / zFull.
+    Cone angle 0 keeps the exact transverse spur construction with
+    m = 2 Ro / (zFull + 2). Not modeled yet vs Gear Lab: tip chamfer,
+    undercut relief for low-tooth-count pinions. NEXT: pair mode (shaft
+    angle + two tooth counts -> derived cone angles, auto pinion blank).
 
     Onshape paste rules learned the hard way (do not regress):
     - annotation strings must be printable ASCII (no em-dashes, no unicode minus)
@@ -80,9 +94,26 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
         const isFull = def.arcAngle >= 360 * degree - 0.01 * degree;
         const half = def.arcAngle / 2;
 
-        // Top-face outer radius after the cone cut; the cone must not eat
+        // Tooth-count geometry needed by both the wall cut and the teeth.
+        const zFull = def.teeth * (360 * degree) / def.arcAngle;    // full-circle equivalent count
+        // Step 6 (ISO taper): the visible wall is the TIP cone, steeper than
+        // the pitch cone by the addendum angle theta_a = atan(2 sin(d)/zFull)
+        // (addendum over the outer cone distance, ISO 23509 standard taper).
+        // kBlank maps the wall anchor Ro (tip radius at z = 0) back to the
+        // big-end pitch radius.
+        var wallTan = tan(def.coneAngle);
+        var kBlank = 1;
+        if (def.coneAngle > 0 * degree)
+        {
+            const thetaA = atan(2 * sin(def.coneAngle) / zFull);
+            wallTan = tan(def.coneAngle + thetaA);
+            kBlank = 1 + (2 / zFull) * (cos(def.coneAngle)
+                + sin(def.coneAngle) * tan(def.coneAngle + thetaA));
+        }
+
+        // Top-face outer radius after the wall cut; the wall must not eat
         // through to the bore (or past the center when solid).
-        const RoTop = Ro - def.height * tan(def.coneAngle);
+        const RoTop = Ro - def.height * wallTan;
         if (RoTop <= Ri)
             throw regenError("Cone angle consumes the full wall at the top. Reduce cone angle or height, or shrink the inner radius.");
 
@@ -126,12 +157,11 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
         const ov = 1 * millimeter;
 
         // Step 2: cone the outer wall. Cut with a revolved wedge - everything
-        // outside the cone line r(z) = Ro - z * tan(coneAngle).
+        // outside the wall line r(z) = Ro - z * wallTan (the ISO tip cone).
         if (def.coneAngle > 0 * degree)
         {
-            const t = tan(def.coneAngle);
-            const rBot = Ro + ov * t;                    // cone line at z = -ov
-            const rTop = Ro - (def.height + ov) * t;     // cone line at z = height + ov
+            const rBot = Ro + ov * wallTan;                    // wall line at z = -ov
+            const rTop = Ro - (def.height + ov) * wallTan;     // wall line at z = height + ov
             const rMax = rBot + 5 * millimeter;
 
             // Front plane is world XZ: sketch x = radius, sketch y = world z.
@@ -211,83 +241,132 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
             });
         }
 
-        // Step 3: tooth slots.
+        // Steps 3-6: tooth slots. The profile is drawn as an EQUIVALENT SPUR
+        // in a flat "drawing plane", then mapped into place:
+        // - coneAngle 0: the drawing plane IS the transverse plane; pure
+        //   rotation to phi0 (exact spur involute).
+        // - coneAngle > 0 (step 6, ISO/Tredgold): the drawing plane is the
+        //   developed BACK CONE - a virtual spur with zFull / cos(delta)
+        //   teeth at slant radius rPitch / cos(delta), addendum m and
+        //   dedendum 1.25 m measured ALONG the back cone. Each point wraps
+        //   onto the back cone (development angle compresses by cos(delta))
+        //   and projects through the PITCH APEX onto the two loft planes,
+        //   so flank rulings pass through the apex and the whole tooth
+        //   vanishes there - a true straight bevel per Tredgold.
         const pitchAngle = def.arcAngle / def.teeth;
-        const zFull = (360 * degree) / pitchAngle;  // full-circle tooth count (fractional is allowed)
-        const m = 2 * Ro / (zFull + 2);             // derived module (tips at Ro)
-        const rPitch = Ro - m;
-        const rRoot = Ro - 2.25 * m;
-        const rTipOv = Ro + ov;                     // overshoot beyond the cone face
-
-        // Step 4: involute flanks (the "roundness" Gear Lab has). In the
-        // big-end transverse plane the slot HALF-ANGLE at radius r is
-        //   tau/4 - inv(alpha) + inv(alpha_r),  alpha_r = acos(rb / r)
-        // (inv(x) = tan(x) - x). It grows with r: slots widen outward,
-        // teeth thin toward the tip. Below the base circle the involute
-        // does not exist; the flank drops radially at the base-circle
-        // angle (standard approximation, relevant only at low counts).
-        const rb = rPitch * cos(def.pressureAngle); // base circle
-        const tau = 2 * PI / zFull;                 // angular pitch, radians
         const invAlpha = tan(def.pressureAngle) - def.pressureAngle / radian;
-        var slotHalfAngle = function(r)             // returns radians as a number
+        const phi0 = -half;                         // slot centered on the leading joint
+        const K = 10;                               // involute facets per flank
+        const zs = [-ov, def.height + ov];
+
+        // Equivalent-spur parameters (radii in the drawing plane).
+        var mMod;                                   // derived module
+        var eqPitch;
+        var eqRoot;
+        var eqTipOv;
+        var eqTeeth;                                // fractional is fine
+        var zApex = 0 * millimeter;                 // pitch apex (coned only)
+        var zBack = 0 * millimeter;                 // back-cone apex (coned only)
+        if (def.coneAngle > 0 * degree)
         {
-            var g = tau / 4 - invAlpha;
-            if (r > rb)
+            const rP = Ro / kBlank;
+            mMod = 2 * rP / zFull;
+            zApex = rP / tan(def.coneAngle);
+            if (zApex <= def.height + ov)
+                throw regenError("Pitch apex lies inside the blank - reduce cone angle or height, or raise the tooth count.");
+            zBack = -rP * tan(def.coneAngle);
+            eqPitch = rP / cos(def.coneAngle);
+            eqTeeth = zFull / cos(def.coneAngle);
+            eqRoot = eqPitch - 1.25 * mMod;
+            eqTipOv = eqPitch + mMod + ov;
+        }
+        else
+        {
+            mMod = 2 * Ro / (zFull + 2);
+            eqPitch = Ro - mMod;
+            eqTeeth = zFull;
+            eqRoot = Ro - 2.25 * mMod;
+            eqTipOv = Ro + ov;
+        }
+        const eqBase = eqPitch * cos(def.pressureAngle);
+        const tauEq = 2 * PI / eqTeeth;
+        var slotHalfAngle = function(r)             // drawing-plane slot half-angle, radians
+        {
+            var g = tauEq / 4 - invAlpha;
+            if (r > eqBase)
             {
-                const ar = acos(rb / r);
+                const ar = acos(eqBase / r);
                 g = g + tan(ar) - ar / radian;
             }
             return g;
         };
-        const rStart = max(rRoot, rb);
-        if (slotHalfAngle(rStart) <= 0)
+        const eqStart = max(eqRoot, eqBase);
+        if (slotHalfAngle(eqStart) <= 0)
             throw regenError("No slot width left at the root - lower the pressure angle or the tooth count.");
 
-        // Section scale factors about the cone apex (z = Ro / tan(cone)).
-        var s0 = 1;                                  // at z = -ov
-        var s1 = 1;                                  // at z = height + ov
+        // World root radius at the TOP face, for the bore guard.
+        var rRootTop;
         if (def.coneAngle > 0 * degree)
         {
-            const zApex = Ro / tan(def.coneAngle);
-            if (zApex <= def.height + ov)
-                throw regenError("Cone apex lies inside the blank - teeth cannot be built. Reduce cone angle or height.");
-            s0 = (zApex + ov) / zApex;
-            s1 = (zApex - def.height - ov) / zApex;
+            const z3r = zBack + eqRoot * sin(def.coneAngle);
+            rRootTop = eqRoot * cos(def.coneAngle) * (zApex - def.height) / (zApex - z3r);
         }
-        if (rRoot * s1 <= Ri && Ri > 0 * millimeter)
+        else
         {
-            // Largest module whose slot root still clears the bore at the
-            // top face, and the tooth count that produces it.
-            const mMax = (Ro - Ri / s1) / 2.25;
+            rRootTop = eqRoot;
+        }
+        if (rRootTop <= Ri && Ri > 0 * millimeter)
+        {
             var msg = "Tooth slots cut through to the bore: " ~ def.teeth
                 ~ " teeth on this arc give module "
-                ~ (floor(m / millimeter * 100 + 0.5) / 100) ~ " mm, slot depth "
-                ~ (floor(2.25 * m / millimeter * 100 + 0.5) / 100) ~ " mm. ";
-            if (mMax > 0 * millimeter)
-                msg = msg ~ "This blank needs at least "
-                    ~ ceil((2 * Ro / mMax - 2) * def.arcAngle / (360 * degree))
+                ~ (floor(mMod / millimeter * 100 + 0.5) / 100) ~ " mm. ";
+            // Scan upward for the smallest count whose root clears the bore.
+            var fits = -1;
+            for (var n = def.teeth + 1; n <= 1000; n += 1)
+            {
+                const zF2 = n * (360 * degree) / def.arcAngle;
+                var rrt;
+                if (def.coneAngle > 0 * degree)
+                {
+                    const th2 = atan(2 * sin(def.coneAngle) / zF2);
+                    const k2 = 1 + (2 / zF2) * (cos(def.coneAngle)
+                        + sin(def.coneAngle) * tan(def.coneAngle + th2));
+                    const rP2 = Ro / k2;
+                    const m2 = 2 * rP2 / zF2;
+                    const zA2 = rP2 / tan(def.coneAngle);
+                    const rt2 = rP2 / cos(def.coneAngle) - 1.25 * m2;
+                    const z32 = -rP2 * tan(def.coneAngle) + rt2 * sin(def.coneAngle);
+                    rrt = rt2 * cos(def.coneAngle) * (zA2 - def.height) / (zA2 - z32);
+                }
+                else
+                {
+                    rrt = Ro - 2.25 * (2 * Ro / (zF2 + 2));
+                }
+                if (rrt > Ri)
+                {
+                    fits = n;
+                    break;
+                }
+            }
+            if (fits > 0)
+                msg = msg ~ "This blank needs at least " ~ fits
                     ~ " teeth on this arc, or a smaller inner radius.";
             else
                 msg = msg ~ "No tooth count fits this wall - thicken it or reduce the cone angle or height.";
             throw regenError(msg);
         }
 
-        // Base slot centered on the leading joint face (phi = -arc/2) so
-        // sector joints land mid-slot; slots then march by one pitch.
-        const phi0 = -half;
-        const K = 10;                               // involute facets per flank
-
-        // Canonical frame: slot centered on the +X axis (rotated out to
-        // phi0 at the end, mirrored for the -side). In this frame the
+        // Canonical drawing frame: slot centered on the +X axis (mapped out
+        // to phi0 at the end, mirrored for the -side). In this frame the
         // root chord is parallel to the Y axis. +side flank, root -> tip.
         var flankPts = [];
-        if (rRoot < rb)
+        if (eqRoot < eqBase)
             flankPts = append(flankPts, vector(
-                rRoot * cos(slotHalfAngle(rb) * radian),
-                rRoot * sin(slotHalfAngle(rb) * radian)));
+                eqRoot * cos(slotHalfAngle(eqBase) * radian),
+                eqRoot * sin(slotHalfAngle(eqBase) * radian)));
         for (var i = 0; i <= K; i += 1)
         {
-            const r = rStart + (rTipOv - rStart) * i / K;
+            const r = eqStart + (eqTipOv - eqStart) * i / K;
             const g = slotHalfAngle(r);
             flankPts = append(flankPts, vector(r * cos(g * radian), r * sin(g * radian)));
         }
@@ -296,15 +375,15 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
         // clamped so the two corner arcs never overlap on the root land.
         // The sharp corner between the root chord and the near-straight
         // flank start becomes a 5-facet tangent arc; the CUTTER loses
-        // area at the corner, so the TOOTH root gains the fillet. It
-        // lives in the big-end profile, so it apex-scales with the rest.
+        // area at the corner, so the TOOTH root gains the fillet. It is
+        // drawn in the equivalent-spur plane, so it maps with the rest.
         var plusPts = flankPts;
         const pf0 = flankPts[0];
         const uDir = vector(0, -1);                 // along the root chord, away from the corner
         var vDir = flankPts[1] - pf0;
         vDir = vDir / norm(vDir);                   // along the flank, away from the corner
         const phiC = acos(dot(uDir, vDir));
-        var rho = 0.38 * m;
+        var rho = 0.38 * mMod;
         var tOff = rho / tan(phiC / 2);
         if (tOff > 0.9 * pf0[1])                    // pf0[1] = half the root chord
         {
@@ -343,22 +422,42 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
             plusPts = pts;
         }
 
-        // Closed outline in world orientation: +side root -> tip, tip
-        // chord, mirrored -side tip -> root, root chord closes it.
-        var rot = function(p)
-        {
-            return vector(p[0] * cos(phi0) - p[1] * sin(phi0),
-                          p[0] * sin(phi0) + p[1] * cos(phi0));
-        };
-        var outline = [];
+        // Closed canonical outline: +side root -> tip, tip chord, mirrored
+        // -side tip -> root, root chord closes it.
+        var canon = [];
         for (var i = 0; i < size(plusPts); i += 1)
-            outline = append(outline, rot(plusPts[i]));
+            canon = append(canon, plusPts[i]);
         for (var i = size(plusPts) - 1; i >= 0; i -= 1)
-            outline = append(outline, rot(vector(plusPts[i][0], -plusPts[i][1])));
+            canon = append(canon, vector(plusPts[i][0], -plusPts[i][1]));
 
-        const scales = [s0, s1];
-        const zs = [-ov, def.height + ov];
-        const nPts = size(outline);
+        // Map the canonical profile onto each loft plane.
+        var outlines = [[], []];
+        for (var j = 0; j < 2; j += 1)
+        {
+            for (var i = 0; i < size(canon); i += 1)
+            {
+                const p = canon[i];
+                if (def.coneAngle > 0 * degree)
+                {
+                    const rhoP = norm(p);                       // back-cone slant radius
+                    const thv = atan2(p[1], p[0]);              // development angle
+                    const phiW = phi0 + thv / cos(def.coneAngle);
+                    const r3 = rhoP * cos(def.coneAngle);
+                    const z3 = zBack + rhoP * sin(def.coneAngle);
+                    const tsc = (zApex - zs[j]) / (zApex - z3); // central projection
+                    outlines[j] = append(outlines[j],
+                        vector(r3 * tsc * cos(phiW), r3 * tsc * sin(phiW)));
+                }
+                else
+                {
+                    outlines[j] = append(outlines[j], vector(
+                        p[0] * cos(phi0) - p[1] * sin(phi0),
+                        p[0] * sin(phi0) + p[1] * cos(phi0)));
+                }
+            }
+        }
+
+        const nPts = size(canon);
         for (var j = 0; j < 2; j += 1)
         {
             var slotSk = newSketchOnPlane(context, id + ("slotSk" ~ j), {
@@ -370,8 +469,8 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
             for (var e = 0; e < nPts; e += 1)
             {
                 skLineSegment(slotSk, "edge" ~ e, {
-                    "start" : outline[e] * scales[j],
-                    "end"   : outline[(e + 1) % nPts] * scales[j]
+                    "start" : outlines[j][e],
+                    "end"   : outlines[j][(e + 1) % nPts]
                 });
             }
             skSolve(slotSk);
