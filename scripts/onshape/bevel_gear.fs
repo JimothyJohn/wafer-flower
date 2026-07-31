@@ -234,7 +234,21 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                 s1 = (zApex - def.height - ov) / zApex;
             }
             if (rRoot * s1 <= Ri && Ri > 0 * millimeter)
-                throw regenError("Tooth slots cut through to the bore at the top face. Shrink the inner radius or raise the tooth count.");
+            {
+                // Largest module whose slot root still clears the bore at the
+                // top face, and the tooth count that produces it.
+                const mMax = (Ro - Ri / s1) / 2.25;
+                var msg = "Tooth slots cut through to the bore: " ~ Z
+                    ~ " teeth (per full 360 deg - a sector carries a fraction of them) give module "
+                    ~ (floor(m / millimeter * 100 + 0.5) / 100) ~ " mm, slot depth "
+                    ~ (floor(2.25 * m / millimeter * 100 + 0.5) / 100) ~ " mm. ";
+                if (mMax > 0 * millimeter)
+                    msg = msg ~ "This blank needs at least " ~ ceil(2 * Ro / mMax - 2)
+                        ~ " teeth, or a smaller inner radius.";
+                else
+                    msg = msg ~ "No tooth count fits this wall - thicken it or reduce the cone angle or height.";
+                throw regenError(msg);
+            }
 
             // Base slot centered on the leading joint face (phi = -arc/2) so
             // sector joints land mid-slot; slots then march by one pitch.
