@@ -63,17 +63,11 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
         annotation { "Name" : "Cone angle", "Description" : "Angle of the outer wall from vertical. 0 = straight (cylindrical) wall. Big end is at the bottom face." }
         isAngle(def.coneAngle, { (degree) : [0, 45, 80] } as AngleBoundSpec);
 
-        annotation { "Name" : "Cut teeth", "Default" : true }
-        def.cutTeeth is boolean;
+        annotation { "Name" : "Teeth", "Description" : "Number of teeth ON THIS ARC (joint faces land mid-slot). Full-circle equivalent = teeth * 360 / arc angle - match the pinion to that for the ratio." }
+        isInteger(def.teeth, { (unitless) : [1, 12, 1000] } as IntegerBoundSpec);
 
-        if (def.cutTeeth)
-        {
-            annotation { "Name" : "Teeth", "Description" : "Number of teeth ON THIS ARC (joint faces land mid-slot). Full-circle equivalent = teeth * 360 / arc angle - match the pinion to that for the ratio." }
-            isInteger(def.teeth, { (unitless) : [1, 12, 1000] } as IntegerBoundSpec);
-
-            annotation { "Name" : "Pressure angle" }
-            isAngle(def.pressureAngle, { (degree) : [5, 20, 45] } as AngleBoundSpec);
-        }
+        annotation { "Name" : "Pressure angle", "Description" : "ISO standard is 20 deg. Use 25 deg on BOTH gears when the pinion has under ~14 teeth - it avoids undercut without profile shift." }
+        isAngle(def.pressureAngle, { (degree) : [5, 20, 45] } as AngleBoundSpec);
     }
     {
         const Ro = def.outerRadius;
@@ -218,219 +212,216 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
         }
 
         // Step 3: tooth slots.
-        if (def.cutTeeth)
+        const pitchAngle = def.arcAngle / def.teeth;
+        const zFull = (360 * degree) / pitchAngle;  // full-circle tooth count (fractional is allowed)
+        const m = 2 * Ro / (zFull + 2);             // derived module (tips at Ro)
+        const rPitch = Ro - m;
+        const rRoot = Ro - 2.25 * m;
+        const rTipOv = Ro + ov;                     // overshoot beyond the cone face
+
+        // Step 4: involute flanks (the "roundness" Gear Lab has). In the
+        // big-end transverse plane the slot HALF-ANGLE at radius r is
+        //   tau/4 - inv(alpha) + inv(alpha_r),  alpha_r = acos(rb / r)
+        // (inv(x) = tan(x) - x). It grows with r: slots widen outward,
+        // teeth thin toward the tip. Below the base circle the involute
+        // does not exist; the flank drops radially at the base-circle
+        // angle (standard approximation, relevant only at low counts).
+        const rb = rPitch * cos(def.pressureAngle); // base circle
+        const tau = 2 * PI / zFull;                 // angular pitch, radians
+        const invAlpha = tan(def.pressureAngle) - def.pressureAngle / radian;
+        var slotHalfAngle = function(r)             // returns radians as a number
         {
-            const pitchAngle = def.arcAngle / def.teeth;
-            const zFull = (360 * degree) / pitchAngle;  // full-circle tooth count (fractional is allowed)
-            const m = 2 * Ro / (zFull + 2);             // derived module (tips at Ro)
-            const rPitch = Ro - m;
-            const rRoot = Ro - 2.25 * m;
-            const rTipOv = Ro + ov;                     // overshoot beyond the cone face
-
-            // Step 4: involute flanks (the "roundness" Gear Lab has). In the
-            // big-end transverse plane the slot HALF-ANGLE at radius r is
-            //   tau/4 - inv(alpha) + inv(alpha_r),  alpha_r = acos(rb / r)
-            // (inv(x) = tan(x) - x). It grows with r: slots widen outward,
-            // teeth thin toward the tip. Below the base circle the involute
-            // does not exist; the flank drops radially at the base-circle
-            // angle (standard approximation, relevant only at low counts).
-            const rb = rPitch * cos(def.pressureAngle); // base circle
-            const tau = 2 * PI / zFull;                 // angular pitch, radians
-            const invAlpha = tan(def.pressureAngle) - def.pressureAngle / radian;
-            var slotHalfAngle = function(r)             // returns radians as a number
+            var g = tau / 4 - invAlpha;
+            if (r > rb)
             {
-                var g = tau / 4 - invAlpha;
-                if (r > rb)
-                {
-                    const ar = acos(rb / r);
-                    g = g + tan(ar) - ar / radian;
-                }
-                return g;
-            };
-            const rStart = max(rRoot, rb);
-            if (slotHalfAngle(rStart) <= 0)
-                throw regenError("No slot width left at the root - lower the pressure angle or the tooth count.");
-
-            // Section scale factors about the cone apex (z = Ro / tan(cone)).
-            var s0 = 1;                                  // at z = -ov
-            var s1 = 1;                                  // at z = height + ov
-            if (def.coneAngle > 0 * degree)
-            {
-                const zApex = Ro / tan(def.coneAngle);
-                if (zApex <= def.height + ov)
-                    throw regenError("Cone apex lies inside the blank - teeth cannot be built. Reduce cone angle or height.");
-                s0 = (zApex + ov) / zApex;
-                s1 = (zApex - def.height - ov) / zApex;
+                const ar = acos(rb / r);
+                g = g + tan(ar) - ar / radian;
             }
-            if (rRoot * s1 <= Ri && Ri > 0 * millimeter)
+            return g;
+        };
+        const rStart = max(rRoot, rb);
+        if (slotHalfAngle(rStart) <= 0)
+            throw regenError("No slot width left at the root - lower the pressure angle or the tooth count.");
+
+        // Section scale factors about the cone apex (z = Ro / tan(cone)).
+        var s0 = 1;                                  // at z = -ov
+        var s1 = 1;                                  // at z = height + ov
+        if (def.coneAngle > 0 * degree)
+        {
+            const zApex = Ro / tan(def.coneAngle);
+            if (zApex <= def.height + ov)
+                throw regenError("Cone apex lies inside the blank - teeth cannot be built. Reduce cone angle or height.");
+            s0 = (zApex + ov) / zApex;
+            s1 = (zApex - def.height - ov) / zApex;
+        }
+        if (rRoot * s1 <= Ri && Ri > 0 * millimeter)
+        {
+            // Largest module whose slot root still clears the bore at the
+            // top face, and the tooth count that produces it.
+            const mMax = (Ro - Ri / s1) / 2.25;
+            var msg = "Tooth slots cut through to the bore: " ~ def.teeth
+                ~ " teeth on this arc give module "
+                ~ (floor(m / millimeter * 100 + 0.5) / 100) ~ " mm, slot depth "
+                ~ (floor(2.25 * m / millimeter * 100 + 0.5) / 100) ~ " mm. ";
+            if (mMax > 0 * millimeter)
+                msg = msg ~ "This blank needs at least "
+                    ~ ceil((2 * Ro / mMax - 2) * def.arcAngle / (360 * degree))
+                    ~ " teeth on this arc, or a smaller inner radius.";
+            else
+                msg = msg ~ "No tooth count fits this wall - thicken it or reduce the cone angle or height.";
+            throw regenError(msg);
+        }
+
+        // Base slot centered on the leading joint face (phi = -arc/2) so
+        // sector joints land mid-slot; slots then march by one pitch.
+        const phi0 = -half;
+        const K = 10;                               // involute facets per flank
+
+        // Canonical frame: slot centered on the +X axis (rotated out to
+        // phi0 at the end, mirrored for the -side). In this frame the
+        // root chord is parallel to the Y axis. +side flank, root -> tip.
+        var flankPts = [];
+        if (rRoot < rb)
+            flankPts = append(flankPts, vector(
+                rRoot * cos(slotHalfAngle(rb) * radian),
+                rRoot * sin(slotHalfAngle(rb) * radian)));
+        for (var i = 0; i <= K; i += 1)
+        {
+            const r = rStart + (rTipOv - rStart) * i / K;
+            const g = slotHalfAngle(r);
+            flankPts = append(flankPts, vector(r * cos(g * radian), r * sin(g * radian)));
+        }
+
+        // Step 5: root fillet, radius 0.38 m (ISO rack tip radius),
+        // clamped so the two corner arcs never overlap on the root land.
+        // The sharp corner between the root chord and the near-straight
+        // flank start becomes a 5-facet tangent arc; the CUTTER loses
+        // area at the corner, so the TOOTH root gains the fillet. It
+        // lives in the big-end profile, so it apex-scales with the rest.
+        var plusPts = flankPts;
+        const pf0 = flankPts[0];
+        const uDir = vector(0, -1);                 // along the root chord, away from the corner
+        var vDir = flankPts[1] - pf0;
+        vDir = vDir / norm(vDir);                   // along the flank, away from the corner
+        const phiC = acos(dot(uDir, vDir));
+        var rho = 0.38 * m;
+        var tOff = rho / tan(phiC / 2);
+        if (tOff > 0.9 * pf0[1])                    // pf0[1] = half the root chord
+        {
+            rho = rho * 0.9 * pf0[1] / tOff;
+            tOff = 0.9 * pf0[1];
+        }
+        if (rho > 0.02 * millimeter)
+        {
+            const Tc = pf0 + uDir * tOff;           // tangency on the root chord
+            const Tf = pf0 + vDir * tOff;           // tangency on the flank
+            var bis = uDir + vDir;
+            bis = bis / norm(bis);
+            const Cc = pf0 + bis * (rho / sin(phiC / 2));
+            const a0 = atan2(Tc[1] - Cc[1], Tc[0] - Cc[0]);
+            const a1 = atan2(Tf[1] - Cc[1], Tf[0] - Cc[0]);
+            var sweep = a1 - a0;
+            if (sweep > 180 * degree)
+                sweep = sweep - 360 * degree;
+            if (sweep < -180 * degree)
+                sweep = sweep + 360 * degree;
+            const kf = 5;
+            var pts = [Tc];
+            for (var i = 1; i < kf; i += 1)
             {
-                // Largest module whose slot root still clears the bore at the
-                // top face, and the tooth count that produces it.
-                const mMax = (Ro - Ri / s1) / 2.25;
-                var msg = "Tooth slots cut through to the bore: " ~ def.teeth
-                    ~ " teeth on this arc give module "
-                    ~ (floor(m / millimeter * 100 + 0.5) / 100) ~ " mm, slot depth "
-                    ~ (floor(2.25 * m / millimeter * 100 + 0.5) / 100) ~ " mm. ";
-                if (mMax > 0 * millimeter)
-                    msg = msg ~ "This blank needs at least "
-                        ~ ceil((2 * Ro / mMax - 2) * def.arcAngle / (360 * degree))
-                        ~ " teeth on this arc, or a smaller inner radius.";
-                else
-                    msg = msg ~ "No tooth count fits this wall - thicken it or reduce the cone angle or height.";
-                throw regenError(msg);
+                const a = a0 + sweep * i / kf;
+                pts = append(pts, Cc + vector(cos(a), sin(a)) * rho);
             }
-
-            // Base slot centered on the leading joint face (phi = -arc/2) so
-            // sector joints land mid-slot; slots then march by one pitch.
-            const phi0 = -half;
-            const K = 10;                               // involute facets per flank
-
-            // Canonical frame: slot centered on the +X axis (rotated out to
-            // phi0 at the end, mirrored for the -side). In this frame the
-            // root chord is parallel to the Y axis. +side flank, root -> tip.
-            var flankPts = [];
-            if (rRoot < rb)
-                flankPts = append(flankPts, vector(
-                    rRoot * cos(slotHalfAngle(rb) * radian),
-                    rRoot * sin(slotHalfAngle(rb) * radian)));
-            for (var i = 0; i <= K; i += 1)
+            pts = append(pts, Tf);
+            // Rejoin the involute above the arc (tiny kink, sub-print-scale).
+            const rJoin = norm(Tf);
+            for (var i = 0; i < size(flankPts); i += 1)
             {
-                const r = rStart + (rTipOv - rStart) * i / K;
-                const g = slotHalfAngle(r);
-                flankPts = append(flankPts, vector(r * cos(g * radian), r * sin(g * radian)));
+                if (norm(flankPts[i]) > rJoin + 0.01 * millimeter)
+                    pts = append(pts, flankPts[i]);
             }
+            plusPts = pts;
+        }
 
-            // Step 5: root fillet, radius 0.38 m (ISO rack tip radius),
-            // clamped so the two corner arcs never overlap on the root land.
-            // The sharp corner between the root chord and the near-straight
-            // flank start becomes a 5-facet tangent arc; the CUTTER loses
-            // area at the corner, so the TOOTH root gains the fillet. It
-            // lives in the big-end profile, so it apex-scales with the rest.
-            var plusPts = flankPts;
-            const pf0 = flankPts[0];
-            const uDir = vector(0, -1);                 // along the root chord, away from the corner
-            var vDir = flankPts[1] - pf0;
-            vDir = vDir / norm(vDir);                   // along the flank, away from the corner
-            const phiC = acos(dot(uDir, vDir));
-            var rho = 0.38 * m;
-            var tOff = rho / tan(phiC / 2);
-            if (tOff > 0.9 * pf0[1])                    // pf0[1] = half the root chord
-            {
-                rho = rho * 0.9 * pf0[1] / tOff;
-                tOff = 0.9 * pf0[1];
-            }
-            if (rho > 0.02 * millimeter)
-            {
-                const Tc = pf0 + uDir * tOff;           // tangency on the root chord
-                const Tf = pf0 + vDir * tOff;           // tangency on the flank
-                var bis = uDir + vDir;
-                bis = bis / norm(bis);
-                const Cc = pf0 + bis * (rho / sin(phiC / 2));
-                const a0 = atan2(Tc[1] - Cc[1], Tc[0] - Cc[0]);
-                const a1 = atan2(Tf[1] - Cc[1], Tf[0] - Cc[0]);
-                var sweep = a1 - a0;
-                if (sweep > 180 * degree)
-                    sweep = sweep - 360 * degree;
-                if (sweep < -180 * degree)
-                    sweep = sweep + 360 * degree;
-                const kf = 5;
-                var pts = [Tc];
-                for (var i = 1; i < kf; i += 1)
-                {
-                    const a = a0 + sweep * i / kf;
-                    pts = append(pts, Cc + vector(cos(a), sin(a)) * rho);
-                }
-                pts = append(pts, Tf);
-                // Rejoin the involute above the arc (tiny kink, sub-print-scale).
-                const rJoin = norm(Tf);
-                for (var i = 0; i < size(flankPts); i += 1)
-                {
-                    if (norm(flankPts[i]) > rJoin + 0.01 * millimeter)
-                        pts = append(pts, flankPts[i]);
-                }
-                plusPts = pts;
-            }
+        // Closed outline in world orientation: +side root -> tip, tip
+        // chord, mirrored -side tip -> root, root chord closes it.
+        var rot = function(p)
+        {
+            return vector(p[0] * cos(phi0) - p[1] * sin(phi0),
+                          p[0] * sin(phi0) + p[1] * cos(phi0));
+        };
+        var outline = [];
+        for (var i = 0; i < size(plusPts); i += 1)
+            outline = append(outline, rot(plusPts[i]));
+        for (var i = size(plusPts) - 1; i >= 0; i -= 1)
+            outline = append(outline, rot(vector(plusPts[i][0], -plusPts[i][1])));
 
-            // Closed outline in world orientation: +side root -> tip, tip
-            // chord, mirrored -side tip -> root, root chord closes it.
-            var rot = function(p)
-            {
-                return vector(p[0] * cos(phi0) - p[1] * sin(phi0),
-                              p[0] * sin(phi0) + p[1] * cos(phi0));
-            };
-            var outline = [];
-            for (var i = 0; i < size(plusPts); i += 1)
-                outline = append(outline, rot(plusPts[i]));
-            for (var i = size(plusPts) - 1; i >= 0; i -= 1)
-                outline = append(outline, rot(vector(plusPts[i][0], -plusPts[i][1])));
-
-            const scales = [s0, s1];
-            const zs = [-ov, def.height + ov];
-            const nPts = size(outline);
-            for (var j = 0; j < 2; j += 1)
-            {
-                var slotSk = newSketchOnPlane(context, id + ("slotSk" ~ j), {
-                    "sketchPlane" : plane(
-                        vector(0 * millimeter, 0 * millimeter, zs[j]),
-                        vector(0, 0, 1),
-                        vector(1, 0, 0))
-                });
-                for (var e = 0; e < nPts; e += 1)
-                {
-                    skLineSegment(slotSk, "edge" ~ e, {
-                        "start" : outline[e] * scales[j],
-                        "end"   : outline[(e + 1) % nPts] * scales[j]
-                    });
-                }
-                skSolve(slotSk);
-            }
-
-            opLoft(context, id + "slotLoft", {
-                "profileSubqueries" : [
-                    qSketchRegion(id + "slotSk0", true),
-                    qSketchRegion(id + "slotSk1", true)
-                ],
-                "bodyType" : BodyType.SOLID
+        const scales = [s0, s1];
+        const zs = [-ov, def.height + ov];
+        const nPts = size(outline);
+        for (var j = 0; j < 2; j += 1)
+        {
+            var slotSk = newSketchOnPlane(context, id + ("slotSk" ~ j), {
+                "sketchPlane" : plane(
+                    vector(0 * millimeter, 0 * millimeter, zs[j]),
+                    vector(0, 0, 1),
+                    vector(1, 0, 0))
             });
-
-            // A slot at each joint face plus one per tooth between them; on a
-            // full circle the last slot would duplicate the first.
-            var nSlots = def.teeth + 1;
-            if (isFull)
-                nSlots = def.teeth;
-
-            if (nSlots > 1)
+            for (var e = 0; e < nPts; e += 1)
             {
-                var transforms = [];
-                var names = [];
-                for (var k = 1; k < nSlots; k += 1)
-                {
-                    transforms = append(transforms,
-                        rotationAround(line(vector(0, 0, 0) * millimeter, vector(0, 0, 1)), k * pitchAngle));
-                    names = append(names, "slot" ~ k);
-                }
-                opPattern(context, id + "slotPattern", {
-                    "entities" : qCreatedBy(id + "slotLoft", EntityType.BODY),
-                    "transforms" : transforms,
-                    "instanceNames" : names
+                skLineSegment(slotSk, "edge" ~ e, {
+                    "start" : outline[e] * scales[j],
+                    "end"   : outline[(e + 1) % nPts] * scales[j]
                 });
             }
+            skSolve(slotSk);
+        }
 
-            opBoolean(context, id + "subtractSlots", {
-                "tools" : qUnion([
-                    qCreatedBy(id + "slotLoft", EntityType.BODY),
-                    qCreatedBy(id + "slotPattern", EntityType.BODY)
-                ]),
-                "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
-                "operationType" : BooleanOperationType.SUBTRACTION
-            });
-            opDeleteBodies(context, id + "deleteSlotSketches", {
-                "entities" : qUnion([
-                    qCreatedBy(id + "slotSk0", EntityType.BODY),
-                    qCreatedBy(id + "slotSk1", EntityType.BODY)
-                ])
+        opLoft(context, id + "slotLoft", {
+            "profileSubqueries" : [
+                qSketchRegion(id + "slotSk0", true),
+                qSketchRegion(id + "slotSk1", true)
+            ],
+            "bodyType" : BodyType.SOLID
+        });
+
+        // A slot at each joint face plus one per tooth between them; on a
+        // full circle the last slot would duplicate the first.
+        var nSlots = def.teeth + 1;
+        if (isFull)
+            nSlots = def.teeth;
+
+        if (nSlots > 1)
+        {
+            var transforms = [];
+            var names = [];
+            for (var k = 1; k < nSlots; k += 1)
+            {
+                transforms = append(transforms,
+                    rotationAround(line(vector(0, 0, 0) * millimeter, vector(0, 0, 1)), k * pitchAngle));
+                names = append(names, "slot" ~ k);
+            }
+            opPattern(context, id + "slotPattern", {
+                "entities" : qCreatedBy(id + "slotLoft", EntityType.BODY),
+                "transforms" : transforms,
+                "instanceNames" : names
             });
         }
+
+        opBoolean(context, id + "subtractSlots", {
+            "tools" : qUnion([
+                qCreatedBy(id + "slotLoft", EntityType.BODY),
+                qCreatedBy(id + "slotPattern", EntityType.BODY)
+            ]),
+            "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
+            "operationType" : BooleanOperationType.SUBTRACTION
+        });
+        opDeleteBodies(context, id + "deleteSlotSketches", {
+            "entities" : qUnion([
+                qCreatedBy(id + "slotSk0", EntityType.BODY),
+                qCreatedBy(id + "slotSk1", EntityType.BODY)
+            ])
+        });
 
         // Leave only the solid behind.
         opDeleteBodies(context, id + "deleteSketch", {
