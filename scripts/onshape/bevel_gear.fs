@@ -62,6 +62,9 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
     - annotation strings must be printable ASCII (no em-dashes, no unicode minus)
     - reportFeatureInfo, not reportInfo (and no popup at all - Nick's call)
     - opSphere, not fSphere
+    - a parameter group ("Group Name"/"Driving Parameter") must IMMEDIATELY
+      follow its driving parameter's declaration - nothing in between, or
+      precondition analysis fails on the whole feature
 */
 
 // Maps the wall anchor Ro (tip radius at z = 0) to the big-end pitch
