@@ -95,7 +95,7 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
         isAngle(def.arcAngle, { (degree) : [0.1, 40, 360] } as AngleBoundSpec);
 
         annotation { "Name" : "Teeth", "Description" : "Number of teeth ON THIS ARC (joint faces land mid-slot). Full-circle equivalent = teeth * 360 / arc angle - match the pinion to that for the ratio." }
-        isInteger(def.teeth, { (unitless) : [1, 12, 1000] } as IntegerBoundSpec);
+        isInteger(def.teeth, { (unitless) : [1, 32, 1000] } as IntegerBoundSpec);
 
         annotation { "Name" : "Pressure angle", "Description" : "ISO standard is 20 deg. Use 25 deg on BOTH gears when the pinion has under ~14 teeth - it avoids undercut without profile shift." }
         isAngle(def.pressureAngle, { (degree) : [5, 20, 45] } as AngleBoundSpec);
@@ -232,7 +232,16 @@ function buildGear(context is Context, id is Id, g is map)
     // through to the bore (or past the center when solid).
     const RoTop = Ro - g.height * wallTan;
     if (RoTop <= Ri)
-        throw regenError("Cone angle consumes the full wall at the top. Reduce cone angle or height, or shrink the inner radius.");
+    {
+        var msg = "Wall cone ("
+            ~ (floor(atan(wallTan) / degree * 10 + 0.5) / 10)
+            ~ " deg) crosses the bore before the top face";
+        if (wallTan > 0)
+            msg = msg ~ " - the tallest blank this geometry allows is "
+                ~ (floor((Ro - Ri) / wallTan / millimeter * 100) / 100) ~ " mm";
+        msg = msg ~ ". Reduce Height, widen the wall (outer minus inner radius), or flatten the cone (standalone: Cone angle; pair mode: the derived angle falls with a smaller ratio or a smaller shaft angle).";
+        throw regenError(msg);
+    }
 
     // Outer boundary on the Top plane, symmetric about +X.
     var sk = newSketch(context, id + "profile", {
