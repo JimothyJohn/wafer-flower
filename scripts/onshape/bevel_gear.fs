@@ -99,12 +99,7 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
 
         annotation { "Name" : "Mating pinion", "Description" : "Also generate the meshing pinion. ISO pair: BOTH cone angles are then derived from the tooth counts and shaft angle, and the Cone angle input is ignored." }
         def.mate is boolean;
-        if (!def.mate)
-        {
-            annotation { "Name" : "Cone angle", "Description" : "Angle of the outer wall from vertical. 0 = straight (cylindrical) wall. Big end is at the bottom face." }
-            isAngle(def.coneAngle, { (degree) : [0, 45, 80] } as AngleBoundSpec);
-        }
-        else
+        if (def.mate)
         {
             annotation { "Group Name" : "Mating Pinion", "Driving Parameter" : "mate", "Collapsed By Default" : false }
             {
@@ -120,6 +115,11 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                 annotation { "Name" : "Pinion bore radius", "Description" : "0 = solid. 1.5 mm suits a 3 mm motor shaft." }
                 isLength(def.pinionBore, { (millimeter) : [0, 1.5, 100] } as LengthBoundSpec);
             }
+        }
+        else
+        {
+            annotation { "Name" : "Cone angle", "Description" : "Angle of the outer wall from vertical. 0 = straight (cylindrical) wall. Big end is at the bottom face." }
+            isAngle(def.coneAngle, { (degree) : [0, 45, 80] } as AngleBoundSpec);
         }
     }
     {
