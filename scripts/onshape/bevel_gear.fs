@@ -18,13 +18,20 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
     equivalent zFull = teeth * 360 / arc drives the module, which is
     DERIVED, not input: m = 2 * Ro / (zFull + 2) (pitch radius Ro - m at
     the big end, addendum m, dedendum 1.25 m, slot depth 2.25 m).
-    Each slot is a trapezoid defined in the big-end plane (z = 0) and
-    lofted between two horizontal sections SCALED ABOUT THE CONE APEX
-    (axis point z = Ro / tan(coneAngle)), so flanks are planes through the
-    apex and tooth width AND depth shrink toward the small end - straight
-    bevel behavior. Cone angle 0 degenerates to equal sections (spur
-    slots). Slots are phased so the sector's joint faces land mid-slot
-    (halo rule: joints mid-space; keep teeth divisible by segment count).
+    Each slot is defined in the big-end plane (z = 0) and lofted between
+    two horizontal sections SCALED ABOUT THE CONE APEX (axis point
+    z = Ro / tan(coneAngle)), so flank rulings pass through the apex and
+    tooth width AND depth shrink toward the small end - straight bevel
+    behavior. Cone angle 0 degenerates to equal sections (spur slots).
+    Slots are phased so the sector's joint faces land mid-slot (halo rule:
+    joints mid-space; keep teeth divisible by segment count).
+
+    Step 4: involute flanks (10-facet polyline per side) replace the
+    straight trapezoid sides - transverse involute at the big end, apex-
+    scaled along the face (the Tredgold-style approximation; Gear Lab's
+    spherical involute differs by hundredths of a mm at the face ends).
+    Not modeled yet vs Gear Lab: root fillet, tip chamfer, and undercut
+    relief for low-tooth-count pinions.
 
     Onshape paste rules learned the hard way (do not regress):
     - annotation strings must be printable ASCII (no em-dashes, no unicode minus)
@@ -217,12 +224,30 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
             const rPitch = Ro - m;
             const rRoot = Ro - 2.25 * m;
             const rTipOv = Ro + ov;                     // overshoot beyond the cone face
-            const tanPA = tan(def.pressureAngle);
-            const hwPitch = PI * m / 4;                 // half of the half-pitch space width
-            const hwRoot = hwPitch - 1.25 * m * tanPA;
-            const hwTip = hwPitch + (rTipOv - rPitch) * tanPA;
-            if (hwRoot <= 0 * millimeter)
-                throw regenError("Pressure angle too steep for this tooth size - slot closes before the root.");
+
+            // Step 4: involute flanks (the "roundness" Gear Lab has). In the
+            // big-end transverse plane the slot HALF-ANGLE at radius r is
+            //   tau/4 - inv(alpha) + inv(alpha_r),  alpha_r = acos(rb / r)
+            // (inv(x) = tan(x) - x). It grows with r: slots widen outward,
+            // teeth thin toward the tip. Below the base circle the involute
+            // does not exist; the flank drops radially at the base-circle
+            // angle (standard approximation, relevant only at low counts).
+            const rb = rPitch * cos(def.pressureAngle); // base circle
+            const tau = 2 * PI / zFull;                 // angular pitch, radians
+            const invAlpha = tan(def.pressureAngle) - def.pressureAngle / radian;
+            var slotHalfAngle = function(r)             // returns radians as a number
+            {
+                var g = tau / 4 - invAlpha;
+                if (r > rb)
+                {
+                    const ar = acos(rb / r);
+                    g = g + tan(ar) - ar / radian;
+                }
+                return g;
+            };
+            const rStart = max(rRoot, rb);
+            if (slotHalfAngle(rStart) <= 0)
+                throw regenError("No slot width left at the root - lower the pressure angle or the tooth count.");
 
             // Section scale factors about the cone apex (z = Ro / tan(cone)).
             var s0 = 1;                                  // at z = -ov
@@ -256,16 +281,30 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
             // Base slot centered on the leading joint face (phi = -arc/2) so
             // sector joints land mid-slot; slots then march by one pitch.
             const phi0 = -half;
-            const u = vector(cos(phi0), sin(phi0));
-            const v = vector(-sin(phi0), cos(phi0));
-            const corners = [
-                rRoot * u + hwRoot * v,
-                rTipOv * u + hwTip * v,
-                rTipOv * u - hwTip * v,
-                rRoot * u - hwRoot * v
-            ];
+            const K = 10;                               // involute facets per flank
+            var flank = [];                             // [radius, halfAngle] pairs, root -> tip
+            if (rRoot < rb)
+                flank = append(flank, [rRoot, slotHalfAngle(rb)]);   // radial stub below base circle
+            for (var i = 0; i <= K; i += 1)
+            {
+                const r = rStart + (rTipOv - rStart) * i / K;
+                flank = append(flank, [r, slotHalfAngle(r)]);
+            }
+            // Closed outline: +side flank root -> tip, tip chord, -side flank
+            // tip -> root (mirror), root chord back to the start.
+            var outline = [];
+            for (var i = 0; i < size(flank); i += 1)
+                outline = append(outline, vector(
+                    flank[i][0] * cos(phi0 + flank[i][1] * radian),
+                    flank[i][0] * sin(phi0 + flank[i][1] * radian)));
+            for (var i = size(flank) - 1; i >= 0; i -= 1)
+                outline = append(outline, vector(
+                    flank[i][0] * cos(phi0 - flank[i][1] * radian),
+                    flank[i][0] * sin(phi0 - flank[i][1] * radian)));
+
             const scales = [s0, s1];
             const zs = [-ov, def.height + ov];
+            const nPts = size(outline);
             for (var j = 0; j < 2; j += 1)
             {
                 var slotSk = newSketchOnPlane(context, id + ("slotSk" ~ j), {
@@ -274,11 +313,11 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                         vector(0, 0, 1),
                         vector(1, 0, 0))
                 });
-                for (var e = 0; e < 4; e += 1)
+                for (var e = 0; e < nPts; e += 1)
                 {
                     skLineSegment(slotSk, "edge" ~ e, {
-                        "start" : corners[e] * scales[j],
-                        "end"   : corners[(e + 1) % 4] * scales[j]
+                        "start" : outline[e] * scales[j],
+                        "end"   : outline[(e + 1) % nPts] * scales[j]
                     });
                 }
                 skSolve(slotSk);
