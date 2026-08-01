@@ -380,9 +380,20 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   (segment / pair / frame / assembly / pinion) + DXF sketch profiles in
   stl/dxf/ for OnShape. Needs `pip install manifold3d`. Every PARAMS entry is
   also a CLI flag. Run it before trusting any dimension. gear_drive =
-  'bevel45' (default) | 'spur' (legacy); the 3D mesh sweep AND a
+  'bevel45' (default) | 'face' | 'spur' (legacy); the 3D mesh sweep AND a
   stray-shard decompose() count GATE the exit code (>0.05 mm³ or >1
-  component fails). Generation traps encoded in gear_teeth_bevel45's
+  component fails). 'face' (2026-07-31, ported from the OnShape FS
+  session): radial rack-slot teeth on a flange top OUTSIDE the band OD
+  (gf 284–297, flush 288T, m 2.017, PA 25) + 13T spur pinion on a RADIAL
+  axis (motor flat on the wall, Ø3.2 bore + 0.5 D-flat + motor-side hub),
+  22.2:1 — sweep measures exactly 0 because the constant rack profile is
+  conjugate at the flange middle and the ±6.5 mm band stays inside the
+  0.15 backlash. Face-mode defaults (gear_m 2, pin_T 13, gear_pa 25,
+  gear_bl 0.15, gear_F 6.5) apply only where the knob still sits at its
+  bevel-era default. Artifacts committed under stl/face/. The DEFAULT
+  stays 'bevel45' because bracket_stl / cure_jig / viewer_export still
+  assume the crossed drive — flipping it drags the bracket redesign
+  along. Generation traps encoded in gear_teeth_bevel45's
   docstring and comments: pattern phase is k*pitch from the joint (not
   k+0.5 — half off reads as ~156 mm³), tps+1 copies clipped to the sector
   (unclipped wedge overhang lands 232 mm³ inside the neighbour), the
@@ -538,19 +549,25 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   and viewer_export.py --verify on every PR (gearmotor_stl dropped when it
   was parked, 2026-07-24). STEP + manual are committed artifacts, not
   CI-gated.
-- scripts/onshape/wafer_halo_beveloid.fs — OnShape FeatureScript port
-  (2026-07-25, Nick's ask, modelled on Anthony Lu's "Gear Lab" FS): two
-  custom features, "Halo Beveloid Band" (the 40° external tooth-band
-  sector — flush module, big-at-wall cone, joints mid-space, straight or
-  spiral) and "Halo Beveloid Pinion" (parallel-axis mate, hub + N20
-  D-bore, reports C). ANALYTIC lofted involutes, not the Python swept
-  envelope — mid-face identical, hundredths off at the faces; the Python
-  gates stay the authority for printed parts. The spec math is
-  parity-tested against Cfg/bevel_geom to 1e-9 (all 11 quantities).
-  scripts/onshape/README.md has the crib sheet + why Gear Lab's
-  intersecting-axis bevels can't make this pair. UNTESTED inside OnShape
-  itself (no FS runtime here) — expect minor std-API touch-ups on first
-  paste.
+- scripts/onshape/face_gear.fs — OnShape FeatureScript, REBUILT
+  incrementally with Nick verifying every paste (2026-07-30..31; the
+  one-shot wafer_halo_beveloid.fs + its README are deleted — history at
+  69bbd86). ONE feature, "Arc Segment": FACE-GEAR ring sector — radial
+  rack teeth cut into the front face (tooth depth along Height, tooth
+  lines perpendicular to the arc), ISO 0.38 m root fillets, joints
+  mid-slot, module DERIVED from the band middle — plus an optional
+  meshing spur pinion on a RADIAL axis lying flat against the wall
+  (D-flat bore for a 3 mm shaft, MOTOR-side hub, parity-based
+  tooth-into-slot clocking). Backlash = total pitch-line play split
+  evenly between the gears. The architecture walked 45° beveloid → ISO
+  intersecting-axes (Nick's pick, made the ring a crown at 8:1/90°) →
+  parallel-axis spur → FACE GEAR ("teeth extend with the height");
+  ancestors in git history: ISO bevel/crown ed600bf, parallel spur
+  5623c8c. PASTE-RULE LEDGER in the file header, learned from real
+  Feature Studio errors — ASCII-only annotation strings,
+  reportFeatureInfo (and no popup at all), opSphere not fSphere, a
+  parameter group must IMMEDIATELY follow its driving parameter. Do not
+  regress it.
 - scripts/*.py — halo_gen.py, v3_dxf_gen.py (parametric; edit constants).
 - NOTE: cad/ and tools/ do not exist in this repo. Everything else is
   tracked: README.md, docs/, scripts/, stl/, CLAUDE.md, V3_NOTES.md,
@@ -580,4 +597,7 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
    module. The static bracket (DONE 2026-07-24, scripts/bracket_stl.py)
    already banks the compression-arch win — the single-point-hang dovetail
    case is retired either way. Rotation would make T3 cyclic (peel term
-   reverses every rev).
+   reverses every rev). 2026-07-31: the FS session effectively REVIVED
+   this concept front-side as gear_drive='face' (see the segment_stl
+   bullet) — if motion returns, that mode plus a radial-axis motor
+   bracket is the path.
