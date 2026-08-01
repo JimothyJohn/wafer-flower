@@ -22,7 +22,10 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
     pitch radius, giving the standard 0.25 m root clearance. Sector joint
     faces land mid-slot (halo tiling rule). Clocking pairs a pinion tooth
     with a ring slot at the +X contact meridian. Ratio = zFull / pinion
-    teeth; coprime counts hunt (wear-even).
+    teeth; coprime counts hunt (wear-even). Backlash = total pitch-line
+    play, split evenly (each gear's slots widen by half, a quarter per
+    flank). Pinion bore takes an optional D-flat (chord cut, depth from
+    the round wall).
 
     Onshape paste rules learned the hard way (do not regress):
     - annotation strings must be printable ASCII (no em-dashes, no unicode minus)
@@ -58,6 +61,9 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
         annotation { "Name" : "Pressure angle", "Description" : "ISO standardizes 20 and 25 deg. 25 (the default) avoids undercut on small pinions (under ~14 teeth). Rack-flank limit here is ~32 deg." }
         isAngle(def.pressureAngle, { (degree) : [5, 25, 30] } as AngleBoundSpec);
 
+        annotation { "Name" : "Backlash", "Description" : "Total circumferential play at the pitch line, split evenly between ring and pinion slots. 0 = theoretical tight mesh; 0.1-0.2 mm is typical for FDM." }
+        isLength(def.backlash, { (millimeter) : [0, 0.15, 2] } as LengthBoundSpec);
+
         annotation { "Name" : "Mating pinion", "Default" : true, "Description" : "Also generate the meshing spur pinion in place: radial axis lying flat against the wall, tangent to the ring's pitch plane, tooth facing slot at the +X meridian." }
         def.mate is boolean;
         if (def.mate)
@@ -70,8 +76,11 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                 annotation { "Name" : "Pinion height", "Description" : "Pinion face width, which runs RADIALLY here. Keep it inside the tooth band; centered on the band middle." }
                 isLength(def.pinionHeight, { (millimeter) : [0.1, 10, 1000] } as LengthBoundSpec);
 
-                annotation { "Name" : "Pinion bore radius", "Description" : "0 = solid. 1.5 mm suits a 3 mm motor shaft." }
+                annotation { "Name" : "Pinion bore radius", "Description" : "0 = solid. 1.5 mm suits a 3 mm motor shaft (print-fit may want +0.1)." }
                 isLength(def.pinionBore, { (millimeter) : [0, 1.5, 100] } as LengthBoundSpec);
+
+                annotation { "Name" : "Bore flat depth", "Description" : "D-shaft flat: cut depth from the round bore wall. 0 = plain round bore. A 3 mm D-shaft typically wants 0.5 mm." }
+                isLength(def.pinionFlat, { (millimeter) : [0, 0.5, 10] } as LengthBoundSpec);
             }
         }
     }
@@ -82,7 +91,9 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
             "height" : def.height,
             "arcAngle" : def.arcAngle,
             "teeth" : def.teeth,
-            "pressureAngle" : def.pressureAngle
+            "pressureAngle" : def.pressureAngle,
+            "backlash" : def.backlash,
+            "boreFlat" : 0 * millimeter
         });
 
         if (def.mate)
@@ -102,7 +113,9 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                 "height" : def.pinionHeight,
                 "arcAngle" : 360 * degree,
                 "teeth" : zp,
-                "pressureAngle" : def.pressureAngle
+                "pressureAngle" : def.pressureAngle,
+                "backlash" : def.backlash,
+                "boreFlat" : def.pinionFlat
             });
 
             // Clocking: after the tilt the pinion's own +X meridian points
@@ -179,35 +192,68 @@ function buildBlank(context is Context, id is Id, g is map)
         "endDepth" : g.height
     });
 
-    // Inner bore: a revolved rectangle (edge on the axis is fine for
-    // opRevolve; the profile must not CROSS the axis).
+    // Inner bore. Round: a revolved rectangle (edge ON the axis is fine
+    // for opRevolve; the profile must not CROSS it). With a D-flat: an
+    // extruded D-profile (major arc + chord), flat facing +X.
     if (Ri > 0 * millimeter)
     {
-        var boreSk = newSketch(context, id + "boreProfile", {
-            "sketchPlane" : qCreatedBy(makeId("Front"), EntityType.FACE)
-        });
-        skLineSegment(boreSk, "axisEdge", {
-            "start" : vector(0 * millimeter, -ov),
-            "end"   : vector(0 * millimeter, g.height + ov)
-        });
-        skLineSegment(boreSk, "top", {
-            "start" : vector(0 * millimeter, g.height + ov),
-            "end"   : vector(Ri, g.height + ov)
-        });
-        skLineSegment(boreSk, "wall", {
-            "start" : vector(Ri, g.height + ov),
-            "end"   : vector(Ri, -ov)
-        });
-        skLineSegment(boreSk, "bottom", {
-            "start" : vector(Ri, -ov),
-            "end"   : vector(0 * millimeter, -ov)
-        });
-        skSolve(boreSk);
-        opRevolve(context, id + "boreCut", {
-            "entities" : qSketchRegion(id + "boreProfile"),
-            "axis" : line(vector(0, 0, 0) * millimeter, vector(0, 0, 1)),
-            "angleForward" : 360 * degree
-        });
+        if (g.boreFlat >= Ri)
+            throw regenError("Bore flat depth must be smaller than the bore radius.");
+        if (g.boreFlat > 0 * millimeter)
+        {
+            const xF = Ri - g.boreFlat;
+            const y0 = sqrt(Ri * Ri - xF * xF);
+            var dSk = newSketchOnPlane(context, id + "boreProfile", {
+                "sketchPlane" : plane(
+                    vector(0 * millimeter, 0 * millimeter, -ov),
+                    vector(0, 0, 1),
+                    vector(1, 0, 0))
+            });
+            skArc(dSk, "round", {
+                "start" : vector(xF, y0),
+                "mid"   : vector(-Ri, 0 * millimeter),
+                "end"   : vector(xF, -y0)
+            });
+            skLineSegment(dSk, "flat", {
+                "start" : vector(xF, -y0),
+                "end"   : vector(xF, y0)
+            });
+            skSolve(dSk);
+            opExtrude(context, id + "boreCut", {
+                "entities" : qSketchRegion(id + "boreProfile"),
+                "direction" : vector(0, 0, 1),
+                "endBound" : BoundingType.BLIND,
+                "endDepth" : g.height + 2 * ov
+            });
+        }
+        else
+        {
+            var boreSk = newSketch(context, id + "boreProfile", {
+                "sketchPlane" : qCreatedBy(makeId("Front"), EntityType.FACE)
+            });
+            skLineSegment(boreSk, "axisEdge", {
+                "start" : vector(0 * millimeter, -ov),
+                "end"   : vector(0 * millimeter, g.height + ov)
+            });
+            skLineSegment(boreSk, "top", {
+                "start" : vector(0 * millimeter, g.height + ov),
+                "end"   : vector(Ri, g.height + ov)
+            });
+            skLineSegment(boreSk, "wall", {
+                "start" : vector(Ri, g.height + ov),
+                "end"   : vector(Ri, -ov)
+            });
+            skLineSegment(boreSk, "bottom", {
+                "start" : vector(Ri, -ov),
+                "end"   : vector(0 * millimeter, -ov)
+            });
+            skSolve(boreSk);
+            opRevolve(context, id + "boreCut", {
+                "entities" : qSketchRegion(id + "boreProfile"),
+                "axis" : line(vector(0, 0, 0) * millimeter, vector(0, 0, 1)),
+                "angleForward" : 360 * degree
+            });
+        }
         opBoolean(context, id + "subtractBore", {
             "tools" : qCreatedBy(id + "boreCut", EntityType.BODY),
             "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
@@ -279,7 +325,8 @@ function buildFaceRing(context is Context, id is Id, g is map)
     // pi m / 4 at pitch growing at tanA per mm of z.
     const yRoot = g.height - 2.25 * m;
     const yTop = g.height + ov;
-    const hwPitch = PI * m / 4;
+    // + backlash/4: the ring's half of the play, split over its two flanks.
+    const hwPitch = PI * m / 4 + g.backlash / 4;
     const hwRoot = hwPitch - 1.25 * m * tanA;
     const hwTop = hwPitch + (m + ov) * tanA;
     if (hwRoot <= 0 * millimeter)
@@ -401,9 +448,12 @@ function buildGear(context is Context, id is Id, g is map)
     const rb = rPitch * cos(g.pressureAngle);
     const tau = 2 * PI / zFull;
     const invAlpha = tan(g.pressureAngle) - g.pressureAngle / radian;
+    // The pinion's half of the backlash: each flank rotates out by a
+    // quarter of the total play, taken as an angle at the pitch radius.
+    const blAng = g.backlash / 4 / rPitch;
     var slotHalfAngle = function(r)
     {
-        var a = tau / 4 - invAlpha;
+        var a = tau / 4 - invAlpha + blAng;
         if (r > rb)
         {
             const ar = acos(rb / r);
