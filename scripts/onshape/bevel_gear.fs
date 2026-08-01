@@ -2,65 +2,23 @@ FeatureScript 1803;
 import(path : "onshape/std/geometry.fs", version : "1803.0");
 
 /*
-    Bevel gear generator - built incrementally, one verified piece at a time.
+    Spur gear arc generator - simplified from the bevel/crown generator at
+    Nick's call (2026-07-31): a right-angle gearmotor makes the 90-degree
+    turn in hardware, so the pinion axis is PARALLEL to the ring axis and
+    the pair is plain spur gears - teeth parallel to both axes, no cones.
+    The full ISO straight-bevel / crown generator (Tredgold back-cone
+    profiles, tip-circle anchoring, crown regime, apex-to-apex placement)
+    lives in git history at commit ed600bf if the bevel route ever returns.
 
-    Step 1: "Arc Segment" - a plain arc blank. Inputs: outer radius, inner
-    radius (0 = solid, for the pinion blank), height, and arc ANGLE in
-    degrees (360 / wafer count; 360 = full gear, for the pinion). Centered
-    on the +X axis, flat on the Top plane, extruded +Z by the height.
-
-    Step 2: cone angle - the outer wall is cut to a cone, BIG END AT THE
-    BOTTOM (z = 0): Ro at z = 0 shrinking to Ro - height * tan(coneAngle)
-    at the top. 0 deg = straight wall. The inner wall stays cylindrical.
-
-    Step 3: tooth slots. Teeth counts the teeth ON THIS ARC (Nick's call -
-    the whole model's teeth, not a per-circle abstraction); the full-circle
-    equivalent zFull = teeth * 360 / arc drives the module, which is
-    DERIVED, not input: m = 2 * Ro / (zFull + 2) (pitch radius Ro - m at
-    the big end, addendum m, dedendum 1.25 m, slot depth 2.25 m).
-    Each slot is defined in the big-end plane (z = 0) and lofted between
-    two horizontal sections SCALED ABOUT THE CONE APEX (axis point
-    z = Ro / tan(coneAngle)), so flank rulings pass through the apex and
-    tooth width AND depth shrink toward the small end - straight bevel
-    behavior. Cone angle 0 degenerates to equal sections (spur slots).
-    Slots are phased so the sector's joint faces land mid-slot (halo rule:
-    joints mid-space; keep teeth divisible by segment count).
-
-    Step 4: involute flanks (10-facet polyline per side) replace the
-    straight trapezoid sides - transverse involute at the big end, apex-
-    scaled along the face (the Tredgold-style approximation; Gear Lab's
-    spherical involute differs by hundredths of a mm at the face ends).
-    Step 5: root fillet, radius 0.38 m (ISO rack tip radius), clamped to
-    the root land - a 5-facet tangent arc rounding the slot cutter's root
-    corners, mapped with the profile.
-
-    Step 6 (Nick's pair-architecture pick: ISO intersecting-axes bevel):
-    Tredgold geometry. For coned gears the profile is drawn on the
-    developed BACK CONE (virtual spur: Zv = zFull / cos(delta) teeth at
-    slant Rv = rPitch / cos(delta)), addendum m / dedendum 1.25 m measured
-    ALONG the back cone, then wrapped (development angle compresses by
-    cos(delta)) and projected through the PITCH apex onto the loft planes.
-    The visible wall is the TIP cone: pitch angle + theta_a where
-    tan(theta_a) = 2 sin(delta) / zFull (ISO 23509 standard taper), so the
-    wall reads slightly steeper than the input cone angle. Ro anchors the
-    BIG-END TIP CIRCLE (rP = Ro / tipK, module m = 2 rP / zFull): teeth
-    tips sit flush on the outer wall at every cone angle, with a short
-    cylindrical collar below the tip circle. Defaults tuned for Nick's
-    setup (90 deg shafts, small pinion): crown-regime ring, Height 4,
-    Base depth 8, PA 25, pair on by default.
-    Cone angle 0 keeps the exact transverse spur construction with
-    m = 2 Ro / (zFull + 2). Not modeled yet vs Gear Lab: tip chamfer,
-    undercut relief for low-tooth-count pinions.
-
-    Step 7: pair mode ("Mating pinion"). Both cone angles derive from the
-    tooth counts and shaft angle S (tan(delta_ring) = sin(S)/(Zp/Zr +
-    cos(S)), delta_pinion = S - delta_ring; the Cone angle input is
-    ignored). The single-gear pipeline moved into buildGear(); the pinion
-    is built as a full 360 gear sized off the shared module (rPp = m Zp/2,
-    blank anchor via tipK) and parked apex-to-apex: pre-rotate half a
-    pitch when the ring count is even (contact meridian must pair a tooth
-    with a slot), tilt -S about Y, translate the apex onto the ring's.
-    Ratio = ring full-circle count / pinion teeth.
+    "Arc Segment": ring sector (full gear at 360) with external involute
+    teeth, tips flush at Ro, plus an optional meshing pinion at parallel
+    axes. Teeth counts teeth ON THIS ARC; the module is DERIVED:
+    m = 2 Ro / (zFull + 2), zFull = teeth * 360 / arc. Sector joint faces
+    land mid-slot (halo tiling rule). Flanks are 10-facet transverse
+    involutes; root fillet 0.38 m (ISO rack tip radius) clamped to the
+    root land. Pair: center distance m (zFull + Zp) / 2, zero backlash by
+    construction, clocked tooth-to-slot at the ring's +X meridian.
+    Ratio = zFull / pinion teeth; coprime counts hunt (wear-even).
 
     Onshape paste rules learned the hard way (do not regress):
     - annotation strings must be printable ASCII (no em-dashes, no unicode minus)
@@ -71,135 +29,86 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
       precondition analysis fails on the whole feature
 */
 
-// Ro anchors the big-end TIP CIRCLE; pitch radius rP = Ro / tipK(delta, zF)
-// (the tip circle sits one module of addendum beyond pitch along the back
-// cone, so its RADIAL offset is m cos(delta)).
-function tipK(delta, zF)
-{
-    return 1 + 2 * cos(delta) / zF;
-}
-
 annotation {
     "Feature Type Name" : "Arc Segment",
-    "Feature Type Description" : "ISO straight bevel gear / arc rack segment (Tredgold profiles, root fillets, ISO taper). Inner radius 0 fills it solid; arc angle 360 makes the full gear. Teeth counts the teeth on this arc. Tick Mating pinion to also generate the meshing pinion in place - cone angles derive from the tooth counts and shaft angle."
+    "Feature Type Description" : "Spur gear ring sector with external involute teeth (tips flush at the outer radius) and an optional meshing pinion at parallel axes. Inner radius 0 fills it solid; arc angle 360 makes the full gear. Module is derived: m = 2 Ro / (teeth * 360 / arc + 2)."
 }
 export const arcSegment = defineFeature(function(context is Context, id is Id, def is map)
     precondition
     {
-        annotation { "Name" : "Outer radius", "Description" : "Outer (tooth tip) radius at the bottom face - the cone's big end." }
+        annotation { "Name" : "Outer radius", "Description" : "Tooth tip radius." }
         isLength(def.outerRadius, { (millimeter) : [1, 300, 10000] } as LengthBoundSpec);
 
-        annotation { "Name" : "Inner radius", "Description" : "Bore radius. 0 fills the segment solid (pinion blank)." }
+        annotation { "Name" : "Inner radius", "Description" : "Bore radius. 0 fills the segment solid." }
         isLength(def.innerRadius, { (millimeter) : [0, 270, 10000] } as LengthBoundSpec);
 
-        annotation { "Name" : "Height" }
-        isLength(def.height, { (millimeter) : [0.1, 4, 10000] } as LengthBoundSpec);
-
-        annotation { "Name" : "Base depth", "Description" : "Solid teeth-free backing added BELOW the big-end face. Near-face-gear rings (90 deg shafts at high ratio) need a thin tooth Height - the base gives the part its body. 0 = none." }
-        isLength(def.baseDepth, { (millimeter) : [0, 8, 1000] } as LengthBoundSpec);
+        annotation { "Name" : "Height", "Description" : "Face width." }
+        isLength(def.height, { (millimeter) : [0.1, 15, 10000] } as LengthBoundSpec);
 
         annotation { "Name" : "Arc angle", "Description" : "360 divided by the number of segments in the full ring (9 wafers -> 40 deg). 360 makes the full gear." }
         isAngle(def.arcAngle, { (degree) : [0.1, 40, 360] } as AngleBoundSpec);
 
-        annotation { "Name" : "Teeth", "Description" : "Number of teeth ON THIS ARC (joint faces land mid-slot). Full-circle equivalent = teeth * 360 / arc angle - match the pinion to that for the ratio." }
+        annotation { "Name" : "Teeth", "Description" : "Number of teeth ON THIS ARC (joint faces land mid-slot). Full-circle equivalent = teeth * 360 / arc angle." }
         isInteger(def.teeth, { (unitless) : [1, 32, 1000] } as IntegerBoundSpec);
 
         annotation { "Name" : "Pressure angle", "Description" : "ISO standardizes 20 and 25 deg. 25 (the default) avoids undercut on small pinions (under ~14 teeth) without profile shift." }
         isAngle(def.pressureAngle, { (degree) : [5, 25, 45] } as AngleBoundSpec);
 
-        annotation { "Name" : "Mating pinion", "Default" : true, "Description" : "Also generate the meshing pinion. ISO pair: BOTH cone angles are then derived from the tooth counts and shaft angle, and the Cone angle input is ignored." }
+        annotation { "Name" : "Mating pinion", "Default" : true, "Description" : "Also generate the meshing pinion in place: parallel axes, shared module, tooth facing slot at the ring's +X meridian." }
         def.mate is boolean;
         if (def.mate)
         {
             annotation { "Group Name" : "Mating Pinion", "Driving Parameter" : "mate", "Collapsed By Default" : false }
             {
-                annotation { "Name" : "Shaft angle", "Description" : "Angle between the two gear axes. 90 deg puts the motor along the wall." }
-                isAngle(def.shaftAngle, { (degree) : [10, 90, 170] } as AngleBoundSpec);
-
                 annotation { "Name" : "Pinion teeth", "Description" : "Ratio = ring full-circle count / pinion teeth. Coprime counts wear best (hunting tooth)." }
                 isInteger(def.pinionTeeth, { (unitless) : [4, 13, 200] } as IntegerBoundSpec);
 
-                annotation { "Name" : "Pinion height", "Description" : "Axial face width of the pinion. It meshes over this depth from the big end inward." }
-                isLength(def.pinionHeight, { (millimeter) : [0.1, 10, 1000] } as LengthBoundSpec);
+                annotation { "Name" : "Pinion height", "Description" : "Pinion face width. Match the ring height for full-face contact." }
+                isLength(def.pinionHeight, { (millimeter) : [0.1, 15, 1000] } as LengthBoundSpec);
 
                 annotation { "Name" : "Pinion bore radius", "Description" : "0 = solid. 1.5 mm suits a 3 mm motor shaft." }
                 isLength(def.pinionBore, { (millimeter) : [0, 1.5, 100] } as LengthBoundSpec);
             }
         }
-        else
-        {
-            annotation { "Name" : "Cone angle", "Description" : "Angle of the outer wall from vertical. 0 = straight (cylindrical) wall. Big end is at the bottom face." }
-            isAngle(def.coneAngle, { (degree) : [0, 45, 80] } as AngleBoundSpec);
-        }
     }
     {
-        // Step 7 pair mode: cone angles are DERIVED from the tooth counts
-        // and shaft angle (ISO: tan(delta_ring) = sin(S)/(Zp/Zr + cos(S)),
-        // delta_pinion = S - delta_ring); the Cone angle input drives
-        // standalone gears only.
-        var ringCone = def.coneAngle;
-        var deltaP = 0 * degree;
-        if (def.mate)
-        {
-            const zr = def.teeth * (360 * degree) / def.arcAngle;
-            ringCone = atan2(sin(def.shaftAngle),
-                def.pinionTeeth / zr + cos(def.shaftAngle));
-            deltaP = def.shaftAngle - ringCone;
-            if (ringCone <= 0 * degree || deltaP <= 0 * degree)
-                throw regenError("Shaft angle and tooth counts give no valid cone pair.");
-        }
-
         buildGear(context, id + "ring", {
             "outerRadius" : def.outerRadius,
             "innerRadius" : def.innerRadius,
             "height" : def.height,
-            "baseDepth" : def.baseDepth,
             "arcAngle" : def.arcAngle,
-            "coneAngle" : ringCone,
             "teeth" : def.teeth,
             "pressureAngle" : def.pressureAngle
         });
 
         if (def.mate)
         {
-            // Shared module sizes the pinion blank; the pair shares its
-            // pitch apex, so the pinion is parked apex-to-apex, tilted by
-            // the shaft angle about Y, contacting at the ring's +X meridian.
-            const zr = def.teeth * (360 * degree) / def.arcAngle;
+            // Shared module; parallel axes; center distance = sum of the
+            // pitch radii. Both gears sit on the same z = 0 plane.
+            const zFull = def.teeth * (360 * degree) / def.arcAngle;
+            const m = 2 * def.outerRadius / (zFull + 2);
             const zp = def.pinionTeeth;
-            const rPr = def.outerRadius / tipK(ringCone, zr);
-            const mMod = 2 * rPr / zr;
-            const rPp = mMod * zp / 2;
-            const zAr = rPr / tan(ringCone);
-            const zAp = rPp / tan(deltaP);
+            const C = m * (zFull + zp) / 2;
 
             buildGear(context, id + "pinion", {
-                "outerRadius" : rPp * tipK(deltaP, zp),
+                "outerRadius" : m * (zp + 2) / 2,
                 "innerRadius" : def.pinionBore,
                 "height" : def.pinionHeight,
-                "baseDepth" : 0 * millimeter,
                 "arcAngle" : 360 * degree,
-                "coneAngle" : deltaP,
                 "teeth" : zp,
                 "pressureAngle" : def.pressureAngle
             });
 
-            // Clocking: after the tilt the pinion presents its own -X
-            // meridian, which always carries a slot center. An even ring
-            // count also puts a ring SLOT at the contact meridian, so the
-            // pinion pre-rotates half a pitch to face it with a tooth; an
-            // odd ring count already presents a ring tooth there.
+            // Clocking: the pinion presents a slot center on its -X meridian
+            // (the side facing the ring). An even ring count puts a ring
+            // SLOT at the contact meridian too, so the pinion pre-rotates
+            // half a pitch to face it with a tooth; an odd ring count
+            // already presents a ring tooth there.
             var preRot = 0 * degree;
             if (def.teeth % 2 == 0)
                 preRot = 180 * degree / zp;
-            const zAxis = line(vector(0, 0, 0) * millimeter, vector(0, 0, 1));
-            const yAxis = line(vector(0, 0, 0) * millimeter, vector(0, 1, 0));
-            const place = transform(vector(
-                    zAp * sin(def.shaftAngle),
-                    0 * millimeter,
-                    zAr - zAp * cos(def.shaftAngle)))
-                * rotationAround(yAxis, -def.shaftAngle)
-                * rotationAround(zAxis, preRot);
+            const place = transform(vector(C, 0 * millimeter, 0 * millimeter))
+                * rotationAround(line(vector(0, 0, 0) * millimeter, vector(0, 0, 1)), preRot);
             opTransform(context, id + "placePinion", {
                 "bodies" : qCreatedBy(id + "pinion", EntityType.BODY),
                 "transform" : place
@@ -207,9 +116,9 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
         }
     });
 
-// The whole single-gear pipeline (blank, wall cone, bore, tooth slots).
-// g: outerRadius, innerRadius, height, baseDepth, arcAngle, coneAngle,
-// teeth, pressureAngle. Bodies are created under the passed id.
+// The whole single-gear pipeline: blank, bore, involute tooth slots.
+// g: outerRadius, innerRadius, height, arcAngle, teeth, pressureAngle.
+// Bodies are created under the passed id.
 function buildGear(context is Context, id is Id, g is map)
 {
     const Ro = g.outerRadius;
@@ -222,31 +131,16 @@ function buildGear(context is Context, id is Id, g is map)
     const isFull = g.arcAngle >= 360 * degree - 0.01 * degree;
     const half = g.arcAngle / 2;
 
-    // Tooth-count geometry needed by both the wall cut and the teeth.
     const zFull = g.teeth * (360 * degree) / g.arcAngle;    // full-circle equivalent count
-    // Ro anchors the BIG-END TIP CIRCLE - the gear's true outer radius,
-    // at z = zTip = m sin(delta). Tips sit flush on the outer wall at
-    // every cone angle; below the tip circle the wall keeps a short
-    // cylindrical collar. (The old z = 0 anchor went pathological near
-    // crown angles: at 87 deg it put the teeth ~45 mm inboard of the
-    // entered Ro.) Above the tip circle the wall is the TIP cone: pitch
-    // angle + theta_a, tan(theta_a) = 2 sin(delta)/zFull (ISO 23509).
-    var wallTan = tan(g.coneAngle);
-    var rP;                                     // big-end pitch radius
-    var mMod;                                   // derived module
-    var zTip = 0 * millimeter;                  // tip-circle height
-    if (g.coneAngle > 0 * degree)
-    {
-        wallTan = tan(g.coneAngle + atan(2 * sin(g.coneAngle) / zFull));
-        rP = Ro / tipK(g.coneAngle, zFull);
-        mMod = 2 * rP / zFull;
-        zTip = mMod * sin(g.coneAngle);
-    }
-    else
-    {
-        mMod = 2 * Ro / (zFull + 2);
-        rP = Ro - mMod;
-    }
+    const m = 2 * Ro / (zFull + 2);             // derived module (tips at Ro)
+    const rPitch = Ro - m;
+    const rRoot = Ro - 2.25 * m;                // addendum m + dedendum 1.25 m
+    const ov = 1 * millimeter;                  // cutter overshoot past both faces
+
+    if (rRoot <= Ri && Ri > 0 * millimeter)
+        throw regenError("Tooth slots cut through to the bore. This blank needs at least "
+            ~ ceil((2 * Ro / ((Ro - Ri) / 2.25) - 2) * g.arcAngle / (360 * degree))
+            ~ " teeth on this arc, or a smaller inner radius.");
 
     // Outer boundary on the Top plane, symmetric about +X.
     var sk = newSketch(context, id + "profile", {
@@ -284,57 +178,6 @@ function buildGear(context is Context, id is Id, g is map)
         "endDepth" : g.height
     });
 
-    // Cutters overshoot both end faces by 1 mm (coplanar-cap sliver trap).
-    const ov = 1 * millimeter;
-
-    // Step 2: cone the outer wall ABOVE the tip circle. Revolved wedge
-    // outside the tip-cone line r(z) = Ro - (z - zTip) * wallTan; below
-    // zTip that line exits the blank, leaving the cylindrical collar.
-    if (g.coneAngle > 0 * degree)
-    {
-        const rBot = Ro + ov * wallTan;          // tip-cone line at z = zTip - ov
-        const rTop = Ro - (g.height + ov - zTip) * wallTan;
-        if (rTop <= 0.1 * millimeter)
-            throw regenError("Height reaches past the tip cone apex - reduce Height.");
-        const rMax = rBot + 5 * millimeter;
-
-        // Front plane is world XZ: sketch x = radius, sketch y = world z.
-        var cutSk = newSketch(context, id + "coneProfile", {
-            "sketchPlane" : qCreatedBy(makeId("Front"), EntityType.FACE)
-        });
-        skLineSegment(cutSk, "cone", {
-            "start" : vector(rBot, zTip - ov),
-            "end"   : vector(rTop, g.height + ov)
-        });
-        skLineSegment(cutSk, "top", {
-            "start" : vector(rTop, g.height + ov),
-            "end"   : vector(rMax, g.height + ov)
-        });
-        skLineSegment(cutSk, "outer", {
-            "start" : vector(rMax, g.height + ov),
-            "end"   : vector(rMax, zTip - ov)
-        });
-        skLineSegment(cutSk, "bottom", {
-            "start" : vector(rMax, zTip - ov),
-            "end"   : vector(rBot, zTip - ov)
-        });
-        skSolve(cutSk);
-
-        opRevolve(context, id + "coneCut", {
-            "entities" : qSketchRegion(id + "coneProfile"),
-            "axis" : line(vector(0, 0, 0) * millimeter, vector(0, 0, 1)),
-            "angleForward" : 360 * degree
-        });
-        opBoolean(context, id + "subtractCone", {
-            "tools" : qCreatedBy(id + "coneCut", EntityType.BODY),
-            "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
-            "operationType" : BooleanOperationType.SUBTRACTION
-        });
-        opDeleteBodies(context, id + "deleteConeSketch", {
-            "entities" : qCreatedBy(id + "coneProfile", EntityType.BODY)
-        });
-    }
-
     // Inner bore: a revolved rectangle (edge on the axis is fine for
     // opRevolve; the profile must not CROSS the axis).
     if (Ri > 0 * millimeter)
@@ -359,7 +202,6 @@ function buildGear(context is Context, id is Id, g is map)
             "end"   : vector(0 * millimeter, -ov)
         });
         skSolve(boreSk);
-
         opRevolve(context, id + "boreCut", {
             "entities" : qSketchRegion(id + "boreProfile"),
             "axis" : line(vector(0, 0, 0) * millimeter, vector(0, 0, 1)),
@@ -375,214 +217,56 @@ function buildGear(context is Context, id is Id, g is map)
         });
     }
 
-    // Base (Gear Lab idiom): solid teeth-free backing below the big end,
-    // bored to match, unioned on BEFORE the teeth are cut so the slot
-    // roots recess into it (1.25 m sin(delta) deep at the big end). In
-    // the crown regime the teeth stand entirely on this base.
-    if (g.baseDepth > 0 * millimeter)
-    {
-        opExtrude(context, id + "baseExtrude", {
-            "entities" : qSketchRegion(id + "profile"),
-            "direction" : vector(0, 0, -1),
-            "endBound" : BoundingType.BLIND,
-            "endDepth" : g.baseDepth
-        });
-        if (Ri > 0 * millimeter)
-        {
-            var baseBoreSk = newSketch(context, id + "baseBoreProfile", {
-                "sketchPlane" : qCreatedBy(makeId("Front"), EntityType.FACE)
-            });
-            skLineSegment(baseBoreSk, "axisEdge", {
-                "start" : vector(0 * millimeter, -g.baseDepth - ov),
-                "end"   : vector(0 * millimeter, ov)
-            });
-            skLineSegment(baseBoreSk, "top", {
-                "start" : vector(0 * millimeter, ov),
-                "end"   : vector(Ri, ov)
-            });
-            skLineSegment(baseBoreSk, "wall", {
-                "start" : vector(Ri, ov),
-                "end"   : vector(Ri, -g.baseDepth - ov)
-            });
-            skLineSegment(baseBoreSk, "bottom", {
-                "start" : vector(Ri, -g.baseDepth - ov),
-                "end"   : vector(0 * millimeter, -g.baseDepth - ov)
-            });
-            skSolve(baseBoreSk);
-            opRevolve(context, id + "baseBoreCut", {
-                "entities" : qSketchRegion(id + "baseBoreProfile"),
-                "axis" : line(vector(0, 0, 0) * millimeter, vector(0, 0, 1)),
-                "angleForward" : 360 * degree
-            });
-            opBoolean(context, id + "subtractBaseBore", {
-                "tools" : qCreatedBy(id + "baseBoreCut", EntityType.BODY),
-                "targets" : qCreatedBy(id + "baseExtrude", EntityType.BODY),
-                "operationType" : BooleanOperationType.SUBTRACTION
-            });
-            opDeleteBodies(context, id + "deleteBaseBoreSketch", {
-                "entities" : qCreatedBy(id + "baseBoreProfile", EntityType.BODY)
-            });
-        }
-        opBoolean(context, id + "attachBase", {
-            "tools" : qUnion([
-                qCreatedBy(id + "extrude", EntityType.BODY),
-                qCreatedBy(id + "baseExtrude", EntityType.BODY)
-            ]),
-            "operationType" : BooleanOperationType.UNION
-        });
-    }
-
-
-    // Steps 3-6: tooth slots. The profile is drawn as an EQUIVALENT SPUR
-    // in a flat "drawing plane", then mapped into place:
-    // - coneAngle 0: the drawing plane IS the transverse plane; pure
-    //   rotation to phi0 (exact spur involute).
-    // - coneAngle > 0 (step 6, ISO/Tredgold): the drawing plane is the
-    //   developed BACK CONE - a virtual spur with zFull / cos(delta)
-    //   teeth at slant radius rPitch / cos(delta), addendum m and
-    //   dedendum 1.25 m measured ALONG the back cone. Each point wraps
-    //   onto the back cone (development angle compresses by cos(delta))
-    //   and projects through the PITCH APEX onto the two loft planes,
-    //   so flank rulings pass through the apex and the whole tooth
-    //   vanishes there - a true straight bevel per Tredgold.
-    const pitchAngle = g.arcAngle / g.teeth;
+    // Tooth slots. Transverse-plane involute (exact for spurs): the slot
+    // HALF-ANGLE at radius r is tau/4 - inv(alpha) + inv(alpha_r) with
+    // alpha_r = acos(rb / r), inv(x) = tan(x) - x. Below the base circle
+    // the flank drops radially at the base-circle angle.
+    const rb = rPitch * cos(g.pressureAngle);   // base circle
+    const tau = 2 * PI / zFull;                 // angular pitch, radians
     const invAlpha = tan(g.pressureAngle) - g.pressureAngle / radian;
-    const phi0 = -half;                         // slot centered on the leading joint
-    const K = 10;                               // involute facets per flank
-
-    // Equivalent-spur parameters (radii in the drawing plane). rP and
-    // mMod come from the tip-circle anchor block above.
-    var eqPitch;
-    var eqRoot;
-    var eqTipOv;
-    var eqTeeth;                                // fractional is fine
-    var zApex = 0 * millimeter;                 // pitch apex (coned only)
-    var zBack = 0 * millimeter;                 // back-cone apex (coned only)
-    var zRoot = 0 * millimeter;                 // big-end root-circle height
-    if (g.coneAngle > 0 * degree)
+    var slotHalfAngle = function(r)             // radians as a number
     {
-        zApex = rP / tan(g.coneAngle);
-        if (zApex <= g.height + ov)
-            throw regenError("Pitch apex lies inside the blank - reduce cone angle or height, or raise the tooth count.");
-        zBack = -rP * tan(g.coneAngle);
-        eqPitch = rP / cos(g.coneAngle);
-        eqTeeth = zFull / cos(g.coneAngle);
-        eqRoot = eqPitch - 1.25 * mMod;
-        eqTipOv = eqPitch + mMod + ov;
-        zRoot = zBack + eqRoot * sin(g.coneAngle);
-    }
-    else
-    {
-        eqPitch = rP;
-        eqTeeth = zFull;
-        eqRoot = Ro - 2.25 * mMod;
-        eqTipOv = Ro + ov;
-    }
-    const eqBase = eqPitch * cos(g.pressureAngle);
-    const tauEq = 2 * PI / eqTeeth;
-    var slotHalfAngle = function(r)             // drawing-plane slot half-angle, radians
-    {
-        var g = tauEq / 4 - invAlpha;
-        if (r > eqBase)
+        var a = tau / 4 - invAlpha;
+        if (r > rb)
         {
-            const ar = acos(eqBase / r);
-            g = g + tan(ar) - ar / radian;
+            const ar = acos(rb / r);
+            a = a + tan(ar) - ar / radian;
         }
-        return g;
+        return a;
     };
-    const eqStart = max(eqRoot, eqBase);
-    if (slotHalfAngle(eqStart) <= 0)
+    const rStart = max(rRoot, rb);
+    if (slotHalfAngle(rStart) <= 0)
         throw regenError("No slot width left at the root - lower the pressure angle or the tooth count.");
 
-    // Loft planes: the lower one sits below the deepest root point so the
-    // slots fully form even where they recess into the base.
-    const zs = [min(-ov, zRoot - ov), g.height + ov];
-
-    // Root-support / bore guards. zRoot is below z = 0 (bevel slots
-    // normally exit the back face); the root CONE rises toward the apex
-    // and re-enters the blank at radius rRootAtZ0. If that radius is
-    // inside the bore, the roots never rise above the bottom face across
-    // the whole wall: CROWN regime - the teeth stand on the base, which
-    // must exist and be deep enough. Otherwise (WALL regime) the root
-    // cone at the top face must clear the bore or the slots gut the ring.
-    if (g.coneAngle > 0 * degree)
-    {
-        const rRootAtZ0 = eqRoot * cos(g.coneAngle) * zApex / (zApex - zRoot);
-        if (rRootAtZ0 <= Ri && Ri > 0 * millimeter)
-        {
-            const need = 1.25 * mMod * sin(g.coneAngle) + 1 * millimeter;
-            if (g.baseDepth < need)
-                throw regenError("Crown regime: tooth roots stay below the bottom face across the whole wall, so the teeth need a backing. Set Base depth to at least "
-                    ~ (floor(need / millimeter * 10 + 0.5) / 10)
-                    ~ " mm, or lower the ratio / shaft angle.");
-        }
-        else
-        {
-            const rRootTop = eqRoot * cos(g.coneAngle) * (zApex - g.height) / (zApex - zRoot);
-            if (rRootTop <= Ri && Ri > 0 * millimeter)
-            {
-                var msg = "Tooth slots cut through to the bore: " ~ g.teeth
-                    ~ " teeth on this arc give module "
-                    ~ (floor(mMod / millimeter * 100 + 0.5) / 100) ~ " mm. ";
-                var fits = -1;
-                for (var n = g.teeth + 1; n <= 1000; n += 1)
-                {
-                    const zF2 = n * (360 * degree) / g.arcAngle;
-                    const rP2 = Ro / tipK(g.coneAngle, zF2);
-                    const m2 = 2 * rP2 / zF2;
-                    const zA2 = rP2 / tan(g.coneAngle);
-                    const rt2 = rP2 / cos(g.coneAngle) - 1.25 * m2;
-                    const z32 = -rP2 * tan(g.coneAngle) + rt2 * sin(g.coneAngle);
-                    if (rt2 * cos(g.coneAngle) * (zA2 - g.height) / (zA2 - z32) > Ri)
-                    {
-                        fits = n;
-                        break;
-                    }
-                }
-                if (fits > 0)
-                    msg = msg ~ "This blank needs at least " ~ fits
-                        ~ " teeth on this arc, or a smaller inner radius.";
-                else
-                    msg = msg ~ "No tooth count fits this wall - thicken it or reduce the cone angle or height.";
-                throw regenError(msg);
-            }
-        }
-    }
-    else if (eqRoot <= Ri && Ri > 0 * millimeter)
-    {
-        throw regenError("Tooth slots cut through to the bore. This blank needs at least "
-            ~ ceil((2 * Ro / ((Ro - Ri) / 2.25) - 2) * g.arcAngle / (360 * degree))
-            ~ " teeth on this arc, or a smaller inner radius.");
-    }
-
-    // Canonical drawing frame: slot centered on the +X axis (mapped out
-    // to phi0 at the end, mirrored for the -side). In this frame the
-    // root chord is parallel to the Y axis. +side flank, root -> tip.
+    // Canonical frame: slot centered on the +X axis (rotated out to the
+    // leading joint at phi0 = -arc/2, mirrored for the -side). The root
+    // chord is parallel to Y here. +side flank, root -> tip.
+    const phi0 = -half;
+    const K = 10;                               // involute facets per flank
+    const rTipOv = Ro + ov;
     var flankPts = [];
-    if (eqRoot < eqBase)
+    if (rRoot < rb)
         flankPts = append(flankPts, vector(
-            eqRoot * cos(slotHalfAngle(eqBase) * radian),
-            eqRoot * sin(slotHalfAngle(eqBase) * radian)));
+            rRoot * cos(slotHalfAngle(rb) * radian),
+            rRoot * sin(slotHalfAngle(rb) * radian)));
     for (var i = 0; i <= K; i += 1)
     {
-        const r = eqStart + (eqTipOv - eqStart) * i / K;
-        const g = slotHalfAngle(r);
-        flankPts = append(flankPts, vector(r * cos(g * radian), r * sin(g * radian)));
+        const r = rStart + (rTipOv - rStart) * i / K;
+        const a = slotHalfAngle(r);
+        flankPts = append(flankPts, vector(r * cos(a * radian), r * sin(a * radian)));
     }
 
-    // Step 5: root fillet, radius 0.38 m (ISO rack tip radius),
-    // clamped so the two corner arcs never overlap on the root land.
-    // The sharp corner between the root chord and the near-straight
-    // flank start becomes a 5-facet tangent arc; the CUTTER loses
-    // area at the corner, so the TOOTH root gains the fillet. It is
-    // drawn in the equivalent-spur plane, so it maps with the rest.
+    // Root fillet, radius 0.38 m (ISO rack tip radius), clamped so the two
+    // corner arcs never overlap on the root land: the sharp corner between
+    // root chord and flank start becomes a 5-facet tangent arc. The CUTTER
+    // loses area at the corner, so the TOOTH root gains the fillet.
     var plusPts = flankPts;
     const pf0 = flankPts[0];
     const uDir = vector(0, -1);                 // along the root chord, away from the corner
     var vDir = flankPts[1] - pf0;
     vDir = vDir / norm(vDir);                   // along the flank, away from the corner
     const phiC = acos(dot(uDir, vDir));
-    var rho = 0.38 * mMod;
+    var rho = 0.38 * m;
     var tOff = rho / tan(phiC / 2);
     if (tOff > 0.9 * pf0[1])                    // pf0[1] = half the root chord
     {
@@ -611,7 +295,7 @@ function buildGear(context is Context, id is Id, g is map)
             pts = append(pts, Cc + vector(cos(a), sin(a)) * rho);
         }
         pts = append(pts, Tf);
-        // Rejoin the involute above the arc (tiny kink, sub-print-scale).
+        // Rejoin the involute above the arc (sub-print-scale kink).
         const rJoin = norm(Tf);
         for (var i = 0; i < size(flankPts); i += 1)
         {
@@ -621,74 +305,49 @@ function buildGear(context is Context, id is Id, g is map)
         plusPts = pts;
     }
 
-    // Closed canonical outline: +side root -> tip, tip chord, mirrored
-    // -side tip -> root, root chord closes it.
-    var canon = [];
+    // Closed outline in world orientation: +side root -> tip, tip chord,
+    // mirrored -side tip -> root, root chord closes it.
+    var rot = function(p)
+    {
+        return vector(p[0] * cos(phi0) - p[1] * sin(phi0),
+                      p[0] * sin(phi0) + p[1] * cos(phi0));
+    };
+    var outline = [];
     for (var i = 0; i < size(plusPts); i += 1)
-        canon = append(canon, plusPts[i]);
+        outline = append(outline, rot(plusPts[i]));
     for (var i = size(plusPts) - 1; i >= 0; i -= 1)
-        canon = append(canon, vector(plusPts[i][0], -plusPts[i][1]));
+        outline = append(outline, rot(vector(plusPts[i][0], -plusPts[i][1])));
 
-    // Map the canonical profile onto each loft plane.
-    var outlines = [[], []];
-    for (var j = 0; j < 2; j += 1)
+    // One slot cutter, extruded straight through (spur teeth are prisms),
+    // then rotation-patterned and subtracted in a single boolean.
+    var slotSk = newSketchOnPlane(context, id + "slotSk", {
+        "sketchPlane" : plane(
+            vector(0 * millimeter, 0 * millimeter, -ov),
+            vector(0, 0, 1),
+            vector(1, 0, 0))
+    });
+    const nPts = size(outline);
+    for (var e = 0; e < nPts; e += 1)
     {
-        for (var i = 0; i < size(canon); i += 1)
-        {
-            const p = canon[i];
-            if (g.coneAngle > 0 * degree)
-            {
-                const rhoP = norm(p);                       // back-cone slant radius
-                const thv = atan2(p[1], p[0]);              // development angle
-                const phiW = phi0 + thv / cos(g.coneAngle);
-                const r3 = rhoP * cos(g.coneAngle);
-                const z3 = zBack + rhoP * sin(g.coneAngle);
-                const tsc = (zApex - zs[j]) / (zApex - z3); // central projection
-                outlines[j] = append(outlines[j],
-                    vector(r3 * tsc * cos(phiW), r3 * tsc * sin(phiW)));
-            }
-            else
-            {
-                outlines[j] = append(outlines[j], vector(
-                    p[0] * cos(phi0) - p[1] * sin(phi0),
-                    p[0] * sin(phi0) + p[1] * cos(phi0)));
-            }
-        }
-    }
-
-    const nPts = size(canon);
-    for (var j = 0; j < 2; j += 1)
-    {
-        var slotSk = newSketchOnPlane(context, id + ("slotSk" ~ j), {
-            "sketchPlane" : plane(
-                vector(0 * millimeter, 0 * millimeter, zs[j]),
-                vector(0, 0, 1),
-                vector(1, 0, 0))
+        skLineSegment(slotSk, "edge" ~ e, {
+            "start" : outline[e],
+            "end"   : outline[(e + 1) % nPts]
         });
-        for (var e = 0; e < nPts; e += 1)
-        {
-            skLineSegment(slotSk, "edge" ~ e, {
-                "start" : outlines[j][e],
-                "end"   : outlines[j][(e + 1) % nPts]
-            });
-        }
-        skSolve(slotSk);
     }
-
-    opLoft(context, id + "slotLoft", {
-        "profileSubqueries" : [
-            qSketchRegion(id + "slotSk0", true),
-            qSketchRegion(id + "slotSk1", true)
-        ],
-        "bodyType" : BodyType.SOLID
+    skSolve(slotSk);
+    opExtrude(context, id + "slotCutter", {
+        "entities" : qSketchRegion(id + "slotSk"),
+        "direction" : vector(0, 0, 1),
+        "endBound" : BoundingType.BLIND,
+        "endDepth" : g.height + 2 * ov
     });
 
     // A slot at each joint face plus one per tooth between them; on a
     // full circle the last slot would duplicate the first.
+    const pitchAngle = g.arcAngle / g.teeth;
     var nSlots = g.teeth + 1;
     if (isFull)
         nSlots = g.teeth;
-
     if (nSlots > 1)
     {
         var transforms = [];
@@ -700,7 +359,7 @@ function buildGear(context is Context, id is Id, g is map)
             names = append(names, "slot" ~ k);
         }
         opPattern(context, id + "slotPattern", {
-            "entities" : qCreatedBy(id + "slotLoft", EntityType.BODY),
+            "entities" : qCreatedBy(id + "slotCutter", EntityType.BODY),
             "transforms" : transforms,
             "instanceNames" : names
         });
@@ -708,20 +367,14 @@ function buildGear(context is Context, id is Id, g is map)
 
     opBoolean(context, id + "subtractSlots", {
         "tools" : qUnion([
-            qCreatedBy(id + "slotLoft", EntityType.BODY),
+            qCreatedBy(id + "slotCutter", EntityType.BODY),
             qCreatedBy(id + "slotPattern", EntityType.BODY)
         ]),
-        "targets" : qUnion([
-            qCreatedBy(id + "extrude", EntityType.BODY),
-            qCreatedBy(id + "attachBase", EntityType.BODY)
-        ]),
+        "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
         "operationType" : BooleanOperationType.SUBTRACTION
     });
-    opDeleteBodies(context, id + "deleteSlotSketches", {
-        "entities" : qUnion([
-            qCreatedBy(id + "slotSk0", EntityType.BODY),
-            qCreatedBy(id + "slotSk1", EntityType.BODY)
-        ])
+    opDeleteBodies(context, id + "deleteSlotSketch", {
+        "entities" : qCreatedBy(id + "slotSk", EntityType.BODY)
     });
 
     // Leave only the solid behind.
