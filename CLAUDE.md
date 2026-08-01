@@ -571,7 +571,9 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 - scripts/*.py — halo_gen.py, v3_dxf_gen.py (parametric; edit constants).
 - NOTE: cad/ and tools/ do not exist in this repo. Everything else is
   tracked: README.md, docs/, scripts/, stl/, CLAUDE.md, V3_NOTES.md,
-  ONSHAPE_RECIPE.md, TODO.md, .github/. gcode/ is gitignored.
+  TODO.md, .github/. gcode/ is gitignored. (ONSHAPE_RECIPE.md — the
+  hand-CAD OnShape recipe — deleted by Nick 2026-07-31, superseded by
+  scripts/onshape/face_gear.fs; recoverable from history.)
 
 ## Conventions & preferences
 - User (Nick) is technical; be direct, lead with problems, no praise
