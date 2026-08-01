@@ -337,12 +337,9 @@ T3 adhesive shear + 10–30 °C thermal cycling (THE gate), T4 land flatness
 T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 
 ## Repo contents
-- GEARS.md — the bevel-gear clinic (2026-07-27, Nick's ask): why the
-  generated crossed pair works, which constraints are load-bearing (tooth
-  counts) vs free (pinion size), the full recipe with code citations, the
-  trap ledger, and the re-targeting checklist. Every number in it is
-  verified against the live Cfg; update it when the gear architecture
-  changes.
+- GEARS.md — DELETED by Nick 2026-07-31 (the bevel-gear clinic; it
+  documented the crossed-bevel architecture the face drive replaces —
+  recoverable from history if the bevel route returns).
 - DESIGN.md — Nick's high-level design guide (recovered from an untracked
   root file 2026-07-25; his authorship, edit freely): H2S fabrication,
   spiral-bevel-rack drivetrain concept.
@@ -570,10 +567,11 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   regress it.
 - scripts/*.py — halo_gen.py, v3_dxf_gen.py (parametric; edit constants).
 - NOTE: cad/ and tools/ do not exist in this repo. Everything else is
-  tracked: README.md, docs/, scripts/, stl/, CLAUDE.md, V3_NOTES.md,
-  TODO.md, .github/. gcode/ is gitignored. (ONSHAPE_RECIPE.md — the
-  hand-CAD OnShape recipe — deleted by Nick 2026-07-31, superseded by
-  scripts/onshape/face_gear.fs; recoverable from history.)
+  tracked: README.md, docs/, scripts/, stl/, CLAUDE.md, TODO.md,
+  .github/. gcode/ is gitignored. (Deleted by Nick 2026-07-31 in the
+  face-drive cleanup, all recoverable from history: ONSHAPE_RECIPE.md
+  the hand-CAD recipe — superseded by scripts/onshape/face_gear.fs —
+  plus GEARS.md the bevel-gear clinic and V3_NOTES.md.)
 
 ## Conventions & preferences
 - User (Nick) is technical; be direct, lead with problems, no praise
