@@ -81,6 +81,12 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
 
                 annotation { "Name" : "Bore flat depth", "Description" : "D-shaft flat: cut depth from the round bore wall. 0 = plain round bore. A 3 mm D-shaft typically wants 0.5 mm." }
                 isLength(def.pinionFlat, { (millimeter) : [0, 0.5, 10] } as LengthBoundSpec);
+
+                annotation { "Name" : "Hub length", "Description" : "Retention hub: a boss around the bore on the inner face (away from the motor) - washer seat for the shaft screw plus extra bore engagement. 0 = none." }
+                isLength(def.pinionHubLength, { (millimeter) : [0, 3, 100] } as LengthBoundSpec);
+
+                annotation { "Name" : "Hub radius", "Description" : "Must stay under the pinion pitch radius minus one module so it clears the ring's tooth tips - the guard reports the exact limit." }
+                isLength(def.pinionHubRadius, { (millimeter) : [0.1, 4.5, 100] } as LengthBoundSpec);
             }
         }
     }
@@ -93,7 +99,9 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
             "teeth" : def.teeth,
             "pressureAngle" : def.pressureAngle,
             "backlash" : def.backlash,
-            "boreFlat" : 0 * millimeter
+            "boreFlat" : 0 * millimeter,
+            "hubLength" : 0 * millimeter,
+            "hubRadius" : 0 * millimeter
         });
 
         if (def.mate)
@@ -107,6 +115,19 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
             const zp = def.pinionTeeth;
             const rPp = m * zp / 2;
 
+            if (def.pinionHubLength > 0 * millimeter)
+            {
+                // The hub sweeps past the ring face as the pinion turns; it
+                // must clear the ring's tooth tips (pitch radius less one
+                // module of addendum, less 0.5 mm running clearance).
+                const hubMax = rPp - m - 0.5 * millimeter;
+                if (def.pinionHubRadius > hubMax)
+                    throw regenError("Hub radius collides with the ring's tooth tips - maximum here is "
+                        ~ (floor(hubMax / millimeter * 100) / 100) ~ " mm.");
+                if (def.pinionHubRadius <= def.pinionBore)
+                    throw regenError("Hub radius must exceed the pinion bore radius.");
+            }
+
             buildGear(context, id + "pinion", {
                 "outerRadius" : m * (zp + 2) / 2,
                 "innerRadius" : def.pinionBore,
@@ -115,7 +136,9 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                 "teeth" : zp,
                 "pressureAngle" : def.pressureAngle,
                 "backlash" : def.backlash,
-                "boreFlat" : def.pinionFlat
+                "boreFlat" : def.pinionFlat,
+                "hubLength" : def.pinionHubLength,
+                "hubRadius" : def.pinionHubRadius
             });
 
             // Clocking: after the tilt the pinion's own +X meridian points
@@ -192,11 +215,48 @@ function buildBlank(context is Context, id is Id, g is map)
         "endDepth" : g.height
     });
 
-    // Inner bore. Round: a revolved rectangle (edge ON the axis is fine
-    // for opRevolve; the profile must not CROSS it). With a D-flat: an
-    // extruded D-profile (major arc + chord), flat facing +X.
+    // Retention hub (pinion): a boss around the bore on the z = 0 face -
+    // after placement it faces the ring center, giving the shaft screw a
+    // washer seat and the D-bore extra engagement. It overlaps 1 mm into
+    // the body so the union has no coplanar seam.
+    if (g.hubLength > 0 * millimeter)
+    {
+        var hubSk = newSketchOnPlane(context, id + "hubProfile", {
+            "sketchPlane" : plane(
+                vector(0 * millimeter, 0 * millimeter, -g.hubLength),
+                vector(0, 0, 1),
+                vector(1, 0, 0))
+        });
+        skCircle(hubSk, "hubCircle", {
+            "center" : vector(0, 0) * millimeter,
+            "radius" : g.hubRadius
+        });
+        skSolve(hubSk);
+        opExtrude(context, id + "hubExtrude", {
+            "entities" : qSketchRegion(id + "hubProfile"),
+            "direction" : vector(0, 0, 1),
+            "endBound" : BoundingType.BLIND,
+            "endDepth" : g.hubLength + ov
+        });
+        opBoolean(context, id + "attachHub", {
+            "tools" : qUnion([
+                qCreatedBy(id + "extrude", EntityType.BODY),
+                qCreatedBy(id + "hubExtrude", EntityType.BODY)
+            ]),
+            "operationType" : BooleanOperationType.UNION
+        });
+        opDeleteBodies(context, id + "deleteHubSketch", {
+            "entities" : qCreatedBy(id + "hubProfile", EntityType.BODY)
+        });
+    }
+
+    // Inner bore, cut through body AND hub. Round: a revolved rectangle
+    // (edge ON the axis is fine for opRevolve; the profile must not CROSS
+    // it). With a D-flat: an extruded D-profile (major arc + chord), flat
+    // facing +X.
     if (Ri > 0 * millimeter)
     {
+        const zLo = -g.hubLength - ov;
         if (g.boreFlat >= Ri)
             throw regenError("Bore flat depth must be smaller than the bore radius.");
         if (g.boreFlat > 0 * millimeter)
@@ -205,7 +265,7 @@ function buildBlank(context is Context, id is Id, g is map)
             const y0 = sqrt(Ri * Ri - xF * xF);
             var dSk = newSketchOnPlane(context, id + "boreProfile", {
                 "sketchPlane" : plane(
-                    vector(0 * millimeter, 0 * millimeter, -ov),
+                    vector(0 * millimeter, 0 * millimeter, zLo),
                     vector(0, 0, 1),
                     vector(1, 0, 0))
             });
@@ -223,7 +283,7 @@ function buildBlank(context is Context, id is Id, g is map)
                 "entities" : qSketchRegion(id + "boreProfile"),
                 "direction" : vector(0, 0, 1),
                 "endBound" : BoundingType.BLIND,
-                "endDepth" : g.height + 2 * ov
+                "endDepth" : g.height + g.hubLength + 2 * ov
             });
         }
         else
@@ -232,7 +292,7 @@ function buildBlank(context is Context, id is Id, g is map)
                 "sketchPlane" : qCreatedBy(makeId("Front"), EntityType.FACE)
             });
             skLineSegment(boreSk, "axisEdge", {
-                "start" : vector(0 * millimeter, -ov),
+                "start" : vector(0 * millimeter, zLo),
                 "end"   : vector(0 * millimeter, g.height + ov)
             });
             skLineSegment(boreSk, "top", {
@@ -241,11 +301,11 @@ function buildBlank(context is Context, id is Id, g is map)
             });
             skLineSegment(boreSk, "wall", {
                 "start" : vector(Ri, g.height + ov),
-                "end"   : vector(Ri, -ov)
+                "end"   : vector(Ri, zLo)
             });
             skLineSegment(boreSk, "bottom", {
-                "start" : vector(Ri, -ov),
-                "end"   : vector(0 * millimeter, -ov)
+                "start" : vector(Ri, zLo),
+                "end"   : vector(0 * millimeter, zLo)
             });
             skSolve(boreSk);
             opRevolve(context, id + "boreCut", {
@@ -256,7 +316,11 @@ function buildBlank(context is Context, id is Id, g is map)
         }
         opBoolean(context, id + "subtractBore", {
             "tools" : qCreatedBy(id + "boreCut", EntityType.BODY),
-            "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
+            "targets" : qUnion([
+                qCreatedBy(id + "extrude", EntityType.BODY),
+                qCreatedBy(id + "hubExtrude", EntityType.BODY),
+                qCreatedBy(id + "attachHub", EntityType.BODY)
+            ]),
             "operationType" : BooleanOperationType.SUBTRACTION
         });
         opDeleteBodies(context, id + "deleteBoreSketch", {
@@ -290,7 +354,11 @@ function cutSlots(context is Context, id is Id, nSlots, pitchAngle)
             qCreatedBy(id + "slotCutter", EntityType.BODY),
             qCreatedBy(id + "slotPattern", EntityType.BODY)
         ]),
-        "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
+        "targets" : qUnion([
+            qCreatedBy(id + "extrude", EntityType.BODY),
+            qCreatedBy(id + "hubExtrude", EntityType.BODY),
+            qCreatedBy(id + "attachHub", EntityType.BODY)
+        ]),
         "operationType" : BooleanOperationType.SUBTRACTION
     });
     opDeleteBodies(context, id + "deleteSlotSketch", {
