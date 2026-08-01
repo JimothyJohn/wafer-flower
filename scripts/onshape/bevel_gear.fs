@@ -82,7 +82,7 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                 annotation { "Name" : "Bore flat depth", "Description" : "D-shaft flat: cut depth from the round bore wall. 0 = plain round bore. A 3 mm D-shaft typically wants 0.5 mm." }
                 isLength(def.pinionFlat, { (millimeter) : [0, 0.5, 10] } as LengthBoundSpec);
 
-                annotation { "Name" : "Hub length", "Description" : "Retention hub: a boss around the bore on the inner face (away from the motor) - washer seat for the shaft screw plus extra bore engagement. 0 = none." }
+                annotation { "Name" : "Hub length", "Description" : "Hub boss around the bore on the MOTOR side (outer radius face): spacer off the gearbox nose plus extra bore engagement. 0 = none." }
                 isLength(def.pinionHubLength, { (millimeter) : [0, 3, 100] } as LengthBoundSpec);
 
                 annotation { "Name" : "Hub radius", "Description" : "Must stay under the pinion pitch radius minus one module so it clears the ring's tooth tips - the guard reports the exact limit." }
@@ -215,15 +215,16 @@ function buildBlank(context is Context, id is Id, g is map)
         "endDepth" : g.height
     });
 
-    // Retention hub (pinion): a boss around the bore on the z = 0 face -
-    // after placement it faces the ring center, giving the shaft screw a
-    // washer seat and the D-bore extra engagement. It overlaps 1 mm into
-    // the body so the union has no coplanar seam.
+    // Retention hub (pinion): a boss around the bore on the z = height
+    // face - after placement that is the MOTOR side (outer radius), so it
+    // spaces the gear off the gearbox nose and extends the D-bore
+    // engagement toward the motor bearing. It starts 1 mm inside the body
+    // so the union has no coplanar seam.
     if (g.hubLength > 0 * millimeter)
     {
         var hubSk = newSketchOnPlane(context, id + "hubProfile", {
             "sketchPlane" : plane(
-                vector(0 * millimeter, 0 * millimeter, -g.hubLength),
+                vector(0 * millimeter, 0 * millimeter, g.height - ov),
                 vector(0, 0, 1),
                 vector(1, 0, 0))
         });
@@ -256,7 +257,7 @@ function buildBlank(context is Context, id is Id, g is map)
     // facing +X.
     if (Ri > 0 * millimeter)
     {
-        const zLo = -g.hubLength - ov;
+        const zHi = g.height + g.hubLength + ov;
         if (g.boreFlat >= Ri)
             throw regenError("Bore flat depth must be smaller than the bore radius.");
         if (g.boreFlat > 0 * millimeter)
@@ -265,7 +266,7 @@ function buildBlank(context is Context, id is Id, g is map)
             const y0 = sqrt(Ri * Ri - xF * xF);
             var dSk = newSketchOnPlane(context, id + "boreProfile", {
                 "sketchPlane" : plane(
-                    vector(0 * millimeter, 0 * millimeter, zLo),
+                    vector(0 * millimeter, 0 * millimeter, -ov),
                     vector(0, 0, 1),
                     vector(1, 0, 0))
             });
@@ -292,20 +293,20 @@ function buildBlank(context is Context, id is Id, g is map)
                 "sketchPlane" : qCreatedBy(makeId("Front"), EntityType.FACE)
             });
             skLineSegment(boreSk, "axisEdge", {
-                "start" : vector(0 * millimeter, zLo),
-                "end"   : vector(0 * millimeter, g.height + ov)
+                "start" : vector(0 * millimeter, -ov),
+                "end"   : vector(0 * millimeter, zHi)
             });
             skLineSegment(boreSk, "top", {
-                "start" : vector(0 * millimeter, g.height + ov),
-                "end"   : vector(Ri, g.height + ov)
+                "start" : vector(0 * millimeter, zHi),
+                "end"   : vector(Ri, zHi)
             });
             skLineSegment(boreSk, "wall", {
-                "start" : vector(Ri, g.height + ov),
-                "end"   : vector(Ri, zLo)
+                "start" : vector(Ri, zHi),
+                "end"   : vector(Ri, -ov)
             });
             skLineSegment(boreSk, "bottom", {
-                "start" : vector(Ri, zLo),
-                "end"   : vector(0 * millimeter, zLo)
+                "start" : vector(Ri, -ov),
+                "end"   : vector(0 * millimeter, -ov)
             });
             skSolve(boreSk);
             opRevolve(context, id + "boreCut", {
