@@ -86,8 +86,15 @@ PARAMS = dict(
                         # pinion, 0.6 halves the tooth.
     gear_drive = 'bevel45', # 'bevel45': external beveloid ring, big end
                         # at the wall, generated conjugate to a parallel-
-                        # axis pinion — see bevel_geom(). 'spur' is the
-                        # parked legacy drive (gearmotor_stl pins it).
+                        # axis pinion — see bevel_geom(). 'face': FACE
+                        # teeth on a flange top outside the band OD, spur
+                        # pinion on a radial axis (2026-07-31, ported from
+                        # the OnShape FS session) — see face_geom(). 'spur'
+                        # is the parked legacy drive (gearmotor_stl pins it).
+    gear_w   = 12.0,    # 'face': radial width of the tooth flange beyond
+                        # the band OD (the annulus the radial teeth span).
+    pin_bore = 3.2,     # 'face' pinion bore Ø: 3 mm D-shaft + print fit
+    pin_flat = 0.5,     # 'face' pinion D-flat depth from the bore wall
     gear_F   = 9.5,     # ring band face height — the visible 45-deg cone
                         # (9.5 face ~ the 12.1 tooth depth: the mixer look).
                         # HARD CEILING: must stay under the neighbour-wafer
@@ -130,6 +137,16 @@ class Cfg:
     def __init__(self, **kw):
         p = dict(PARAMS); p.update(kw); self.p = p
         for k, v in p.items(): setattr(self, k, v)
+        # 'face' drive defaults from the OnShape FS session (2026-07-31):
+        # fine module -> small pinion (right-angle-motor scale), PA 25
+        # (undercut-free at 13T), FS backlash, flange sized to the tooth
+        # depth. Applied only when the knob still sits at its bevel-era
+        # default so explicit overrides win.
+        if self.gear_drive == 'face':
+            for k, v in dict(gear_m=2.0, pin_T=13, gear_pa=25.0,
+                             gear_bl=0.15, gear_F=6.5).items():
+                if k not in kw:
+                    setattr(self, k, v)
         self.r       = self.wafer_D / 2.0
         self.sector  = 2 * math.pi / self.N
         self.half    = self.sector / 2.0
@@ -155,17 +172,31 @@ class Cfg:
         # the band so the root cone clears the band OD (and the dovetail
         # zone) with a short web between them.
         self.g_bev   = (self.gear_drive == 'bevel45')
+        self.g_face  = (self.gear_drive == 'face')
         if self.g_bev:
             target = self.Ro + 1.25 * self.gear_m + 2.0
             self.tps = max(6, int(math.ceil(2 * target / self.gear_m / self.N)))
+        elif self.g_face:
+            # tooth flange: annulus just outside the band OD (1 mm overlap
+            # into the band so the union is never coplanar); the reference
+            # radius is the flange middle, where the constant rack profile
+            # is exactly conjugate to the spur pinion
+            self.gf_ri  = self.Ro - 1.0
+            self.gf_ro  = self.Ro + self.gear_w
+            self.g_ref  = (self.gf_ri + self.gf_ro) / 2.0
+            self.tps = max(6, round(2 * self.g_ref / self.gear_m / self.N))
         else:
             self.tps = max(6, round(2 * (self.Ri - 5.0) / self.gear_m / self.N))
         self.teeth   = self.tps * self.N
         # FLUSH MODULE: tooth count is quantised in steps of N, so the
         # module (not the count) is retuned to land the front root circle
         # 1 mm inside the band OD — teeth rise straight off the band wall.
+        # 'face': same idea, retuned so the linear pitch at the flange
+        # middle is exactly pi*m.
         if self.g_bev:
             self.gear_m = (self.Ro - 1.0) / (self.teeth / 2.0 - 1.25)
+        elif self.g_face:
+            self.gear_m = 2.0 * self.g_ref / self.teeth
         self.g_pitch = self.teeth * self.gear_m / 2.0
         self.g_tip   = (self.g_pitch + self.gear_m if self.g_bev
                         else self.g_pitch - self.gear_m)   # external: outward
@@ -178,7 +209,7 @@ class Cfg:
         # gear_F tall; the slab inner boundary is plain Ri.
         self.g_kbig  = (self.g_pitch + self.gear_F) / self.g_pitch
         self.g_web_i = self.Ro - 2.0                   # web overlap into band
-        self.g_fi    = self.Ri if self.g_bev else self.g_root
+        self.g_fi    = self.Ri if (self.g_bev or self.g_face) else self.g_root
         # CROSSED-AXIS drive numbers (2026-07-26, Nick: shaft points DOWN —
         # radial at 12 o'clock — and the wafers move forward to clear the
         # pinion). Rolling at the front pitch circle: pinion pitch radius
@@ -197,6 +228,25 @@ class Cfg:
                               + self.pin_rho * (1 + 2.0 / self.pin_T))
             tip_big = (self.pin_x1 - self.pin_apex) * (1 + 2.0 / self.pin_T)
             self.pin_bulge = self.pin_zax + tip_big          # frontmost z
+            gap0 = ((self.rise + self.landOff + self.tmin)
+                    - (self.wafer_T / 2.0 + self.r * math.sin(self.th)))
+            if self.stand < 0:
+                self.stand = max(0.0, self.pin_bulge + 3.0 - gap0)
+        elif self.g_face:
+            # FACE drive (ported from the OnShape FS session): the flange
+            # top is the TIP plane, pitch plane one module down, spur
+            # pinion axis RADIAL at 12 o'clock, tangent to the pitch plane
+            # (the 0.25 m root clearance falls out). The pinion tip circle
+            # is the frontmost thing — it sets the derived wafer standoff
+            # exactly like the crossed pinion's bulge did.
+            self.pin_ratio = self.teeth / self.pin_T
+            self.fp_rp   = self.pin_T * self.gear_m / 2.0
+            self.fp_tip  = self.fp_rp + self.gear_m
+            self.f_zpitch = self.gear_F - self.gear_m       # above the wall face
+            self.pin_zax  = self.f_zpitch + self.fp_rp
+            self.pin_x0   = self.g_ref - self.pin_face / 2.0
+            self.pin_x1   = self.pin_x0 + self.pin_face
+            self.pin_bulge = self.pin_zax + self.fp_tip
             gap0 = ((self.rise + self.landOff + self.tmin)
                     - (self.wafer_T / 2.0 + self.r * math.sin(self.th)))
             if self.stand < 0:
@@ -236,9 +286,11 @@ def gear_F_ceiling(cf, na=120):
     M, c, n = cf.wafer_frame(1)
     cn = sum(ci * ni for ci, ni in zip(c, n))
     best = float('inf')
+    rads = ((cf.gf_ri, cf.g_ref, cf.gf_ro, cf.gf_ro + 0.5) if cf.g_face
+            else (cf.g_web_i, cf.g_root, cf.g_tip, cf.g_tip * 1.05))
     for i in range(na + 1):
         a = cf.half * i / na
-        for rr in (cf.g_web_i, cf.g_root, cf.g_tip, cf.g_tip * 1.05):
+        for rr in rads:
             x, y = rr * math.cos(a), rr * math.sin(a)
             d = (x - c[0], y - c[1], -c[2])
             ax = sum(di * ni for di, ni in zip(d, n))
@@ -482,6 +534,144 @@ def gear_teeth_bevel45(cf, z0=0.0, steps=None, span_pitches=4.0):
     return teeth.translate([0.0, 0.0, z0])
 
 
+def face_geom(cf):
+    """Shared numbers for the FACE drive (2026-07-31, ported from the
+    OnShape FS session): radial rack-slot teeth cut into the tooth
+    flange's TOP face (the tip plane), spur pinion on a RADIAL axis at
+    12 o'clock — the motor lies flat against the wall, shaft pointing at
+    the halo centre. Mesh frame: wall face z=0, flange 0..gear_F, contact
+    meridian +x. The constant-profile rack slot is exactly conjugate to
+    the involute pinion at the flange middle g_ref and approximate off it
+    (linear pitch grows with radius); the flange is kept narrow so the
+    mismatch stays under the runner's backlash — the sweep gate is the
+    arbiter. hub_len/hub_r: the pinion's MOTOR-side hub (spacer off the
+    gearbox nose + bore engagement; must stay under rp - m - 0.5 or it
+    sweeps into the ring's tooth tips — asserted here)."""
+    fg = dict(F=cf.gear_F, ratio=cf.pin_ratio, rp=cf.fp_rp, tip=cf.fp_tip,
+              zax=cf.pin_zax, x0=cf.pin_x0, x1=cf.pin_x1,
+              ri=cf.gf_ri, ro=cf.gf_ro, ref=cf.g_ref,
+              zpitch=cf.f_zpitch, depth=2.25 * cf.gear_m,
+              hub_len=6.0, hub_r=8.0)
+    assert fg['hub_r'] < cf.fp_rp - cf.gear_m - 0.5, \
+        "pinion hub sweeps into the ring tooth tips"
+    return fg
+
+
+def face_slot_profile(cf, over=1.0):
+    """One rack tooth-space cross-section in the (tangential, z) plane:
+    straight flanks at the pressure angle, 0.38 m root-fillet arcs (ISO
+    rack tip radius, clamped to the root land), open top. The slot is the
+    NOMINAL space — backlash lives on the pinion (repo convention: the
+    runner is gear_bl thinner). z measured from the wall face; the flange
+    top gear_F is the tip plane, pitch plane one module down."""
+    m, F = cf.gear_m, cf.gear_F
+    pa = math.radians(cf.gear_pa)
+    y_root = F - 2.25 * m
+    hwP = math.pi * m / 4.0
+    hwRoot = hwP - 1.25 * m * math.tan(pa)
+    hwTop = hwP + (m + over) * math.tan(pa)
+    assert hwRoot > 0, "pressure angle closes the rack slot before the root"
+    u = (-1.0, 0.0)                                  # along the root land
+    v = (math.sin(pa), math.cos(pa))                 # up the flank
+    corner = (hwRoot, y_root)
+    phiC = math.acos(u[0] * v[0] + u[1] * v[1])
+    rho = 0.38 * m
+    t = rho / math.tan(phiC / 2.0)
+    if t > 0.9 * hwRoot:
+        rho *= 0.9 * hwRoot / t
+        t = 0.9 * hwRoot
+    right = []
+    if rho > 0.02:
+        Tc = (corner[0] - t, corner[1])
+        Tf = (corner[0] + v[0] * t, corner[1] + v[1] * t)
+        bn = math.hypot(u[0] + v[0], u[1] + v[1])
+        C = (corner[0] + (u[0] + v[0]) / bn * rho / math.sin(phiC / 2),
+             corner[1] + (u[1] + v[1]) / bn * rho / math.sin(phiC / 2))
+        a0 = math.atan2(Tc[1] - C[1], Tc[0] - C[0])
+        a1 = math.atan2(Tf[1] - C[1], Tf[0] - C[0])
+        sweep = a1 - a0
+        while sweep > math.pi:  sweep -= 2 * math.pi
+        while sweep < -math.pi: sweep += 2 * math.pi
+        right.append(Tc)
+        for i in range(1, 5):
+            aa = a0 + sweep * i / 5
+            right.append((C[0] + rho * math.cos(aa), C[1] + rho * math.sin(aa)))
+        right.append(Tf)
+    else:
+        right.append(corner)
+    right.append((hwTop, F + over))
+    return [(-x, y) for x, y in reversed(right)] + right
+
+
+def face_slot_cutter(cf, over=1.0):
+    """The radial slot channel at meridian 0 in the mesh frame: the
+    profile extruded across the flange annulus with overshoot at both
+    edges. Profile axes are (tangential, z); the extrusion runs radially,
+    so the (u, v, w) prism permutes to (w, u, v)."""
+    pts = face_slot_profile(cf, over)
+    if signed_area(pts) < 0:
+        pts = pts[::-1]
+    ch = Manifold.extrude(CrossSection([pts]),
+                          (cf.gf_ro - cf.gf_ri) + 2 * over)
+    return ch.transform([[0.0, 0.0, 1.0, cf.gf_ri - over],
+                         [1.0, 0.0, 0.0, 0.0],
+                         [0.0, 1.0, 0.0, 0.0]])
+
+
+_FACE_CACHE = {}
+
+
+def face_teeth_flange(cf, z0=0.0):
+    """The face-drive tooth flange WITH its slots, sector-clipped with the
+    usual joint back-off, in the mesh frame z 0..gear_F. Slots pattern
+    k*pitch from the joint face — joints land mid-slot (halo tiling rule;
+    tps+1 cutters, a half-slot at each joint). The cutters' inner
+    overshoot notches the band OD wall — the roots blending into the
+    band, same convention as the bevel notch."""
+    key = (cf.teeth, cf.tps, cf.gear_m, cf.gear_F, cf.gear_pa, cf.half,
+           cf.gf_ri, cf.gf_ro)
+    if key in _FACE_CACHE:
+        return _FACE_CACHE[key].translate([0.0, 0.0, z0])
+    h = cf.half - 1e-5          # joint-face setback, see band_poly
+    poly = ([face_pt(-h, cf.gf_ri, 0.0)]
+            + arc(cf.gf_ro, -h, h, 160)
+            + [face_pt(h, cf.gf_ri, 0.0)]
+            + arc(cf.gf_ri, h, -h, 160)[1:-1])
+    fl = prism(poly, 0.0, cf.gear_F)
+    cut = face_slot_cutter(cf)
+    pitch = cf.sector / cf.tps
+    fl = fl - union_all([
+        cut.rotate([0.0, 0.0, math.degrees(-cf.half + k * pitch)])
+        for k in range(cf.tps + 1)])
+    _FACE_CACHE[key] = fl
+    return fl.translate([0.0, 0.0, z0])
+
+
+def face_pinion(cf, backlash=None, over=0.0):
+    """The face-drive spur pinion in its LOCAL frame: axis +z, involute
+    prism z 0..pin_face. Local z=0 maps to the INNER radial end (global
+    x = pin_x0); the motor-side hub goes on the z = pin_face end."""
+    pts, g = pinion_profile(cf, cf.pin_T, backlash=backlash)
+    if signed_area(pts) < 0:
+        pts = pts[::-1]
+    return prism(pts, -over, cf.pin_face + 2 * over), g
+
+
+def face_pinion_at(cf, pin, d, dz=0.0):
+    """Place the local pinion into the mesh frame at ring roll d: spin
+    +ratio*d about its own axis (matched surface speeds at the pitch
+    plane; the sweep gate is the arbiter of the sign), phase a half pitch
+    when tps is odd (the contact meridian then carries a ring TOOTH, not
+    a slot), then local +z onto global +x (the RADIAL axis; local +x
+    lands on global -z, so the phase-0 tooth points DOWN into the ring)
+    and up to the axis height."""
+    fg = face_geom(cf)
+    ph = 0.0 if cf.tps % 2 == 0 else math.pi / cf.pin_T
+    return (pin.rotate([0.0, 0.0, math.degrees(d * fg['ratio'] + ph)])
+               .rotate([0.0, 90.0, 0.0])
+               .translate([fg['x0'], 0.0, fg['zax'] + dz]))
+
+
 def pocket_poly(cf, na=120):
     """Adhesive pocket: the band, inset all round.
 
@@ -599,6 +789,13 @@ def build_segment(cf):
         # cut surface meets the 45-deg tooth lean at a shallow angle and can
         # strand a tip crumb right at the disc wall (masquerades as wrong
         # genus); the +0.2 depth / +0.5 radius swallows it
+        seg = seg + (t - wafer_cut(cf, 1, -cf.clrOff - 0.2, cf.tall, extra_r=0.5))
+    elif cf.g_face:
+        # face drive: the slotted tooth flange unions on outside the band
+        # OD (1 mm radial overlap — never coplanar). Same oversized
+        # clearance-disc protection as the bevel teeth; the gate in main()
+        # demands the cut removes zero tooth material.
+        t = face_teeth_flange(cf, cf.z_bot)
         seg = seg + (t - wafer_cut(cf, 1, -cf.clrOff - 0.2, cf.tall, extra_r=0.5))
     else:
         seg = seg + gear_teeth(cf, cf.z_bot)
@@ -816,6 +1013,18 @@ def main():
               f"{bg['zax']:.1f} above the wall face, bulge {bg['bulge']:.1f} "
               f"— wafer standoff +{cf.stand:.1f} (derived)")
 
+    elif cf.g_face:
+        fg = face_geom(cf)
+        print(f"  gear    FACE drive (FS-session port): {cf.tps}T/seg × {cf.N} "
+              f"= {cf.teeth}T radial rack teeth on the flange top "
+              f"(r{cf.gf_ri:.0f}–{cf.gf_ro:.0f}, ref r{cf.g_ref:.1f}), "
+              f"module {cf.gear_m:.3f}, PA {cf.gear_pa:.0f}°, flange "
+              f"{cf.gear_F} tall (slot depth {fg['depth']:.2f}); pinion "
+              f"{cf.pin_T}T spur on a RADIAL axis (motor flat on the "
+              f"wall), ratio {cf.pin_ratio:.1f}:1, axis {fg['zax']:.1f} "
+              f"above the wall face, bore Ø{cf.pin_bore} +{cf.pin_flat} "
+              f"flat, tip bulge {cf.pin_bulge:.1f} — wafer standoff "
+              f"+{cf.stand:.1f} (derived)")
     else:
         print(f"  gear    {cf.tps}T/seg × {cf.N} = {cf.teeth}T  module {cf.gear_m}  "
               f"pitch Ø{2*cf.g_pitch:.0f}  tip r{cf.g_tip:.1f}  root r{cf.g_root:.1f}")
@@ -848,9 +1057,11 @@ def main():
         print(f"{'':24}centre distance {mesh['centre']:.0f} mm, worst overlap over a full "
               f"tooth pitch {mesh['worst_overlap']:.5f} mm3\n")
     else:
+        why = ('generated teeth — scallop only' if cf.g_bev
+               else 'rack-slot conjugacy exact at the flange middle')
         print(f"{'':24}pinion axis {mesh['axis']}, {mesh['zax']:.1f} above "
               f"the wall face; worst overlap over a full tooth pitch "
-              f"{mesh['worst_overlap']:.5f} mm3 (generated teeth — scallop only)\n")
+              f"{mesh['worst_overlap']:.5f} mm3 ({why})\n")
 
     # ---- DXF sketch profiles for OnShape ----
     dxf = os.path.join(a.out, 'dxf'); os.makedirs(dxf, exist_ok=True)
@@ -870,13 +1081,20 @@ def main():
                          'GENERATED teeth have no 2D sketch — this is the '
                          'cutter pinion profile; sweep it per '
                          'segment_stl.gear_teeth_bevel45'))
+    elif cf.g_face:
+        profiles.append(('05_face_slot.dxf', [face_slot_profile(cf)],
+                         'radial rack-slot section (tangential, z) — '
+                         'extrude across the flange annulus, pattern '
+                         'k*pitch from the joint'))
     else:
         profiles.append(('05_ring_teeth.dxf',
                          [[(r * math.cos(t), r * math.sin(t))
                            for r, t in tooth_profile(cf)]],
                          f'{cf.tps}T of the {cf.teeth}T internal ring'))
-    profiles.append(('06_pinion.dxf', [pinion_profile(cf, cf.tps)[0]],
-                     f'{cf.tps}T pinion, extrude {cf.tmin} mm'))
+    pinT_dxf = cf.pin_T if cf.g_face else cf.tps
+    profiles.append(('06_pinion.dxf', [pinion_profile(cf, pinT_dxf)[0]],
+                     f'{pinT_dxf}T pinion, extrude '
+                     f'{cf.pin_face if cf.g_face else cf.tmin} mm'))
     print("  DXF sketch profiles for OnShape:")
     for fn, loops, note in profiles:
         n = write_dxf(os.path.join(dxf, fn), loops)
@@ -900,9 +1118,10 @@ def main():
     # REGRESSION GATE: the neighbour-wafer clearance cut must remove ZERO
     # tooth material — a too-tall band gets its leading teeth planed and
     # sheds slivers at the disc rim. Every tooth of the ring is identical.
-    if cf.g_bev:
+    if cf.g_bev or cf.g_face:
         ceil_F = gear_F_ceiling(cf)
-        t = gear_teeth_bevel45(cf, cf.z_bot)
+        t = (gear_teeth_bevel45(cf, cf.z_bot) if cf.g_bev
+             else face_teeth_flange(cf, cf.z_bot))
         trimmed = (t ^ wafer_cut(cf, 1, -cf.clrOff - 0.2, cf.tall,
                                  extra_r=0.5)).volume()
         if trimmed > 0.001:
@@ -963,6 +1182,20 @@ def build_pinion(cf, T=None, face=None, bore=4.2, flat=0.5, backlash=None):
                                   bg['hub_r'], 96).translate(
             [0.0, 0.0, bg['face'] - 0.1])
         z_lo = 0.0
+    elif cf.g_face and (T == cf.tps or T == cf.pin_T):
+        # face-drive spur pinion + MOTOR-side hub (the outer radial end
+        # after placement: spacer off the gearbox nose, extra D-bore
+        # engagement next to the motor bearing — FS session's call).
+        # Bore/flat come from pin_bore/pin_flat (3 mm D-shaft class),
+        # overriding the 22PG-era signature defaults.
+        p, g = face_pinion(cf, backlash=backlash)
+        fg = face_geom(cf)
+        face = cf.pin_face + fg['hub_len']
+        p = p + Manifold.cylinder(fg['hub_len'] + 0.1, fg['hub_r'],
+                                  fg['hub_r'], 96).translate(
+            [0.0, 0.0, cf.pin_face - 0.1])
+        z_lo = 0.0
+        bore, flat = cf.pin_bore, cf.pin_flat
     else:
         face = face or cf.tmin
         pts, g = pinion_profile(cf, T, backlash=backlash)
@@ -989,6 +1222,22 @@ def check_mesh(cf, T=None, steps=24, backlash=None):
     T = T or cf.tps
     F = cf.tmin
     ratio = cf.teeth / T
+    if cf.g_face:
+        # FACE pair: ring rolls d about the halo axis, the radial-axis
+        # spur pinion spins +ratio*d about +x. The flange body under the
+        # slots rides along, so pinion tips clearing the root plane
+        # (0.25 m by construction) is part of what the sweep measures.
+        ring = face_teeth_flange(cf, 0.0)
+        pin, g = face_pinion(cf, backlash=backlash)
+        fg = face_geom(cf)
+        worst = 0.0
+        for i in range(steps):
+            d = (2 * math.pi / cf.teeth) * i / steps
+            r2 = ring.rotate([0, 0, math.degrees(d)])
+            p2 = face_pinion_at(cf, pin, d)
+            worst = max(worst, (r2 ^ p2).volume())
+        return dict(ratio=cf.pin_ratio, worst_overlap=worst,
+                    axis='radial (face)', zax=fg['zax'], **g)
     if not cf.g_bev:
         ring = gear_teeth(cf, 0.0) + prism(
             arc(cf.g_root + 1.0, -cf.half, cf.half, 120) +
