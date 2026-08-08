@@ -549,7 +549,7 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 - scripts/onshape/face_gear.fs — OnShape FeatureScript, REBUILT
   incrementally with Nick verifying every paste (2026-07-30..31; the
   one-shot wafer_halo_beveloid.fs + its README are deleted — history at
-  69bbd86). ONE feature, "Arc Segment": FACE-GEAR ring sector — radial
+  69bbd86). TWO features. "Arc Segment": FACE-GEAR ring sector — radial
   rack teeth cut into the front face (tooth depth along Height, tooth
   lines perpendicular to the arc), ISO 0.38 m root fillets, joints
   mid-slot, module DERIVED from the band middle — plus an optional
@@ -560,7 +560,20 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   intersecting-axes (Nick's pick, made the ring a crown at 8:1/90°) →
   parallel-axis spur → FACE GEAR ("teeth extend with the height");
   ancestors in git history: ISO bevel/crown ed600bf, parallel spur
-  5623c8c. PASTE-RULE LEDGER in the file header, learned from real
+  5623c8c. "Motor Envelope" (2026-08-07, Nick: "replicates the outer
+  dimensions of the motor so I can design the housing around it"): a
+  solid stand-in for the gearmotor, ONE revolved silhouette (no
+  booleans, so no step face is a boolean seam) + a D-flat prism on the
+  shaft. Datum is the gearbox NOSE FACE at z=0 — can up +Z, shaft
+  down −Z, no placement params (use a Transform/mate). Clearance
+  inflates every radius and the can's back so the body subtracts
+  straight into a pocket. Defaults MIRROR bracket_stl.py's BRK block
+  (24 can / 22 nose × 20 / 65 overall incl. nose / Ø4 shaft × 0.5
+  flat) and inherit its caveat: CATALOG-TYPICAL, NOT MEASURED — and
+  SHAFT LENGTH (12) is a pure placeholder, in no repo file and never
+  published. Point-dedupe before skSolve is load-bearing: nose==body
+  and noseL==0 are both legal inputs that collapse a step to a
+  zero-length segment. PASTE-RULE LEDGER in the file header, learned from real
   Feature Studio errors — ASCII-only annotation strings,
   reportFeatureInfo (and no popup at all), opSphere not fSphere, a
   parameter group must IMMEDIATELY follow its driving parameter. Do not

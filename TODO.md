@@ -30,3 +30,11 @@ the wafer field from the front.)
   printing the shell. Also: it's a 24 V-class motor with an integrated
   driver — what's the supply plan (24 V brick + PWM pot, or a
   microcontroller)? USB 5 V won't run it.
+- 2026-08-07 22PG SHAFT LENGTH is unknown — not in any repo file and never
+  published in the catalog. The new "Motor Envelope" FS feature defaults it
+  to 12 mm as an outright placeholder. Measure the exposed length from the
+  nose face (and confirm the flat's depth + how far along it runs) before
+  designing the housing around it. Two consumers now carry the same
+  unmeasured 22PG block — scripts/bracket_stl.py BRK and
+  scripts/onshape/face_gear.fs Motor Envelope — so measured dims need
+  updating in BOTH.
