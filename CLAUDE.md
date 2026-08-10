@@ -436,6 +436,26 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   on the same plane leave a folded seam (dup mesh edges) — overlap cutters
   instead. Homebrew python is PEP-668-managed; manifold3d lives in a venv,
   not brew.
+- scripts/coupon_stl.py — SMALL-BATCH TEST COUPONS (2026-08-09, Nick:
+  "test in small batch prints before doing the whole thing"): every
+  coupon is the REAL build_segment() solid ∩ a local clipping box, never
+  a re-model. Emits to stl/coupons/: dovetail male (grip + full tail),
+  sockets at 0.15/0.25/0.35 clearance (edge NOTCHES = ascending-
+  clearance index, 1 = tightest; the T2 "tune via coupon" batch), a
+  ~12° gear-sector of the toothed flange + the pinion (N20 D-bore), a
+  keyhole bore block (Ø6.2 pin fit), and two view-only fitchecks.
+  Default gear_drive='face' (the live N20 path — NOT the repo's bevel45
+  default); --gear_drive bevel45 swaps the gear coupon to the crossed
+  pair. Clearance variants come from a mini-model (band prism − socket
+  cutter) gated volume-identical to the real segment at the shipping
+  clearance; only geometry the shipped part doesn't have is ever
+  re-modeled. Gates (exit nonzero): mated-pair 0, insertion sweep
+  sliding the male DOWN in z (the socket is blind above — a +z sweep
+  reads ~56 mm³ of tail-vs-roof by design), clearance monotonicity,
+  pinion-vs-sector sweep rolling ring AND pinion together (spinning
+  only the pinion reads ~109 mm³ of phase mismatch). In the CI cad job.
+  Sliced PLA @10% (H2S): whole batch ~23 g / ~1h51 — dovetail pieces
+  2.4–2.7 g/14 min each, sector 6.5 g, pinion 3.1 g, keyhole 3.7 g.
 - scripts/printed_hardware_stl.py — printable ISO metric fasteners
   (2026-07-24): M5x0.8 and M6x1.0 knob-head screws + hex nuts, true 60°
   single-start threads via a radius-modulated cross-section swept with

@@ -43,6 +43,7 @@ jobs:
           .ci-venv/bin/python scripts/cure_jig_stl.py -o /tmp/stl-ci
           .ci-venv/bin/python scripts/bracket_stl.py -o /tmp/stl-ci
           .ci-venv/bin/python scripts/printed_hardware_stl.py -o /tmp/stl-ci
+          .ci-venv/bin/python scripts/coupon_stl.py -o /tmp/stl-ci/coupons
         # gearmotor_stl.py dropped 2026-07-24: the drive train is parked and
         # that script pins the legacy spur ring (see its header)
       - name: Viewer configuration gates + docs/models staleness check
