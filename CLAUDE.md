@@ -411,7 +411,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   MOTOR (2026-07-27, Nick's pick, replaces the Pololu #1596): 22PG-2430BL
   720:1 brushless planetary with INTEGRATED driver (PWM + direction +
   9 PPR FG), 24 V class — NOT USB 5 V. BRK params mot_D 24 / nose_D 22 /
-  nose_L 20 / mot_L 65 / Ø4 D-shaft (pinion bore 4.2 + 0.5 flat) are
+  nose_L 20 / mot_L 65 / Ø4 D-shaft are (PINION BORE RETIRED 2026-08-09,
+  Nick: the pinion shaft mount is ALWAYS the N20 3 mm D-shaft —
+  build_pinion resolves pin_bore 3.2 / pin_flat 0.5 in EVERY drive mode;
+  the 22PG's 4.2 bore is gone, which orphans this shell's Ø4 shaft)
   CATALOG-TYPICAL, NOT MEASURED (the RobotShop datasheet PDF is
   CDN-blocked; siblings 19:1@630 rpm and 1370:1@8 rpm interpolate 720:1
   to ~16 rpm no-load → ~3 rpm ring, PWM to ~2) — MEASURE the purchased

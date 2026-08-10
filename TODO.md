@@ -30,3 +30,12 @@ the wafer field from the front.)
   printing the shell. Also: it's a 24 V-class motor with an integrated
   driver — what's the supply plan (24 V brick + PWM pot, or a
   microcontroller)? USB 5 V won't run it.
+  (2026-08-09: likely OBE — Nick is now planning an N20; pinion bore is
+  N20 3 mm D-flat in every mode as of this date.)
+
+- 2026-08-09 N20 direct-slide drive: which N20 exactly (gear ratio +
+  voltage, e.g. "6V 298:1 100rpm")? The no-bearing feasibility math
+  assumed a 6V 298:1-class unit (stall 3–4 kg·cm, ≤2 kg·cm gearbox
+  limit); the answer flips from "comfortable" to "marginal" if it's a
+  low-ratio (fast) wind. Also: OK to put UHMW/PTFE tape on the slide
+  pads, or must it be bare printed plastic?
