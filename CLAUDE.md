@@ -443,7 +443,13 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   sockets at 0.15/0.25/0.35 clearance (edge NOTCHES = ascending-
   clearance index, 1 = tightest; the T2 "tune via coupon" batch), a
   ~12° gear-sector of the toothed flange + the pinion (N20 D-bore), a
-  keyhole bore block (Ø6.2 pin fit), and two view-only fitchecks.
+  keyhole bore block (Ø6.2 pin fit), a SADDLE-SLIDE pair (2026-08-09,
+  wheel-less drive study: 14° of the ring's outer-groove arc from
+  segment 7 — the 270±7° window clears its keyhole and dovetails —
+  vs the same arc of the REAL build_foot saddle tongue via a _Foot
+  shim, because Brk() needs bevel_geom which reads the bevel-only
+  pin_apex; gates: 0.05 standoff, settle-catch, ±3° slide sweep,
+  ±0.15 float / ±0.35 jam), and view-only fitchecks.
   Default gear_drive='face' (the live N20 path — NOT the repo's bevel45
   default); --gear_drive bevel45 swaps the gear coupon to the crossed
   pair. Clearance variants come from a mini-model (band prism − socket
@@ -454,8 +460,9 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   reads ~56 mm³ of tail-vs-roof by design), clearance monotonicity,
   pinion-vs-sector sweep rolling ring AND pinion together (spinning
   only the pinion reads ~109 mm³ of phase mismatch). In the CI cad job.
-  Sliced PLA @10% (H2S): whole batch ~23 g / ~1h51 — dovetail pieces
-  2.4–2.7 g/14 min each, sector 6.5 g, pinion 3.1 g, keyhole 3.7 g.
+  Sliced PLA @10% (H2S): whole batch ~43 g / ~2h48 — dovetail pieces
+  2.4–2.7 g/14 min each, sector 6.5 g, pinion 3.1 g, keyhole 3.7 g,
+  saddle ring arc 7.0 g/22 min, saddle tongue 13.0 g/34 min.
 - scripts/printed_hardware_stl.py — printable ISO metric fasteners
   (2026-07-24): M5x0.8 and M6x1.0 knob-head screws + hex nuts, true 60°
   single-start threads via a radius-modulated cross-section swept with

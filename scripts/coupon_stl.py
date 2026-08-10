@@ -206,6 +206,61 @@ def main():
             ('pinion.stl', [pin], f"{g['T']}T, N20 O{cf.pin_bore} D-bore"),
             ('fitcheck_gear.stl', [sector_p, pin_fit], 'nominal mesh, view only')]
 
+    # ---- saddle slide: ring outer-groove arc vs the static saddle tongue
+    # (2026-08-09, wheel-less drive study: the ring RESTS in the bottom
+    # saddle and SLIDES as the motor turns it — this pair is the bench
+    # test for that interface, incl. trying slick tape on the tongue) ----
+    if cf.ogrv_w > 0:
+        from bracket_stl import BRK, build_foot
+
+        class _Foot:
+            """Brk() needs bevel_geom (bevel-only: reads pin_apex); mirror
+            just the saddle-relevant derived attrs so the REAL build_foot
+            runs under any drive mode. Keep in step with Brk.__init__."""
+            def __init__(self, cf):
+                for k, v in BRK.items():
+                    setattr(self, k, v)
+                self.cf = cf
+                self.o_floor = cf.Ro - cf.ogrv_d
+                self.deck_z = cf.z_bot - 0.8
+                self.wall_z = cf.z_bot - self.wall_gap
+
+        b = _Foot(cf)
+        foot = build_foot(b)
+        half_sp = 7.0                       # 14 deg total, inside arc_span 52
+        wz0 = cf.z_bot + max(8.0, cf.gear_F + 1.0)   # above teeth + inner grv
+        wz1 = cf.z_bot + cf.ogrv_z0 + cf.ogrv_w + 4.0
+        rw = wedge(cf, cf.Ro - 14.0, cf.Ro + 2.0, half_sp, wz0, wz1)
+        sw = wedge(cf, cf.Ro - 16.0, 315.0, half_sp, b.wall_z - 1.0, wz1)
+        # segment 7 spans 260-300 deg: the 270+-7 window clears its keyhole
+        # (280 deg) and both dovetails by >1 deg
+        ring_arc = rotated(seg, 7, cf) ^ rw.rotate([0.0, 0.0, 270.0])
+        saddle_arc = foot ^ sw.rotate([0.0, 0.0, 270.0])
+        gate((ring_arc ^ saddle_arc).volume() < 0.02, 'saddle nominal standoff',
+             f"{(ring_arc ^ saddle_arc).volume():.5f} mm3 at the 0.05 datum")
+        catch = (ring_arc.translate([0.0, -0.35, 0.0]) ^ saddle_arc).volume()
+        gate(catch > 0.1, 'saddle catches settled ring', f"{catch:.2f} mm3 at -0.35")
+        worst = max((ring_arc.rotate([0.0, 0.0, d]) ^ saddle_arc).volume()
+                    for d in (-3.0, -1.5, 1.5, 3.0))
+        gate(worst < 0.02, 'saddle slide sweep +-3 deg', f"worst {worst:.5f} mm3")
+        fl = max((ring_arc.translate([0.0, 0.0, t]) ^ saddle_arc).volume()
+                 for t in (-0.15, 0.15))
+        jam = min((ring_arc.translate([0.0, 0.0, t]) ^ saddle_arc).volume()
+                  for t in (-0.35, 0.35))
+        gate(fl < 0.02 and jam > 0.1, 'saddle axial float/jam',
+             f"free +-0.15 ({fl:.5f}), jams +-0.35 ({jam:.2f} mm3)")
+        r_p = (ring_arc.rotate([0.0, 0.0, 90.0])
+               .translate([-(cf.Ro - 6.0), 0.0, -wz0]))
+        s_p = (saddle_arc.rotate([0.0, 0.0, 90.0])
+               .translate([-(cf.Ro - 6.0), 0.0, -b.wall_z]))
+        s_fit = (saddle_arc.rotate([0.0, 0.0, 90.0])
+                 .translate([-(cf.Ro - 6.0), 0.0, -wz0]))
+        out += [('saddle_ring_arc.stl', [r_p],
+                 'ring outer-groove arc, print as-is'),
+                ('saddle_tongue.stl', [s_p],
+                 f"{2 * half_sp:.0f} deg of the static saddle, wall-face down"),
+                ('fitcheck_saddle.stl', [r_p, s_fit], 'ring in saddle, view only')]
+
     # ---- keyhole bore block: real wall section, O6.2 pin slide fit ----
     if cf.hole_D > 0:
         z0 = cf.z1 - 3.0
