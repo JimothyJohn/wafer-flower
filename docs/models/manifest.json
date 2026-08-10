@@ -120,7 +120,7 @@
    "name": "drive_pinion",
    "group": "bracket",
    "color": "#C2497B",
-   "volume_cm3": 2.205
+   "volume_cm3": 2.384
   },
   {
    "file": "my_frame_segment.stl",

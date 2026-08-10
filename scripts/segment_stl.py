@@ -93,8 +93,8 @@ PARAMS = dict(
                         # is the parked legacy drive (gearmotor_stl pins it).
     gear_w   = 12.0,    # 'face': radial width of the tooth flange beyond
                         # the band OD (the annulus the radial teeth span).
-    pin_bore = 3.2,     # 'face' pinion bore Ø: 3 mm D-shaft + print fit
-    pin_flat = 0.5,     # 'face' pinion D-flat depth from the bore wall
+    pin_bore = 3.2,     # pinion bore Ø, EVERY drive mode: N20 3 mm D-shaft
+    pin_flat = 0.5,     # pinion D-flat depth from the bore wall (N20 flat)
     gear_F   = 9.5,     # ring band face height — the visible 45-deg cone
                         # (9.5 face ~ the 12.1 tooth depth: the mixer look).
                         # HARD CEILING: must stay under the neighbour-wafer
@@ -1168,11 +1168,13 @@ def pinion_profile(cf, T, backlash=None):
     return pts, dict(rp=rp, rb=rb, ra=ra, rf=rf, T=T)
 
 
-def build_pinion(cf, T=None, face=None, bore=4.2, flat=0.5, backlash=None):
+def build_pinion(cf, T=None, face=None, bore=None, flat=None, backlash=None):
     """The mating pinion. bevel45 (default): the beveloid pinion, big end
     at the front, axis PARALLEL to the halo axis, plus a Ø16 hub on the
-    motor side for the 22PG-2430BL's 4 mm D-shaft (bore 4.2, 0.5 flat).
-    'spur' legacy: straight spur. T = teeth/segment gives ratio N:1."""
+    motor side. 'spur' legacy: straight spur. T = teeth/segment gives
+    ratio N:1. Bore is ALWAYS the N20 3 mm D-shaft (pin_bore/pin_flat,
+    Nick 2026-08-09 — the 22PG's 4.2 bore is retired in every mode);
+    pass bore=0.0 to skip it (mesh-check runners)."""
     T = T or cf.tps
     if cf.g_bev and (T == cf.tps or T == cf.pin_T):
         p, g = bevel_pinion(cf, backlash=backlash)
@@ -1186,8 +1188,6 @@ def build_pinion(cf, T=None, face=None, bore=4.2, flat=0.5, backlash=None):
         # face-drive spur pinion + MOTOR-side hub (the outer radial end
         # after placement: spacer off the gearbox nose, extra D-bore
         # engagement next to the motor bearing — FS session's call).
-        # Bore/flat come from pin_bore/pin_flat (3 mm D-shaft class),
-        # overriding the 22PG-era signature defaults.
         p, g = face_pinion(cf, backlash=backlash)
         fg = face_geom(cf)
         face = cf.pin_face + fg['hub_len']
@@ -1195,12 +1195,15 @@ def build_pinion(cf, T=None, face=None, bore=4.2, flat=0.5, backlash=None):
                                   fg['hub_r'], 96).translate(
             [0.0, 0.0, cf.pin_face - 0.1])
         z_lo = 0.0
-        bore, flat = cf.pin_bore, cf.pin_flat
     else:
         face = face or cf.tmin
         pts, g = pinion_profile(cf, T, backlash=backlash)
         p = prism(pts, 0.0, face)
         z_lo = 0.0
+    if bore is None:
+        bore = cf.pin_bore
+    if flat is None:
+        flat = cf.pin_flat
     if bore:
         L = face - z_lo + 2.0
         p = p - Manifold.cylinder(L + 2.0, bore / 2, bore / 2, 64).translate(
