@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wafer Halo — Customize</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<div class="page wide">
+
+<nav class="topnav">
+  <a href="index.html">Overview</a>
+  <a href="design.html">Design</a>
+  <a href="engineering.html">Engineering</a>
+  <a href="production.html">Production</a>
+  <span class="sep">·</span>
+  <a class="here" href="customize.html">Customize</a>
+  <a href="viewer.html">CAD viewer</a>
+  <a href="spec-sheet.html">Spec sheet</a>
+</nav>
+
+<header class="traveler">
+  <div class="oxide-rule"></div>
+  <div class="head-main">
+    <div class="eyebrow">HALO-001 · Rev B — customize · the original hub view</div>
+    <h1>Wafer Halo</h1>
+    <div class="head-meta">
+      <span>WHAT <b>9× Ø300 mm silicon wafers in an overlapping swirl, each bonded to one printed segment</b></span>
+      <span>DRIVE <b>108T external bevel (generated, m5.6), 20T crossed pinion from the top — ring hangs on idlers</b></span>
+      <span>HARDWARE <b>zero on the frame — all fixturing in a reusable bench jig</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ CALCULATOR ============ -->
+<section class="op" style="max-width:940px;margin-left:auto;margin-right:auto">
+  <div class="op-head"><span class="op-chip">DESIGN LIVE</span><h2>Tweak it — parametric calculator with STL export</h2></div>
+  <p>Drag any slider and the whole picture re-derives live — segments, wafers, the 45° bevel gear band, the retention groove, the tape jig, and the bracket saddles, along with every readout: halo OD, standoff depth, hide window, bond stresses, assembly weight, dovetail margin. When it looks right, <b>Download STL</b> grabs the preview solid at those exact values and the command line regenerates the full CI-checked CAD. The <a href="viewer.html"><b>CAD viewer</b></a> shows the shipped STLs with their CI interference checks; full engineering context is on the <a href="engineering.html">engineering page</a>.</p>
+  <div class="calc">
+    <div class="presets viewbar">
+      <div class="grp">
+        <span class="lbl">View</span>
+        <button class="pz act" data-view="assembly">Full halo</button>
+        <button class="pz" data-view="station">One station</button>
+        <button class="pz" data-view="jig">Tape jig</button>
+        <button class="pz" data-view="drive">Drive</button>
+        <button class="pz" data-view="frame">Frame only</button>
+      </div>
+      <div id="viewnote"></div>
+    </div>
+    <canvas id="cviz"></canvas>
+    <div id="alert"></div>
+    <div class="stlbar">
+      <button class="pz" id="b_stl">⬇ Download STL — current values</button>
+      <div class="cmd" id="cadcmd"></div>
+      <button class="pz" id="b_copy">Copy</button>
+      <div class="hint">The download is the preview solid this page renders — segment body + gear flange as closed meshes at the slider values, fine for a look or a draft slice. Dovetails, jig keyhole, and adhesive pocket live only in the full CAD: run the command (needs <span class="mono">pip install manifold3d</span>) for the print-ready, CI-checked STLs.</div>
+    </div>
+    <div class="presets">
+      <span class="lbl">Wafer</span>
+      <button class="pz" data-d="150" data-t="0.675">Ø150 × 0.675</button>
+      <button class="pz" data-d="200" data-t="0.725">Ø200 × 0.725</button>
+      <button class="pz act" data-d="300" data-t="0.775">Ø300 × 0.775</button>
+      <span class="lbl" style="margin-left:10px">Band</span>
+      <button class="pz" id="b_hide">Fit hide window</button>
+      <button class="pz" id="b_bal">Center under wafer CG</button>
+      <span class="lbl" style="margin-left:10px">Params</span>
+      <button class="pz" id="b_b3">Rev B.3 build (θ=5)</button>
+    </div>
+    <div class="calc-ui">
+      <div class="ctrls">
+        <div class="ctrl"><label>Segments N <output id="o_N">9</output></label><input type="range" id="i_N" min="6" max="14" step="1" value="9"></div>
+        <div class="ctrl"><label>Tilt θ <output id="o_tilt">10°</output></label><input type="range" id="i_tilt" min="3" max="22" step="0.5" value="10"></div>
+        <div class="ctrl"><label>Pitch radius R <output id="o_R">350</output></label><input type="range" id="i_R" min="200" max="460" step="5" value="350"></div>
+        <div class="ctrl"><label>Band inner Ri <output id="o_Ri">248</output></label><input type="range" id="i_Ri" min="120" max="420" step="1" value="248"></div>
+        <div class="ctrl"><label>Band width <output id="o_bw">55</output></label><input type="range" id="i_bw" min="25" max="140" step="5" value="55"></div>
+        <div class="ctrl"><label>Min base thickness <output id="o_tmin">6</output></label><input type="range" id="i_tmin" min="4" max="18" step="0.5" value="6"></div>
+        <div class="ctrl"><label>Bond line <output id="o_bond">1.1</output></label><input type="range" id="i_bond" min="0.4" max="1.3" step="0.1" value="1.1"></div>
+        <div class="ctrl"><label>Bond shear mod G <output id="o_G">0.06</output></label><input type="range" id="i_G" min="0.02" max="2" step="0.02" value="0.06"></div>
+        <div class="ctrl"><label>Temp swing ΔT <output id="o_dT">20 K</output></label><input type="range" id="i_dT" min="5" max="50" step="1" value="20"></div>
+        <div class="ctrl"><label>Print density <output id="o_dens">10%</output></label><input type="range" id="i_dens" min="5" max="100" step="5" value="10"></div>
+      </div>
+      <div class="reads">
+        <h4>Geometry</h4>
+        <div class="read"><span class="k">Halo OD</span><span class="v" id="r_od">—</span></div>
+        <div class="read"><span class="k">Envelope depth (2r·sinθ + t)</span><span class="v" id="r_depth">—</span></div>
+        <div class="read"><span class="k">Edge swing off ring plane</span><span class="v" id="r_swing">—</span></div>
+        <div class="read"><span class="k">Hide window (radial)</span><span class="v" id="r_hide">—</span></div>
+        <div class="read"><span class="k">Band vs hide window</span><span class="v" id="r_bandok">—</span></div>
+        <div class="read"><span class="k">Neighbor overlap (projected)</span><span class="v" id="r_ovl">—</span></div>
+        <div class="read"><span class="k">Min z-gap between neighbors</span><span class="v" id="r_gap">—</span></div>
+        <div class="read"><span class="k">Segment max thickness (taper)</span><span class="v" id="r_tmax">—</span></div>
+        <div class="read"><span class="k">Bondable land arc</span><span class="v" id="r_land">—</span></div>
+        <div class="read"><span class="k">Bond land area</span><span class="v" id="r_area">—</span></div>
+        <div class="read"><span class="k">Bevel gear 45° (m=2, generated)</span><span class="v" id="r_gear">—</span></div>
+        <div class="read"><span class="k">Gear vs hide window</span><span class="v" id="r_gearok">—</span></div>
+      </div>
+      <div class="reads">
+        <h4>Statics</h4>
+        <div class="read"><span class="k">Wafer mass / weight</span><span class="v" id="s_wm">—</span></div>
+        <div class="read"><span class="k">Segment mass (printed)</span><span class="v" id="s_fm">—</span></div>
+        <div class="read"><span class="k">Assembly mass / hang load</span><span class="v" id="s_tot">—</span></div>
+        <div class="read"><span class="k">CG offset: land → wafer</span><span class="v" id="s_off">—</span></div>
+        <div class="read"><span class="k">Bond shear, gravity</span><span class="v" id="s_tau">—</span></div>
+        <div class="read"><span class="k">Bond peel at land edge</span><span class="v" id="s_peel">—</span></div>
+        <div class="read"><span class="k">Bond shear, thermal ΔT</span><span class="v" id="s_th">—</span></div>
+        <div class="read"><span class="k">Thermal shear strain</span><span class="v" id="s_gam">—</span></div>
+        <div class="read"><span class="k">Wafer overhang (outboard)</span><span class="v" id="s_ovh">—</span></div>
+        <div class="read"><span class="k">Tip droop (hung / flat)</span><span class="v" id="s_droop">—</span></div>
+        <div class="read"><span class="k">Wafer bending stress</span><span class="v" id="s_sig">—</span></div>
+        <div class="read"><span class="k">Joint moment, 1-pt hang</span><span class="v" id="s_mj">—</span></div>
+        <div class="read"><span class="k">Dovetail stress / margin</span><span class="v" id="s_dt">—</span></div>
+        <div class="read"><span class="k">Out-of-plane CG (tip-off)</span><span class="v" id="s_zcg">—</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ pick your page by role ============ -->
+<div class="roles">
+  <a class="role" href="design.html">
+    <div class="rname">Design</div>
+    <div class="rdesc">Pick the look. Tilt θ sets how deep the swirl stands
+      off the wall — it's an aesthetic choice, not a structural one — and the
+      hide window keeps the frame invisible from the front.</div>
+    <div class="rlist">θ / depth trade · wafer size · parameter knobs</div>
+  </a>
+  <a class="role" href="engineering.html">
+    <div class="rname">Engineering</div>
+    <div class="rdesc">The parametric calculator with a live statics solver,
+      the 6-feature CAD recipe, the load-path analysis, and the ring-gear
+      drive. Generate an STL straight from the current slider values.</div>
+    <div class="rlist">calculator + STL export · OP 010 CAD · OP 015 statics · motion</div>
+  </a>
+  <a class="role" href="production.html">
+    <div class="rname">Production</div>
+    <div class="rdesc">Everything needed to build one: the seven test gates
+      that must pass before printing ×9, the bench bonding procedure, and the
+      full bill of materials.</div>
+    <div class="rlist">gates T1–T7 · OP 020 bond · BOM · tape jig</div>
+  </a>
+</div>
+
+<div class="docstrip">
+  <a href="viewer.html">CAD viewer (full page)</a>
+  <a href="cure-jig.html">Tape-jig instructions (OP 012)</a>
+  <a href="onshape-variables.html">OnShape variables</a>
+  <a href="onshape-guide.html">OnShape guide</a>
+  <a href="spec-sheet.html">Spec &amp; care sheet</a>
+  <a href="kiselring-manual.pdf">Assembly manual (PDF)</a>
+</div>
+
+<!-- ============ current build at a glance ============ -->
+<div class="keynums">
+  <div class="kn"><div class="v">θ=5° · N=9</div><div class="k">Rev B.3 params</div></div>
+  <div class="kn"><div class="v">1.77 kg / 17.4 N</div><div class="k">assembly, PLA @10%</div></div>
+  <div class="kn"><div class="v">69.2 g · 2h20m</div><div class="k">per segment, PLA @10%</div></div>
+  <div class="kn"><div class="v">4.5×</div><div class="k">dovetail margin (tightest)</div></div>
+  <div class="kn"><div class="v">6.0 kPa</div><div class="k">thermal — the governing load</div></div>
+  <div class="kn"><div class="v">108T : 20T</div><div class="k">crossed bevel, 5.4:1 · ~2 rpm</div></div>
+</div>
+
+<footer>
+  <span>HALO-001 · REV B · frame-method iteration + statics</span>
+  <span>thermal governs · dovetail is the margin · motion retires it</span>
+</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="assets/calc.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // Wafer Halo — live parametric calculator + statics solver + STL export.
-// Shared by index.html (hub, "design on the fly") and engineering.html.
+// Shared by customize.html (hub, "design on the fly") and engineering.html.
 // Expects the calculator markup block: canvas#cviz, #alert, #viewnote,
 // the i_*/o_* sliders, r_*/s_* readouts, and the STL bar (#b_stl, #cadcmd,
 // #b_copy). Self-contained (no fetch) — works under file:// as-is.

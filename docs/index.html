@@ -3,172 +3,347 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wafer Halo — Rev B</title>
+<title>Wafer Halo</title>
+<meta name="description" content="Nine 300 mm silicon wafers in an overlapping swirl — a one-metre kinetic wall piece that turns at two revolutions per minute.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/site.css">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090b; --panel:#0d0f13; --ink:#eceae5; --dim:#959ca7;
+  --line:rgba(235,238,245,.09); --line2:rgba(235,238,245,.16);
+  --gold:#c9a227; --magenta:#c2497b; --blue:#5a6fe0; --teal:#25b3a1;
+  --oxide:linear-gradient(90deg,#c9a227 0%,#c2497b 32%,#4457c4 66%,#1e9e8e 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'Instrument Serif',Georgia,serif;
+  font-size:19px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+/* film grain over everything */
+body::after{content:"";position:fixed;inset:-50%;z-index:40;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- top nav ---------- */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;
+  justify-content:space-between;padding:20px 32px;font-family:'IBM Plex Mono',monospace;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:linear-gradient(rgba(8,9,11,.85),rgba(8,9,11,0))}
+nav .brand{color:var(--ink);text-decoration:none;font-weight:600}
+nav .brand em{font-style:normal;background:var(--oxide);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav .links{display:flex;gap:22px}
+nav .links a{color:var(--dim);text-decoration:none;transition:color .25s}
+nav .links a:hover{color:var(--ink)}
+@media(max-width:760px){nav .links{gap:13px}nav .links a.opt{display:none}}
+
+/* ---------- hero ---------- */
+header{position:relative;height:100vh;min-height:620px}
+#hero3d{position:absolute;inset:0;width:100%;height:100%;display:block}
+.nogl #hero3d{display:none}
+.nogl header{background:url('media/hero.png') center/cover no-repeat;filter:saturate(.6) brightness(.55)}
+/* soft iridescent halo behind the 3D ring */
+header .glow{position:absolute;left:50%;top:42%;width:76vmin;height:76vmin;
+  transform:translate(-50%,-50%);pointer-events:none;border-radius:50%;
+  background:conic-gradient(from 20deg,#c9a22722,#c2497b2e,#4457c42e,#1e9e8e22,#c9a22722);
+  filter:blur(70px);animation:glowspin 40s linear infinite}
+@keyframes glowspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){header .glow{animation:none}}
+header .vignette{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 88% 72% at 50% 44%,transparent 45%,rgba(8,9,11,.72) 84%,var(--bg) 100%)}
+header .haze{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(rgba(8,9,11,.35),transparent 30%,transparent 62%,var(--bg) 97%)}
+.hero-copy{position:absolute;left:0;right:0;bottom:9vh;z-index:5;text-align:center;padding:0 24px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--dim);margin-bottom:18px}
+.eyebrow b{background:linear-gradient(90deg,#e3c65a,#e37bab,#94a6f5,#5ed4c3);
+  -webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600}
+h1{font-weight:400;font-size:clamp(64px,12vw,168px);line-height:.92;letter-spacing:-.015em}
+h1 em{font-style:italic;background:linear-gradient(105deg,#e8e2d2 0%,#e3a0be 38%,#9fb0f0 68%,#8fd8cd 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-sub{max-width:620px;margin:22px auto 0;color:var(--dim);font-size:21px;line-height:1.5}
+.hero-sub b{color:var(--ink);font-weight:400}
+.hero-cta{margin-top:30px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em}
+.hero-cta a{text-decoration:none;padding:11px 22px;border-radius:999px;transition:all .25s}
+.hero-cta .solid{background:var(--ink);color:#0a0b0d}
+.hero-cta .solid:hover{background:#fff}
+.hero-cta .ghost{color:var(--dim);border:1px solid var(--line2)}
+.hero-cta .ghost:hover{color:var(--ink);border-color:var(--dim)}
+.scrollcue{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:5;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.3em;color:var(--dim);
+  animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,7px)}}
+@media(prefers-reduced-motion:reduce){.scrollcue{animation:none}}
+
+/* ---------- shared section chrome ---------- */
+main{position:relative;z-index:2}
+section{max-width:1080px;margin:0 auto;padding:110px 32px 0}
+.k{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.k::before{content:"";width:34px;height:1px;background:var(--oxide)}
+h2{font-weight:400;font-size:clamp(36px,5.2vw,60px);line-height:1.06;letter-spacing:-.01em;max-width:16ch}
+h2 em{font-style:italic;color:transparent;background:var(--oxide);-webkit-background-clip:text;background-clip:text}
+.lede{margin-top:26px;color:var(--dim);max-width:58ch;font-size:20px}
+.lede b{color:var(--ink);font-weight:400}
+.cols{display:grid;grid-template-columns:1.15fr .85fr;gap:60px;align-items:start}
+@media(max-width:820px){.cols{grid-template-columns:1fr;gap:28px}}
+.facts{border-top:1px solid var(--line);margin-top:8px}
+.facts .f{display:flex;justify-content:space-between;gap:18px;padding:13px 2px;border-bottom:1px solid var(--line);font-size:15px}
+.facts .f .fk{color:var(--dim)}
+.facts .f .fv{font-family:'IBM Plex Mono',monospace;font-size:13px;white-space:nowrap;color:var(--ink)}
+
+/* reveal on scroll */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s ease}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+
+/* ---------- stat band ---------- */
+.stats{max-width:none;padding:130px 0 0}
+.statgrid{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+@media(max-width:1000px){.statgrid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.statgrid{grid-template-columns:repeat(2,1fr)}}
+.stat{padding:34px 26px 30px;border-right:1px solid var(--line);position:relative;overflow:hidden}
+.stat:last-child{border-right:none}
+@media(max-width:1000px){.stat:nth-child(3n){border-right:none}.stat:nth-child(-n+3){border-bottom:1px solid var(--line)}}
+@media(max-width:560px){.stat{border-right:none}.stat:nth-child(odd){border-right:1px solid var(--line)}.stat:nth-child(-n+4){border-bottom:1px solid var(--line)}}
+.stat .v{font-size:clamp(30px,3.4vw,44px);line-height:1;letter-spacing:-.01em}
+.stat .v small{font-size:.55em;color:var(--dim)}
+.stat .l{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-top:12px}
+.stat::after{content:"";position:absolute;left:0;top:0;width:100%;height:2px;background:var(--oxide);
+  transform:scaleX(0);transform-origin:left;transition:transform .9s ease .15s}
+.stat.in::after{transform:scaleX(1)}
+
+/* ---------- numbered story rows ---------- */
+.num{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);letter-spacing:.2em;margin-bottom:14px}
+.num b{color:transparent;background:var(--oxide);-webkit-background-clip:text;background-clip:text;font-weight:600}
+
+/* ---------- deeper grid ---------- */
+.deep{padding-bottom:40px}
+.deepgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin-top:44px}
+@media(max-width:820px){.deepgrid{grid-template-columns:1fr}}
+.dcard{background:var(--panel);padding:30px 28px 34px;text-decoration:none;display:block;
+  position:relative;overflow:hidden;transition:background .3s}
+.dcard:hover{background:#12151b}
+.dcard .dn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.26em;color:var(--dim);text-transform:uppercase}
+.dcard h3{font-weight:400;font-size:27px;margin:12px 0 10px}
+.dcard h3 .arr{display:inline-block;transition:transform .3s;color:var(--dim)}
+.dcard:hover h3 .arr{transform:translateX(6px);color:var(--ink)}
+.dcard p{color:var(--dim);font-size:15.5px;line-height:1.5}
+.dcard::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;background:var(--oxide);
+  opacity:0;transition:opacity .3s}
+.dcard:hover::before{opacity:1}
+.docstrip{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.docstrip a{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--dim);text-decoration:none;
+  border:1px solid var(--line2);border-radius:999px;padding:7px 15px;transition:all .25s}
+.docstrip a:hover{color:var(--ink);border-color:var(--dim)}
+
+/* ---------- footer ---------- */
+footer{margin-top:110px;border-top:1px solid var(--line);padding:34px 32px 46px;
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+footer a{color:var(--dim);text-decoration:none}
+footer a:hover{color:var(--ink)}
+</style>
 </head>
 <body>
-<div class="page wide">
 
-<nav class="topnav">
-  <a class="here" href="index.html">Overview</a>
-  <a href="design.html">Design</a>
-  <a href="engineering.html">Engineering</a>
-  <a href="production.html">Production</a>
-  <span class="sep">·</span>
-  <a href="viewer.html">CAD viewer</a>
-  <a href="spec-sheet.html">Spec sheet</a>
+<nav>
+  <a class="brand" href="index.html">WAFER <em>HALO</em></a>
+  <div class="links">
+    <a class="opt" href="design.html">Design</a>
+    <a class="opt" href="engineering.html">Engineering</a>
+    <a class="opt" href="production.html">Production</a>
+    <a href="customize.html">Customize</a>
+    <a href="viewer.html">Viewer</a>
+  </div>
 </nav>
 
-<header class="traveler">
-  <div class="oxide-rule"></div>
-  <div class="head-main">
-    <div class="eyebrow">HALO-001 · Rev B.3 — frame method</div>
-    <h1>Wafer Halo</h1>
-    <div class="head-meta">
-      <span>WHAT <b>9× Ø300 mm silicon wafers in an overlapping swirl, each bonded to one printed segment</b></span>
-      <span>DRIVE <b>108T external bevel (generated, m5.6), 20T crossed pinion from the top — ring hangs on idlers</b></span>
-      <span>HARDWARE <b>zero on the frame — all fixturing in a reusable bench jig</b></span>
+<header>
+  <div class="glow"></div>
+  <canvas id="hero3d"></canvas>
+  <div class="vignette"></div>
+  <div class="haze"></div>
+  <div class="hero-copy">
+    <div class="eyebrow">HALO-001 · REV B.6 · <b>KINETIC WALL SCULPTURE</b></div>
+    <h1>Nine wafers,<br>one slow <em>revolution</em></h1>
+    <p class="hero-sub">A one-metre swirl of Ø300&nbsp;mm silicon wafers, turning at
+      <b>two revolutions per minute</b>. No visible frame, no visible hardware —
+      from the room, silicon only.</p>
+    <div class="hero-cta">
+      <a class="solid" href="#idea">Explore the design ↓</a>
+      <a class="ghost" href="customize.html">Customize your own →</a>
     </div>
   </div>
+  <div class="scrollcue">SCROLL</div>
 </header>
 
-<!-- ============ CALCULATOR ============ -->
-<section class="op" style="max-width:940px;margin-left:auto;margin-right:auto">
-  <div class="op-head"><span class="op-chip">DESIGN LIVE</span><h2>Tweak it — parametric calculator with STL export</h2></div>
-  <p>Drag any slider and the whole picture re-derives live — segments, wafers, the 45° bevel gear band, the retention groove, the tape jig, and the bracket saddles, along with every readout: halo OD, standoff depth, hide window, bond stresses, assembly weight, dovetail margin. When it looks right, <b>Download STL</b> grabs the preview solid at those exact values and the command line regenerates the full CI-checked CAD. The <a href="viewer.html"><b>CAD viewer</b></a> shows the shipped STLs with their CI interference checks; full engineering context is on the <a href="engineering.html">engineering page</a>.</p>
-  <div class="calc">
-    <div class="presets viewbar">
-      <div class="grp">
-        <span class="lbl">View</span>
-        <button class="pz act" data-view="assembly">Full halo</button>
-        <button class="pz" data-view="station">One station</button>
-        <button class="pz" data-view="jig">Tape jig</button>
-        <button class="pz" data-view="drive">Drive</button>
-        <button class="pz" data-view="frame">Frame only</button>
-      </div>
-      <div id="viewnote"></div>
+<main>
+
+<section id="idea" class="rv">
+  <div class="num"><b>01</b> — THE ILLUSION</div>
+  <div class="cols">
+    <div>
+      <h2>The frame is designed to <em>disappear</em>.</h2>
+      <p class="lede">Each wafer tilts <b>5° about its own radial axis</b>, leading edge
+        proud, so nine discs shingle into one continuous swirl. The printed ring that
+        carries them sits entirely inside the <b>hide window</b> — the band of wall that
+        every front sightline misses behind the overlapping silicon. What the room reads
+        is a floating, turning iris.</p>
     </div>
-    <canvas id="cviz"></canvas>
-    <div id="alert"></div>
-    <div class="stlbar">
-      <button class="pz" id="b_stl">⬇ Download STL — current values</button>
-      <div class="cmd" id="cadcmd"></div>
-      <button class="pz" id="b_copy">Copy</button>
-      <div class="hint">The download is the preview solid this page renders — segment body + gear flange as closed meshes at the slider values, fine for a look or a draft slice. Dovetails, jig keyhole, and adhesive pocket live only in the full CAD: run the command (needs <span class="mono">pip install manifold3d</span>) for the print-ready, CI-checked STLs.</div>
-    </div>
-    <div class="presets">
-      <span class="lbl">Wafer</span>
-      <button class="pz" data-d="150" data-t="0.675">Ø150 × 0.675</button>
-      <button class="pz" data-d="200" data-t="0.725">Ø200 × 0.725</button>
-      <button class="pz act" data-d="300" data-t="0.775">Ø300 × 0.775</button>
-      <span class="lbl" style="margin-left:10px">Band</span>
-      <button class="pz" id="b_hide">Fit hide window</button>
-      <button class="pz" id="b_bal">Center under wafer CG</button>
-      <span class="lbl" style="margin-left:10px">Params</span>
-      <button class="pz" id="b_b3">Rev B.3 build (θ=5)</button>
-    </div>
-    <div class="calc-ui">
-      <div class="ctrls">
-        <div class="ctrl"><label>Segments N <output id="o_N">9</output></label><input type="range" id="i_N" min="6" max="14" step="1" value="9"></div>
-        <div class="ctrl"><label>Tilt θ <output id="o_tilt">10°</output></label><input type="range" id="i_tilt" min="3" max="22" step="0.5" value="10"></div>
-        <div class="ctrl"><label>Pitch radius R <output id="o_R">350</output></label><input type="range" id="i_R" min="200" max="460" step="5" value="350"></div>
-        <div class="ctrl"><label>Band inner Ri <output id="o_Ri">248</output></label><input type="range" id="i_Ri" min="120" max="420" step="1" value="248"></div>
-        <div class="ctrl"><label>Band width <output id="o_bw">55</output></label><input type="range" id="i_bw" min="25" max="140" step="5" value="55"></div>
-        <div class="ctrl"><label>Min base thickness <output id="o_tmin">6</output></label><input type="range" id="i_tmin" min="4" max="18" step="0.5" value="6"></div>
-        <div class="ctrl"><label>Bond line <output id="o_bond">1.1</output></label><input type="range" id="i_bond" min="0.4" max="1.3" step="0.1" value="1.1"></div>
-        <div class="ctrl"><label>Bond shear mod G <output id="o_G">0.06</output></label><input type="range" id="i_G" min="0.02" max="2" step="0.02" value="0.06"></div>
-        <div class="ctrl"><label>Temp swing ΔT <output id="o_dT">20 K</output></label><input type="range" id="i_dT" min="5" max="50" step="1" value="20"></div>
-        <div class="ctrl"><label>Print density <output id="o_dens">10%</output></label><input type="range" id="i_dens" min="5" max="100" step="5" value="10"></div>
-      </div>
-      <div class="reads">
-        <h4>Geometry</h4>
-        <div class="read"><span class="k">Halo OD</span><span class="v" id="r_od">—</span></div>
-        <div class="read"><span class="k">Envelope depth (2r·sinθ + t)</span><span class="v" id="r_depth">—</span></div>
-        <div class="read"><span class="k">Edge swing off ring plane</span><span class="v" id="r_swing">—</span></div>
-        <div class="read"><span class="k">Hide window (radial)</span><span class="v" id="r_hide">—</span></div>
-        <div class="read"><span class="k">Band vs hide window</span><span class="v" id="r_bandok">—</span></div>
-        <div class="read"><span class="k">Neighbor overlap (projected)</span><span class="v" id="r_ovl">—</span></div>
-        <div class="read"><span class="k">Min z-gap between neighbors</span><span class="v" id="r_gap">—</span></div>
-        <div class="read"><span class="k">Segment max thickness (taper)</span><span class="v" id="r_tmax">—</span></div>
-        <div class="read"><span class="k">Bondable land arc</span><span class="v" id="r_land">—</span></div>
-        <div class="read"><span class="k">Bond land area</span><span class="v" id="r_area">—</span></div>
-        <div class="read"><span class="k">Bevel gear 45° (m=2, generated)</span><span class="v" id="r_gear">—</span></div>
-        <div class="read"><span class="k">Gear vs hide window</span><span class="v" id="r_gearok">—</span></div>
-      </div>
-      <div class="reads">
-        <h4>Statics</h4>
-        <div class="read"><span class="k">Wafer mass / weight</span><span class="v" id="s_wm">—</span></div>
-        <div class="read"><span class="k">Segment mass (printed)</span><span class="v" id="s_fm">—</span></div>
-        <div class="read"><span class="k">Assembly mass / hang load</span><span class="v" id="s_tot">—</span></div>
-        <div class="read"><span class="k">CG offset: land → wafer</span><span class="v" id="s_off">—</span></div>
-        <div class="read"><span class="k">Bond shear, gravity</span><span class="v" id="s_tau">—</span></div>
-        <div class="read"><span class="k">Bond peel at land edge</span><span class="v" id="s_peel">—</span></div>
-        <div class="read"><span class="k">Bond shear, thermal ΔT</span><span class="v" id="s_th">—</span></div>
-        <div class="read"><span class="k">Thermal shear strain</span><span class="v" id="s_gam">—</span></div>
-        <div class="read"><span class="k">Wafer overhang (outboard)</span><span class="v" id="s_ovh">—</span></div>
-        <div class="read"><span class="k">Tip droop (hung / flat)</span><span class="v" id="s_droop">—</span></div>
-        <div class="read"><span class="k">Wafer bending stress</span><span class="v" id="s_sig">—</span></div>
-        <div class="read"><span class="k">Joint moment, 1-pt hang</span><span class="v" id="s_mj">—</span></div>
-        <div class="read"><span class="k">Dovetail stress / margin</span><span class="v" id="s_dt">—</span></div>
-        <div class="read"><span class="k">Out-of-plane CG (tip-off)</span><span class="v" id="s_zcg">—</span></div>
-      </div>
+    <div class="facts">
+      <div class="f"><span class="fk">Wafers</span><span class="fv">9 × Ø300 × 0.775 mm</span></div>
+      <div class="f"><span class="fk">Tilt, radial axis</span><span class="fv">θ = 5°</span></div>
+      <div class="f"><span class="fk">Neighbor z-clearance</span><span class="fv">3.0 mm held</span></div>
+      <div class="f"><span class="fk">Ring band</span><span class="fv">r 255–285, hidden</span></div>
+      <div class="f"><span class="fk">Fasteners on the frame</span><span class="fv">zero</span></div>
     </div>
   </div>
 </section>
 
-<!-- ============ pick your page by role ============ -->
-<div class="roles">
-  <a class="role" href="design.html">
-    <div class="rname">Design</div>
-    <div class="rdesc">Pick the look. Tilt θ sets how deep the swirl stands
-      off the wall — it's an aesthetic choice, not a structural one — and the
-      hide window keeps the frame invisible from the front.</div>
-    <div class="rlist">θ / depth trade · wafer size · parameter knobs</div>
-  </a>
-  <a class="role" href="engineering.html">
-    <div class="rname">Engineering</div>
-    <div class="rdesc">The parametric calculator with a live statics solver,
-      the 6-feature CAD recipe, the load-path analysis, and the ring-gear
-      drive. Generate an STL straight from the current slider values.</div>
-    <div class="rlist">calculator + STL export · OP 010 CAD · OP 015 statics · motion</div>
-  </a>
-  <a class="role" href="production.html">
-    <div class="rname">Production</div>
-    <div class="rdesc">Everything needed to build one: the seven test gates
-      that must pass before printing ×9, the bench bonding procedure, and the
-      full bill of materials.</div>
-    <div class="rlist">gates T1–T7 · OP 020 bond · BOM · tape jig</div>
-  </a>
-</div>
+<section class="stats">
+  <div class="statgrid">
+    <div class="stat rv"><div class="v">Ø999<small> mm</small></div><div class="l">overall diameter</div></div>
+    <div class="stat rv"><div class="v">54<small> mm</small></div><div class="l">off the wall</div></div>
+    <div class="stat rv"><div class="v">~2<small> rpm</small></div><div class="l">ring speed</div></div>
+    <div class="stat rv"><div class="v">1.77<small> kg</small></div><div class="l">complete assembly</div></div>
+    <div class="stat rv"><div class="v">1.15<small> kg</small></div><div class="l">of that is silicon</div></div>
+    <div class="stat rv"><div class="v">0</div><div class="l">visible hardware</div></div>
+  </div>
+</section>
 
-<div class="docstrip">
-  <a href="viewer.html">CAD viewer (full page)</a>
-  <a href="cure-jig.html">Tape-jig instructions (OP 012)</a>
-  <a href="onshape-variables.html">OnShape variables</a>
-  <a href="onshape-guide.html">OnShape guide</a>
-  <a href="spec-sheet.html">Spec &amp; care sheet</a>
-  <a href="kiselring-manual.pdf">Assembly manual (PDF)</a>
-</div>
+<section class="rv">
+  <div class="num"><b>02</b> — THE DRIVE</div>
+  <div class="cols">
+    <div>
+      <h2>A 108-tooth gear, hiding behind the <em>silicon</em>.</h2>
+      <p class="lede">A 45° bevel ring gear is generated straight into the segments —
+        <b>12 teeth per segment, 108 around</b>, the pattern tiling seamlessly across
+        every joint. A 20-tooth pinion engages from the top at <b>5.4 : 1</b>, and the
+        whole ring hangs on two flanged bearings riding an internal groove directly
+        under the motor. Torque demand is a few millinewton-metres: one small
+        gearmotor, PWM-dialed to a gallery-slow two revolutions per minute.</p>
+    </div>
+    <div class="facts">
+      <div class="f"><span class="fk">Ring : pinion</span><span class="fv">108T : 20T = 5.4 : 1</span></div>
+      <div class="f"><span class="fk">Mesh interference, swept</span><span class="fv">0.00000 mm³</span></div>
+      <div class="f"><span class="fk">Suspension</span><span class="fv">2 × F625ZZ bearings</span></div>
+      <div class="f"><span class="fk">Joint margin, hung</span><span class="fv">&gt;3×</span></div>
+      <div class="f"><span class="fk">Wall mount</span><span class="fv">drywall anchors, 25 mm grid</span></div>
+    </div>
+  </div>
+</section>
 
-<!-- ============ current build at a glance ============ -->
-<div class="keynums">
-  <div class="kn"><div class="v">θ=5° · N=9</div><div class="k">Rev B.3 params</div></div>
-  <div class="kn"><div class="v">1.77 kg / 17.4 N</div><div class="k">assembly, PLA @10%</div></div>
-  <div class="kn"><div class="v">69.2 g · 2h20m</div><div class="k">per segment, PLA @10%</div></div>
-  <div class="kn"><div class="v">4.5×</div><div class="k">dovetail margin (tightest)</div></div>
-  <div class="kn"><div class="v">6.0 kPa</div><div class="k">thermal — the governing load</div></div>
-  <div class="kn"><div class="v">108T : 20T</div><div class="k">crossed bevel, 5.4:1 · ~2 rpm</div></div>
-</div>
+<section class="rv">
+  <div class="num"><b>03</b> — THE BOND</div>
+  <div class="cols">
+    <div>
+      <h2>Taped, not glued — the numbers say <em>tape wins</em>.</h2>
+      <p class="lede">Each wafer lands once on acrylic foam tape. Gravity loads the bond
+        at <b>0.13&nbsp;kPa against ~500&nbsp;kPa</b> of capability; the load that actually
+        governs is thermal — silicon and plastic breathing at different rates — and even
+        that sits <b>~47× under the limit</b> across a 20&nbsp;K swing. The 1.1&nbsp;mm foam
+        bondline absorbs the mismatch a rigid epoxy would drive straight into the wafer.</p>
+    </div>
+    <div class="facts">
+      <div class="f"><span class="fk">Gravity shear</span><span class="fv">0.13 kPa (~4000×)</span></div>
+      <div class="f"><span class="fk">Thermal shear, ΔT 20 K</span><span class="fv">6.0 kPa (~47×)</span></div>
+      <div class="f"><span class="fk">Bondline</span><span class="fv">1.1 mm acrylic foam</span></div>
+      <div class="f"><span class="fk">Landings per wafer</span><span class="fv">exactly one</span></div>
+      <div class="f"><span class="fk">Rigid epoxy</span><span class="fv">banned</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="rv">
+  <div class="num"><b>04</b> — THE BUILD</div>
+  <div class="cols">
+    <div>
+      <h2>Nine identical prints, dovetailed in <em>one direction</em>.</h2>
+      <p class="lede">One segment design, printed nine times — <b>69&nbsp;g and 2h20
+        each</b> — sliding together on dovetails in Z, no tools, no fasteners. A printed
+        bench jig funnels each wafer onto its tape in a single guided drop, centred by
+        four chamfered pegs to a ±0.15&nbsp;mm window. Every solid is CSG-generated and
+        gate-checked in CI before it earns a print.</p>
+    </div>
+    <div class="facts">
+      <div class="f"><span class="fk">Per segment, PLA @10%</span><span class="fv">69.2 g · 2h20</span></div>
+      <div class="f"><span class="fk">Part height</span><span class="fv">47.7 mm</span></div>
+      <div class="f"><span class="fk">Joints</span><span class="fv">dovetail, slide in Z</span></div>
+      <div class="f"><span class="fk">Wafer placement</span><span class="fv">jig drop, ±0.15 mm</span></div>
+      <div class="f"><span class="fk">CI gates per revision</span><span class="fv">40+ boolean checks</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="deep rv">
+  <div class="num"><b>05</b> — GO DEEPER</div>
+  <h2>The engineering, when you <em>want it</em>.</h2>
+  <div class="deepgrid">
+    <a class="dcard" href="customize.html">
+      <div class="dn">Parametric</div>
+      <h3>Customize <span class="arr">→</span></h3>
+      <p>The original live hub: drag sliders, watch geometry and statics re-derive,
+        download an STL at your exact values. Wafer sizes Ø150–Ø300.</p>
+    </a>
+    <a class="dcard" href="viewer.html">
+      <div class="dn">Shipped CAD</div>
+      <h3>3D viewer <span class="arr">→</span></h3>
+      <p>The real checked solids — segment, jig, drivetrain, full halo — with their
+        CI interference checks rendered as a pass/fail panel.</p>
+    </a>
+    <a class="dcard" href="engineering.html">
+      <div class="dn">OP 010 / 015</div>
+      <h3>Engineering <span class="arr">→</span></h3>
+      <p>The CAD recipe, the load-path statics, the motion analysis, and the same
+        calculator wired into the full derivation.</p>
+    </a>
+    <a class="dcard" href="design.html">
+      <div class="dn">Aesthetic knobs</div>
+      <h3>Design <span class="arr">→</span></h3>
+      <p>Why tilt is an aesthetic choice, not a structural one — the θ / depth trade
+        and the hide-window logic behind the disappearing frame.</p>
+    </a>
+    <a class="dcard" href="production.html">
+      <div class="dn">Gates T1–T7</div>
+      <h3>Production <span class="arr">→</span></h3>
+      <p>The seven test gates that must pass before printing ×9, the bench bonding
+        procedure, and the full bill of materials.</p>
+    </a>
+    <a class="dcard" href="spec-sheet.html">
+      <div class="dn">Capability &amp; care</div>
+      <h3>Spec sheet <span class="arr">→</span></h3>
+      <p>The customer-facing one-pager: what it is, what it weighs, how to hang it,
+        how to keep silicon looking like a mirror.</p>
+    </a>
+  </div>
+  <div class="docstrip">
+    <a href="cure-jig.html">Tape-jig instructions (OP 012)</a>
+    <a href="onshape-variables.html">OnShape variables</a>
+    <a href="onshape-guide.html">OnShape guide</a>
+    <a href="kiselring-manual.pdf">Assembly manual (PDF)</a>
+  </div>
+</section>
+
+</main>
 
 <footer>
-  <span>HALO-001 · REV B · frame-method iteration + statics</span>
-  <span>thermal governs · dovetail is the margin · motion retires it</span>
+  <span>HALO-001 · REV B.6 · FRAME METHOD</span>
+  <span><a href="customize.html">CUSTOMIZE</a> · <a href="viewer.html">VIEWER</a> · <a href="https://github.com/JimothyJohn/wafer-flower">SOURCE</a></span>
+  <span>THERMAL GOVERNS · THE FRAME DISAPPEARS</span>
 </footer>
-</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="assets/calc.js"></script>
+<script src="assets/hero.js"></script>
+<script>
+(function(){
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  },{threshold:0.18});
+  document.querySelectorAll('.rv,.stat').forEach(function(el){ io.observe(el); });
+})();
+</script>
 </body>
 </html>

@@ -1,5 +1,4 @@
-// Wafer Halo — real-STL viewer widget. Shared by index.html (hub) and
-// viewer.html (full page). Expects the standard widget markup: canvas#viz,
+// Wafer Halo — real-STL viewer widget. Used by viewer.html (full page). Expects the standard widget markup: canvas#viz,
 // #status, #presets, and the control ids referenced below. Loads
 // models/manifest.json + the exported STLs relative to the page (docs/).
 'use strict';
