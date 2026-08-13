@@ -39,3 +39,17 @@ the wafer field from the front.)
   limit); the answer flips from "comfortable" to "marginal" if it's a
   low-ratio (fast) wind. Also: OK to put UHMW/PTFE tape on the slide
   pads, or must it be bare printed plastic?
+  (2026-08-12 partially answered: 6 VDC, 15 rpm, USB power — a high-ratio
+  wind, torque-comfortable. Still open: the slide-pad tape question, and
+  the N20 body/shaft envelope measurements for the motor shell.)
+
+- 2026-08-12 fasteners: M5 flatheads bought + M5 square nuts assumed on
+  hand, but every printed part carries captive HEX pockets (8 AF) and no
+  countersinks. Redesign bracket pockets for square nuts + countersunk
+  heads, or stick with hex nuts and button/pan heads? Relief values for
+  square nuts are unverified either way.
+
+- 2026-08-12 keyhole relocation: move the keyhole down so the hole bottom
+  sits just above the gear teeth, then hollow the freed standoff in an
+  abstract pattern along the extrusion (DESIGN_LOG.md). Implement in
+  segment_stl.py keyhole_z() when ready — say go.
