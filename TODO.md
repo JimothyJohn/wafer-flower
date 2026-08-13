@@ -43,11 +43,14 @@ the wafer field from the front.)
   wind, torque-comfortable. Still open: the slide-pad tape question, and
   the N20 body/shaft envelope measurements for the motor shell.)
 
-- 2026-08-12 fasteners: M5 flatheads bought + M5 square nuts assumed on
-  hand, but every printed part carries captive HEX pockets (8 AF) and no
-  countersinks. Redesign bracket pockets for square nuts + countersunk
-  heads, or stick with hex nuts and button/pan heads? Relief values for
-  square nuts are unverified either way.
+- 2026-08-12 repo-vs-bench sync: Nick's OnShape design already carries
+  0.2 mm mating relief, an N20-shaped motor mount, M5 square-nut pockets
+  (flathead screws), and his own pinion bore — all printed. The repo
+  scripts (bracket_stl.py hex pockets + 22PG shell, coupon relief set,
+  segment_stl bore) trail it. To sync, need Nick's values: square-nut
+  pocket dims + relief (he hasn't verified relief yet), N20 body/shaft
+  envelope, mount geometry. Until then repo bracket/coupon outputs are
+  stale for printing.
 
 - 2026-08-12 keyhole relocation: move the keyhole down so the hole bottom
   sits just above the gear teeth, then hollow the freed standoff in an

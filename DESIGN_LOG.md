@@ -7,6 +7,16 @@ the machine-facing spec, this file is the human trail.)
 
 ## 2026-08-12 — First coupon batch on the H2S
 
+> **CORRECTION (same day, Nick):** the bench design was AHEAD of the repo
+> when this printed. The 0.2 mm mating relief, the N20-shaped motor
+> mount, the M5 square-nut pockets (+ flathead screws), and the pinion
+> bore were **already incorporated in the design before the print** — in
+> Nick's OnShape build, not the repo scripts. The "clash" flags further
+> down compare against repo values (`bracket_stl.py` hex pockets, 22PG
+> shell, coupon relief set) that simply trail the bench. Sync the repo
+> scripts only from Nick's actual values; never treat the printed parts
+> as wrong against repo defaults.
+
 ### What worked
 
 - **Saddle-slide static-friction bearing: it's going to work.** Slides

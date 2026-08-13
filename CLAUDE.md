@@ -337,6 +337,14 @@ T3 adhesive shear + 10–30 °C thermal cycling (THE gate), T4 land flatness
 T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 
 ## Repo contents
+- BENCH DESIGN DRIFT (2026-08-12): Nick's OnShape/bench design runs
+  AHEAD of the repo scripts — his first printed batch already carried
+  0.2 mm mating relief, an N20-shaped motor mount, M5 square-nut
+  pockets with flathead screws, and his own pinion bore. bracket_stl.py
+  (captive hex pockets, 22PG shell) and the coupon relief set TRAIL it.
+  Never "correct" printed parts against repo defaults; sync repo
+  scripts only from Nick's measured values (open in TODO.md).
+  DESIGN_LOG.md is the bench-notes trail.
 - GEARS.md — DELETED by Nick 2026-07-31 (the bevel-gear clinic; it
   documented the crossed-bevel architecture the face drive replaces —
   recoverable from history if the bevel route returns).
