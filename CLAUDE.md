@@ -86,10 +86,14 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   (dovetail path), pat_gap=4° solid pier at a=0 (inboard fence prong
   seat + keyhole crossing). Depth clamped in Cfg to bw − ogrv_d − 3 so
   the back wall never thins the outer-groove floor. Segment 231 → 214
-  cm³ (~-7%); pat_n=0 deletes it. Subtractive only — every downstream
-  gate re-ran green (segment both modes, 14 jig, 12 coupon, 12 bracket,
-  viewer --verify, STEP round-trip). calc.js's mass model does NOT know
-  the pattern yet — it over-reads ~7% until retuned.
+  cm³; pat_n=0 deletes it. Subtractive only — every downstream gate
+  re-ran green (segment both modes, 14 jig, 12 coupon, 12 bracket,
+  viewer --verify, STEP round-trip). MASS TRUTH (sliced 2026-08-12):
+  the bays remove 16.9 cm³ of infill space but ADD ~46 cm² of skin
+  wall, and at 10% infill skins win — sliced mass RISES 69.2 → 72.8 g
+  (+10 min to 2h30). The pattern is aesthetic, not lightening; don't
+  "optimize" it back out on mass grounds. calc.js mirrors the pattern
+  (formula validated 16.85 vs 16.89 cm³ CSG) including the skin adder.
 - ADHESIVE POCKET, 1 mm deep, inset into the land. It meters glue and gives a
   positive bondline stop. It CANNOT self-centre the wafer: the whole band lies
   under the wafer's interior (rim is 55 mm inboard, 215 mm outboard, closest
@@ -520,9 +524,11 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   m ≈ ρ·(0.91 mm·A_surface + 0.92·infill·(V − skin)), validated ±2% over
   35–425 cm³ (Ø150 holdout: 26.1 g sliced vs 26.2 predicted; PETG-
   calibrated — PLA runs ~2% lighter still). CURRENT B.6
-  build: 69.2 g/segment PLA @10% + 6 top shells (47.7 mm part), 2h20
-  each, assembly 1.77 kg / 17.4 N (84.3 g at the 61 mm B.5 part;
-  PETG@45 history: 91.8 deep bevel, 67.9 at the 4.5 face).
+  build: 72.8 g/segment PLA @10% + 6 top shells (47.7 mm part, riser
+  hollow pattern included — it ADDS 3.6 g of skin, see the pattern
+  bullet), 2h30 each, assembly 1.81 kg / 17.7 N (69.2 g / 2h20 /
+  1.77 kg pre-pattern; 84.3 g at the 61 mm B.5 part; PETG@45 history:
+  91.8 deep bevel, 67.9 at the 4.5 face).
   Pinion 1.9 g / 18 min, top unit 48.4 g / 1h16 @15%, slotted shell
   27.1 g / 57 min, static saddle 79.0 g / 2h09 (idlers are BOUGHT
   F625ZZ bearings now, nothing printed), tape jig 115.3/47.8/7.4 g

@@ -106,7 +106,14 @@ and the vacated inner face gets the **hollow pattern**: capsule pockets
 per-window to the real ceilings (own land plane, neighbour clearance —
 the leading-corner windows drop out on their own, 4 of 6 survive at
 defaults). Blind bays, so genus stays 1; a solid pier stays at a=0 for
-the jig prong and the keyhole. Segment 231 → 214 cm³ (−7 %).
+the jig prong and the keyhole. Segment 231 → 214 cm³ of solid volume.
+
+> **Sliced truth (same day):** hollowing does NOT save mass at 10 %
+> infill — the bays trade 16.9 cm³ of sparse infill for ~46 cm² of
+> solid skin wall, and skins dominate: sliced mass **rises 69.2 →
+> 72.8 g** (+10 min → 2h30). It's an aesthetic feature; keep it or
+> kill it (`--pat_n 0`) on looks, not weight. Docs and calculator now
+> carry the honest 72.8 g / 1.81 kg / 17.7 N numbers.
 
 All knobs are `pat_*` CLI flags on `segment_stl.py` — count, width,
 depth, lean, wall, joint margin, pier — so the "cool, abstract" part is

@@ -464,6 +464,32 @@ function readouts(th,zBot,Ro,yMax,topZ){
   const Gv=gearSpec();
   const aFlange=0.6*0.5*Math.max(0,Gv.tip_front*Gv.tip_front-Gv.web_i*Gv.web_i)*2*H;
   vol+=aFlange*GEAR_F;
+  // Riser hollow pattern (2026-08-12): capsule bays in the inner face,
+  // mirrored from segment_stl.riser_pattern at the shipped pat_* defaults
+  // (n6 w10 d20 lean20 wall5 end5 pier4); formula validated 16.85 vs
+  // 16.89 cm3 against the CSG. Bays SUBTRACT volume but ADD skin wall,
+  // and at low infill the skin wins: sliced 69.2 -> 72.8 g @10% PLA —
+  // the pattern is an aesthetic feature, not a mass saver.
+  const PAT={n:6,w:10,d:20,tilt:20*Math.PI/180,wall:5,end:5*Math.PI/180,gap:4*Math.PI/180};
+  let patV=0, patA=0;
+  { const rc=PAT.w/2, zlo=zBot+2.5+1.5+2+2;     // grv ledge + chamfer + 2
+    const lim=H-PAT.end, rhoC=P.Ri+P.bw/2;
+    const ceil=az=>{let b=Infinity;
+      for(const rr of [P.Ri,rhoC,Ro]) b=Math.min(b,topZ(rr*Math.cos(az),rr*Math.sin(az)));
+      return b-PAT.wall;};
+    for(let j=0;j<PAT.n;j++){
+      const aj=-lim+(j+0.5)*2*lim/PAT.n;
+      let zt=Infinity; for(const s of [-0.08,-0.04,0,0.04,0.08]) zt=Math.min(zt,ceil(aj+s));
+      if(zt-zlo<PAT.w+2) continue;               // squeezed out (leading corner)
+      const dz=(zt-rc)-(zlo+rc), da=dz*Math.tan(PAT.tilt)/rhoC/2, wa=rc/P.Ri;
+      const e0=aj-da-wa, e1=aj+da+wa;
+      if(e0<-lim||e1>lim) continue;              // leans past a joint margin
+      if(e0<PAT.gap&&e1>-PAT.gap) continue;      // touches the a=0 pier
+      const sl=dz/Math.cos(PAT.tilt);            // capsule axis length
+      patV+=(Math.PI*rc*rc+PAT.w*sl)*PAT.d;
+      patA+=(2*Math.PI*rc+2*sl)*PAT.d;
+    } }
+  vol-=patV;
   const rin=P.Ri;
   // Printed mass, slicer-calibrated (OrcaSlicer 0.20mm Standard, 4 walls,
   // Generic PETG): a solid skin ~T_SKIN mm thick over the part surface plus
@@ -474,7 +500,7 @@ function readouts(th,zBot,Ro,yMax,topZ){
   const T_SKIN=1.05, K_INF=0.92;
   const aFoot=0.5*(Ro*Ro-P.Ri*P.Ri)*2*H+aFlange;
   const perim=2*H*(Ro+rin)+2*(Ro-rin);
-  const aEst=2*aFoot+perim*(vol/aFoot);
+  const aEst=2*aFoot+perim*(vol/aFoot)+patA;
   const vSkin=Math.min(vol,T_SKIN*aEst);
   const m_f=PET.rho*(vSkin+K_INF*(P.dens/100)*(vol-vSkin));
   const m_tot=N*(m_w+m_f), W_tot=m_tot*G_ACC/1000;

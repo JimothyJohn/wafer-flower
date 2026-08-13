@@ -35,7 +35,8 @@ is orphaned, superseded by the repo-vs-bench sync item below.)
 
 (2026-08-12 keyhole relocation DONE same day: bore bottom now gear_F +
 0.3 above the flat bottom, riser hollow pattern shipped as pat_* params
-in segment_stl.py, all gates green — see DESIGN_LOG.md. Open follow-up:
-retune docs/assets/calc.js's mass model, which over-reads ~7 % because
-it doesn't know the pattern; and the pattern LOOK is a default awaiting
-Nick's taste pass — knobs are pat_n/w/d/tilt/wall/end/gap.)
+in segment_stl.py, all gates green — see DESIGN_LOG.md. calc.js retuned
+same evening with the pattern mirrored + sliced truth: bays ADD 3.6 g
+at 10% infill (skin beats infill), docs carry 72.8 g / 1.81 kg. Still
+open: the pattern LOOK is a default awaiting Nick's taste pass — knobs
+are pat_n/w/d/tilt/wall/end/gap.)
