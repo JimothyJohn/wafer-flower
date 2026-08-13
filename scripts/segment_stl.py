@@ -121,6 +121,27 @@ PARAMS = dict(
                         # reaming. (Was 5.0 for #10-24 pre-2026-07-24.)
     pocket_d = 1.0,     # adhesive pocket depth in the land
     pocket_m = 4.0,     # pocket inset from the band edges
+    pat_n    = 6,       # riser hollow pattern (2026-08-12, Nick: keyhole
+                        # dropped to the gear top frees the standoff to be
+                        # "hollowed out in a cool, abstract pattern along
+                        # the extrusion"): capsule pockets cut into the
+                        # INNER face, leaning with the swirl. pat_n =
+                        # positions attempted per segment (pier/ceiling
+                        # skips mean fewer survive). 0 deletes it.
+    pat_w    = 10.0,    # pocket width (capsule Ø) — also the printed
+                        # roof span, keep ~<= 12 for clean bridging
+    pat_d    = 20.0,    # pocket depth from the inner face. Clamped in
+                        # Cfg to bw - ogrv_d - 3 so the back wall never
+                        # thins the outer mount groove floor.
+    pat_tilt = 20.0,    # capsule long-axis lean from vertical, deg —
+                        # one direction, echoing the wafer swirl
+    pat_wall = 5.0,     # solid roof kept under the land plane AND the
+                        # neighbour clearance surface (press backing)
+    pat_end  = 5.0,     # solid arc kept at each joint face, deg
+                        # (dovetail moment path)
+    pat_gap  = 4.0,     # solid pier half-angle at a=0, deg: the inboard
+                        # jig fence prong butts the inner face there,
+                        # and the keyhole bore crosses the band
     dt_neck  = 12.0,    # dovetail neck width
     dt_tip   = 16.0,    # dovetail tip width
     dt_depth = 8.0,     # dovetail depth
@@ -163,6 +184,9 @@ class Cfg:
         self.z1      = self.z_bot + self.tmin
         self.rho_c   = self.Ri + self.bw / 2.0
         self.hole_r  = self.hole_D / 2.0
+        # hollow-pattern depth guard: keep >= 3 mm of wall behind the
+        # outer mount groove floor (the saddle/idler rest surface)
+        self.pat_d   = min(self.pat_d, self.bw - self.ogrv_d - 3.0)
         # keyhole is THROUGH the band by definition — the cure-jig rod must
         # reach the inboard fence (was a frozen 30.5 literal that drifted
         # from bw)
@@ -271,10 +295,16 @@ class Cfg:
 
 
 def keyhole_z(cf):
-    """Keyhole axis height, shared with cure_jig_stl.py. Constraints: bore
-    bottom 0.1 above z1 (rod hardware must swing over the bench), and the
-    axis cannot go higher (web under the pocket floor breaks out). Needs
-    theta >= ~4 deg or the bore exits the band top at y=0."""
+    """Keyhole axis height, shared with cure_jig_stl.py. 2026-08-12
+    (Nick): the bore BOTTOM sits just above the gear teeth (gear_F +
+    0.3). The old bore-above-slab-top rule guarded rod-hardware swing
+    that died with the clamp drivetrain (2026-07-27 tape rework), and
+    the lower bore vacates the inner face above it for the pat_* hollow
+    pattern. Upper bound unchanged: the axis cannot go higher than the
+    old z1 + hole_r + 0.1 (web under the pocket floor breaks out).
+    'spur' keeps the legacy height — its teeth span the full slab."""
+    if cf.g_bev or cf.g_face:
+        return cf.z_bot + cf.gear_F + 0.3 + cf.hole_r
     return cf.z1 + cf.hole_r + 0.1
 
 
@@ -768,6 +798,71 @@ def wafer_cut(cf, k, offset, height, extra_r=0.0):
     return on_wafer(cf, cyl, k, offset)
 
 
+def riser_pattern(cf):
+    """Hollow-pattern cutters for the riser (2026-08-12, Nick: with the
+    keyhole dropped to the gear top, "more of the standoff ... hollowed
+    out in a cool, abstract pattern along the extrusion"). Capsule
+    pockets cut pat_d deep into the INNER face — blind bays, so the
+    segment stays genus 1 — long axis leaning pat_tilt with the swirl.
+    Each capsule is the convex hull of two radial cylinders, so every
+    end is round BY CONSTRUCTION: no trims, no plane-sheared tops (the
+    coplanar-sliver trap). Margins, all enforced before a cutter is
+    built: floor 2 above the idler-groove chamfer roof (also under the
+    bracket bearings' roll band), roof pat_wall below BOTH the own-wafer
+    land plane and the neighbour clearance surface (sampled across the
+    window arc at Ri/rho_c/Ro — the leading corner squeezes and finally
+    drops its windows), pat_end deg of solid band at each joint face,
+    and a pat_gap solid pier at a=0 (jig prong seat; the keyhole bore
+    crosses the band there). Returns a list of cutters (possibly empty).
+    """
+    if cf.pat_n <= 0 or cf.pat_d <= 0 or cf.pat_w <= 0:
+        return []
+    tn = math.tan(cf.th)
+    rc = cf.pat_w / 2.0
+    zlo = cf.z_bot + cf.grv_z0 + cf.grv_h + cf.grv_d + 2.0
+    lim = cf.half - math.radians(cf.pat_end)
+    gap = math.radians(cf.pat_gap)
+    M, c, n = cf.wafer_frame(1)
+    cn = sum(ci * ni for ci, ni in zip(c, n))
+
+    def ceil_at(az):                       # governing roof, minus pat_wall
+        best = float('inf')
+        for rr in (cf.Ri, cf.rho_c, cf.Ro):
+            x, y = rr * math.cos(az), rr * math.sin(az)
+            best = min(best, y * tn - cf.landOff)          # own land
+            d = (x - c[0], y - c[1], -c[2])
+            ax = sum(di * ni for di, ni in zip(d, n))
+            if sum(di * di for di in d) - ax * ax <= (cf.r + cf.clr_edge) ** 2:
+                best = min(best,                            # neighbour cut
+                           (cn - cf.clrOff - x * n[0] - y * n[1]) / n[2])
+        return best - cf.pat_wall
+
+    L = cf.pat_d + 2.0
+
+    def rad_cyl(az, z):                    # radial cylinder, keyhole-style
+        return (Manifold.cylinder(L, rc, rc, 48)
+                .rotate([0.0, 90.0, 0.0])
+                .translate([cf.Ri - 2.0, 0.0, z])
+                .rotate([0.0, 0.0, math.degrees(az)]))
+
+    cuts = []
+    for j in range(cf.pat_n):
+        aj = -lim + (j + 0.5) * 2.0 * lim / cf.pat_n
+        zt = min(ceil_at(aj + s) for s in (-0.08, -0.04, 0.0, 0.04, 0.08))
+        if zt - zlo < cf.pat_w + 2.0:
+            continue                       # squeezed out (leading corner)
+        z1, z2 = zlo + rc, zt - rc
+        da = (z2 - z1) * math.tan(math.radians(cf.pat_tilt)) / cf.rho_c / 2.0
+        wa = rc / cf.Ri                    # capsule half-width as arc
+        e0, e1 = aj - da - wa, aj + da + wa
+        if e0 < -lim or e1 > lim:
+            continue                       # leans past a joint margin
+        if e0 < gap and e1 > -gap:
+            continue                       # touches the a=0 pier
+        cuts.append((rad_cyl(aj - da, z1) + rad_cyl(aj + da, z2)).hull())
+    return cuts
+
+
 def build_segment(cf):
     tn = math.tan(cf.th)
     # 1-2. band, trimmed by its own wafer's land plane:  z <= y*tan(th) - landOff
@@ -851,6 +946,11 @@ def build_segment(cf):
                                  cf.Ro - cf.ogrv_d, cf.facets) \
                  .translate([0, 0, oz + cf.ogrv_w - 1.0])
         seg = seg - og - ch
+    # 9. riser hollow pattern: blind capsule bays in the inner face —
+    #    subtractive only, so every structural gate downstream can only
+    #    get easier; genus is untouched (bays, not tunnels)
+    for cut in riser_pattern(cf):
+        seg = seg - cut
     # drop zero-volume degenerate specks (glancing spiral-tooth/clearance
     # intersections shed them; they survive as phantom extra solids in the
     # STEP round-trip even though the STL weld absorbs them)
@@ -1029,9 +1129,15 @@ def main():
         print(f"  gear    {cf.tps}T/seg × {cf.N} = {cf.teeth}T  module {cf.gear_m}  "
               f"pitch Ø{2*cf.g_pitch:.0f}  tip r{cf.g_tip:.1f}  root r{cf.g_root:.1f}")
     print(f"  z       flat bottom {cf.z_bot:.2f}   slab top {cf.z1:.2f}")
-    print(f"  keyhole Ø{cf.hole_D} radial at a=0, z={keyhole_z(cf):.2f}, "
+    print(f"  keyhole Ø{cf.hole_D} radial at a=0, z={keyhole_z(cf):.2f} "
+          f"(bore bottom {keyhole_z(cf) - cf.hole_r - cf.z_bot:.2f} above "
+          f"the flat bottom, gear top {cf.gear_F if (cf.g_bev or cf.g_face) else cf.tmin:.1f}), "
           f"{'THROUGH' if cf.hole_dep >= cf.bw else 'blind'} "
-          f"({cf.hole_dep:.1f} deep from the outer face)\n")
+          f"({cf.hole_dep:.1f} deep from the outer face)")
+    npat = len(riser_pattern(cf))
+    print(f"  pattern {npat} capsule bays survive of {cf.pat_n} attempted "
+          f"(w {cf.pat_w}, depth {cf.pat_d:.1f}, lean {cf.pat_tilt}°, "
+          f"pier ±{cf.pat_gap}°, joints ±{cf.pat_end}° solid)\n")
 
     seg = build_segment(cf)
     bodies = write_stl(seg, os.path.join(a.out, 'segment.stl'))

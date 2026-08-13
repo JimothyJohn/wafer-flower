@@ -97,13 +97,24 @@ dead (added `b4a21e2`, reverted `0bfc53d`); if it lingers in the OnShape
 doc it's a stale paste, delete it there. Motor housing design happens
 outside the FS.
 
-### Keyhole / standoff idea (not yet implemented)
+### Keyhole drop + riser hollow pattern — SHIPPED (same day)
 
-Move the keyhole **down so the bottom of the hole sits just above the gear
-teeth**. That frees the wafer standoff above it to be **hollowed out in an
-abstract pattern along the extrusion** — cosmetic mass removal. Needs the
-`keyhole_z()` derivation in `segment_stl.py` revisited (it currently
-derives the axis from the bore radius above the slab top).
+`keyhole_z()` now puts the **bore bottom 0.3 above the gear teeth**
+(bevel45: 9.80 vs 9.5 gear top; face: 6.80 vs 6.5; spur keeps legacy),
+and the vacated inner face gets the **hollow pattern**: capsule pockets
+20 mm deep into the inner face, Ø10, leaning 20° with the swirl, sized
+per-window to the real ceilings (own land plane, neighbour clearance —
+the leading-corner windows drop out on their own, 4 of 6 survive at
+defaults). Blind bays, so genus stays 1; a solid pier stays at a=0 for
+the jig prong and the keyhole. Segment 231 → 214 cm³ (−7 %).
+
+All knobs are `pat_*` CLI flags on `segment_stl.py` — count, width,
+depth, lean, wall, joint margin, pier — so the "cool, abstract" part is
+one command away from taste-tuning. Every downstream gate re-ran green:
+segment (both drive modes), 14 jig checks (fences follow `keyhole_z()`
+automatically), 12 coupon, 12 bracket, viewer `--verify`, STEP
+round-trip. Known drift: the docs calculator's mass model doesn't know
+the pattern yet (~7 % over-read).
 
 ### Fasteners and cabling (open)
 

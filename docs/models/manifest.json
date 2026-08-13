@@ -33,6 +33,13 @@
   "hole_D": 6.5,
   "pocket_d": 1.0,
   "pocket_m": 4.0,
+  "pat_n": 6,
+  "pat_w": 10.0,
+  "pat_d": 20.0,
+  "pat_tilt": 20.0,
+  "pat_wall": 5.0,
+  "pat_end": 5.0,
+  "pat_gap": 4.0,
   "dt_neck": 12.0,
   "dt_tip": 16.0,
   "dt_depth": 8.0,
@@ -42,7 +49,7 @@
   "facets": 512
  },
  "sector_deg": 40.0,
- "keyhole_z": -24.310861412148725,
+ "keyhole_z": -29.61086141214873,
  "z_bot": -42.660861412148726,
  "parts": [
   {
@@ -50,7 +57,7 @@
    "name": "segment",
    "group": "segment",
    "color": "#B9A87E",
-   "volume_cm3": 231.042
+   "volume_cm3": 214.127
   },
   {
    "file": "wafer.stl",
@@ -64,14 +71,14 @@
    "name": "jig_outboard",
    "group": "out",
    "color": "#D97742",
-   "volume_cm3": 427.472
+   "volume_cm3": 432.372
   },
   {
    "file": "jig_inboard.stl",
    "name": "jig_inboard",
    "group": "inboard",
    "color": "#3E7CB1",
-   "volume_cm3": 154.591
+   "volume_cm3": 156.178
   },
   {
    "file": "rod.stl",

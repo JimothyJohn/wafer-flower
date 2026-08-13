@@ -57,25 +57,39 @@ iterates the FRAME METHOD; mounting/hanging is deferred.
   Top, offset −(t_wafer/2 + bondline).
 - Ø6.5 (M6) JIG KEYHOLE is RADIAL and THROUGH (2026-07-24; was Ø5/#10-24):
   in from the OUTER arc face at a=0, hole_dep = bw+0.5 so it exits the
-  inner face, axis at z1 + hole_r + 0.1 = z1+3.35 (13.35 mm above the flat
-  bottom) — keyhole_z() now DERIVES from the bore radius so the bore bottom
-  stays exactly 0.1 mm above the SLAB TOP z1 at any hole_D (reproduces the
-  old z1+2.6 at Ø5; the gear band top is lower still at z_bot+gear_F, so
-  the rod clears the teeth by ~5.6). The raised axis exists so the jig pin
-  can pass through to an inboard fence (the second historical reason —
-  swing room for rotating closures — died with the clamp drivetrain,
-  2026-07-27 tape rework; nothing rotates on the pin any more). The
-  printed Ø6.2 pin (or an M6 rod, Ø6.0) slides through the printed Ø6.5
-  hole with NO reaming. Bore exits 0.1 mm
-  ABOVE the gear flange (teeth untouched, mesh check still 0.000); the web
-  under the pocket floor is now ~0.9 mm (was 2.4 at Ø5) — thin but
-  unloaded; genus 1 proves it unbroken. The axis CANNOT go higher (web →
-  breakout). Needs rise > zoff+hole_r+1.5 → θ ≥ ~4°; keyhole_z() in
-  segment_stl.py is the single source of truth. A through hole makes the
-  segment genus 1 — expected, not the pocket-tunnel bug. Segments printed
-  with the old Ø5 (or old blind) hole: drill through from the outer face at
-  6.5 mm (a mis-height hole just needs the jig bores redrilled to match,
-  the fences don't care structurally).
+  inner face. AXIS DROPPED 2026-08-12 (Nick, print notes): bore BOTTOM
+  now sits gear_F + 0.3 above the flat bottom — just above the gear
+  teeth (bevel45 9.80 vs 9.5 gear top, face 6.80 vs 6.5; 'spur' keeps
+  the legacy z1 + hole_r + 0.1). The vacated inner face above it hosts
+  the pat_* hollow pattern (next bullet). The old bore-above-slab-top
+  rule guarded rod-hardware swing that died with the clamp drivetrain
+  (2026-07-27); the old ceiling note still binds — the axis cannot go
+  higher than z1 + hole_r + 0.1 (web under the pocket floor breaks out).
+  The printed Ø6.2 pin (or an M6 rod, Ø6.0) slides through the printed
+  Ø6.5 hole with NO reaming; the bore now crosses the slab (through
+  hole, still genus 1 — expected, not the pocket-tunnel bug). All 14
+  jig checks pass at the new height (fences derive from keyhole_z()) —
+  keyhole_z() in segment_stl.py stays the single source of truth.
+  Segments printed at the OLD height: the jig bores just get redrilled
+  to match, the fences don't care structurally.
+- RISER HOLLOW PATTERN (2026-08-12, Nick: keyhole drop "will allow for
+  more of the standoff for the wafer to be hollowed out in a cool,
+  abstract pattern along the extrusion"): pat_* params in segment_stl —
+  capsule pockets pat_d=20 deep in the INNER face (blind bays: genus
+  stays 1), Ø pat_w=10, leaning pat_tilt=20° with the swirl, built as
+  hulls of two radial cylinders so ends are round BY CONSTRUCTION (no
+  trims — plane-sheared capsule tops are a coplanar-sliver trap).
+  Margins enforced per window: floor 2 above the idler-groove chamfer
+  roof, roof pat_wall=5 under BOTH the own land plane and the neighbour
+  clearance surface (leading-corner windows shrink and drop out —
+  4 of pat_n=6 survive at defaults), pat_end=5° solid at each joint
+  (dovetail path), pat_gap=4° solid pier at a=0 (inboard fence prong
+  seat + keyhole crossing). Depth clamped in Cfg to bw − ogrv_d − 3 so
+  the back wall never thins the outer-groove floor. Segment 231 → 214
+  cm³ (~-7%); pat_n=0 deletes it. Subtractive only — every downstream
+  gate re-ran green (segment both modes, 14 jig, 12 coupon, 12 bracket,
+  viewer --verify, STEP round-trip). calc.js's mass model does NOT know
+  the pattern yet — it over-reads ~7% until retuned.
 - ADHESIVE POCKET, 1 mm deep, inset into the land. It meters glue and gives a
   positive bondline stop. It CANNOT self-centre the wafer: the whole band lies
   under the wafer's interior (rim is 55 mm inboard, 215 mm outboard, closest
