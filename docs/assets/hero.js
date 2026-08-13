@@ -133,12 +133,12 @@ const stations=[];   // {grp, wp} — grp spreads radially, wp lifts the wafer
     grp.add(new THREE.Mesh(g,mat));
     grp.add(new THREE.Mesh(fg,fmat));
     const wm=new THREE.MeshPhongMaterial({color:0x767e88,shininess:95,
-      specular:0xdde6f0,emissive:TINT[k%4]});
+      specular:0xdde6f0,emissive:TINT[k%4],transparent:true});
     const w=new THREE.Mesh(wg,wm); w.rotation.x=Math.PI/2;
     const p=new THREE.Group(); p.add(w); p.position.set(P.R,0,0); p.rotation.x=TH;
     const wp=new THREE.Group(); wp.add(p); grp.add(wp);
     ring.add(grp);
-    stations.push({grp,wp,ca:Math.cos(k*SEG),sa:Math.sin(k*SEG)});
+    stations.push({grp,wp,wm,ca:Math.cos(k*SEG),sa:Math.sin(k*SEG)});
   }
 })();
 
@@ -174,7 +174,10 @@ const pinion=new THREE.Group();
     new THREE.MeshPhongMaterial({color:0x232830,shininess:70}));
   shaft.position.y=80;
   pinion.add(shaft);
-  pinion.position.set(0,Gz.tip*Gz.kb+6,zBot+GEAR_F+4);
+  // small end down, tangent to the band cone at 12 o'clock:
+  // band silhouette z = zBot + (wall-tip radius − y); pinion lower edge
+  // z = zc − (RS + slope·(y − y_small)) — meet them at mid-face
+  pinion.position.set(0,303,zBot+15.3);
   scene.add(pinion);
 })();
 
@@ -183,9 +186,9 @@ const pinion=new THREE.Group();
 const KEYS=[
   {az:-1.12,pol:0.30,dist:1900,look:[0,-80,0],  ex:0},   // 0 TITLE
   {az:-0.58,pol:0.66,dist:1150,look:[0,40,0],   ex:0},   // 1 THE SWIRL
-  {az:-1.05,pol:1.08,dist:200, look:[0,296,zBot+12],ex:0}, // 2 THE DRIVE (macro)
+  {az:0.38,pol:1.24,dist:170, look:[0,296,zBot+12],ex:0}, // 2 THE DRIVE (macro, grazing)
   {az:-1.57,pol:1.42,dist:1450,look:[0,0,10],   ex:0},   // 3 THE EDGE
-  {az:-0.85,pol:0.40,dist:2300,look:[0,0,60],   ex:1},   // 4 THE BUILD
+  {az:-0.85,pol:0.72,dist:2300,look:[0,0,60],   ex:1},   // 4 THE BUILD
   {az:-1.12,pol:0.28,dist:2600,look:[0,-40,0],  ex:0},   // 5 CREDITS
 ];
 const secs=Array.prototype.slice.call(document.querySelectorAll('[data-shot]'));
@@ -205,7 +208,7 @@ function camState(y){
   return {
     az:lerp(A.az,B.az,f), pol:lerp(A.pol,B.pol,f), dist:lerp(A.dist,B.dist,f),
     look:[lerp(A.look[0],B.look[0],f),lerp(A.look[1],B.look[1],f),lerp(A.look[2],B.look[2],f)],
-    ex:lerp(A.ex,B.ex,f), shot:i
+    ex:lerp(A.ex,B.ex,f), shot:i, s:i+f
   };
 }
 
@@ -246,14 +249,20 @@ let tPrev=0;
     magenta.position.set(-900*Math.cos(a),-250-300*Math.sin(a),350);
   }
   const st=camState(scrollY||window.pageYOffset||0);
-  // explode: segments spread radially, wafers lift off their tape
+  // explode: segments spread radially, wafers lift off their tape;
+  // x-ray: wafers ghost fully on the drive mesh, half during the build
   const e=st.ex;
+  const ghost=Math.max(Math.max(0,1-Math.abs(st.s-2))*0.92,
+                       Math.max(0,1-Math.abs(st.s-4))*0.5);
   for(let k=0;k<stations.length;k++){
     const s=stations[k];
     s.grp.position.set(s.ca*e*150,s.sa*e*150,0);
-    s.wp.position.z=e*90;
+    s.wp.position.z=e*150;
+    s.wm.opacity=1-ghost;
   }
   pinion.visible=e<0.55;
+  key.intensity=0.75+e*0.55;            // lift the prints out of the dark mid-explode
+  document.body.classList.toggle('ending',st.shot>=5);
   const az=st.az+(still?0:pAz), pol=st.pol+(still?0:pPol);
   camera.position.set(
     st.look[0]+st.dist*Math.sin(pol)*Math.cos(az),

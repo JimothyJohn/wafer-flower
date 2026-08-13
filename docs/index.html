@@ -4,15 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wafer Halo</title>
-<meta name="description" content="Nine 300 mm silicon wafers in an overlapping swirl — a one-metre kinetic wall piece that turns at two revolutions per minute.">
+<meta name="description" content="Nine 300 mm silicon wafers in an overlapping swirl — a one-metre kinetic wall piece turning at two revolutions per minute. Scroll to play the reel.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#08090b; --panel:#0d0f13; --ink:#eceae5; --dim:#959ca7;
+  --bg:#08090b; --ink:#eceae5; --dim:#959ca7;
   --line:rgba(235,238,245,.09); --line2:rgba(235,238,245,.16);
-  --gold:#c9a227; --magenta:#c2497b; --blue:#5a6fe0; --teal:#25b3a1;
   --oxide:linear-gradient(90deg,#c9a227 0%,#c2497b 32%,#4457c4 66%,#1e9e8e 100%);
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -23,49 +22,95 @@ a{color:inherit}
 .mono{font-family:'IBM Plex Mono',monospace}
 
 /* film grain over everything */
-body::after{content:"";position:fixed;inset:-50%;z-index:40;pointer-events:none;opacity:.05;
+body::after{content:"";position:fixed;inset:-50%;z-index:44;pointer-events:none;opacity:.05;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- the reel: fixed canvas + glow ---------- */
+.glow{position:fixed;left:50%;top:42%;width:76vmin;height:76vmin;z-index:0;
+  transform:translate(-50%,-50%);pointer-events:none;border-radius:50%;
+  background:conic-gradient(from 20deg,#c9a22722,#c2497b2e,#4457c42e,#1e9e8e22,#c9a22722);
+  filter:blur(70px);animation:glowspin 40s linear infinite}
+@keyframes glowspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+#reel{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:1}
+.vig{position:fixed;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(ellipse 92% 80% at 50% 44%,transparent 52%,rgba(8,9,11,.6) 88%,rgba(8,9,11,.85) 100%)}
+.nogl #reel,.nogl .glow{display:none}
+.nogl .vig{background:url('media/hero.png') center/cover no-repeat;filter:saturate(.6) brightness(.4)}
+@media(prefers-reduced-motion:reduce){.glow{animation:none}}
+
+/* ---------- letterbox bars: cinema mode engages once you roll ---------- */
+.lbx{position:fixed;left:0;right:0;height:0;background:#040507;z-index:30;
+  transition:height .7s cubic-bezier(.6,0,.2,1)}
+.lbx.top{top:0}.lbx.bot{bottom:0}
+body.reel .lbx{height:6vh}
+@media(max-width:640px){body.reel .lbx{height:4vh}}
 
 /* ---------- top nav ---------- */
 nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;
   justify-content:space-between;padding:20px 32px;font-family:'IBM Plex Mono',monospace;
   font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-  background:linear-gradient(rgba(8,9,11,.85),rgba(8,9,11,0))}
+  background:linear-gradient(rgba(8,9,11,.85),rgba(8,9,11,0));transition:transform .7s cubic-bezier(.6,0,.2,1)}
 nav .brand{color:var(--ink);text-decoration:none;font-weight:600}
 nav .brand em{font-style:normal;background:var(--oxide);-webkit-background-clip:text;background-clip:text;color:transparent}
 nav .links{display:flex;gap:22px}
 nav .links a{color:var(--dim);text-decoration:none;transition:color .25s}
 nav .links a:hover{color:var(--ink)}
-@media(max-width:760px){nav .links{gap:13px}nav .links a.opt{display:none}}
+body.reel nav{transform:translateY(calc(6vh - 100% - 20px))}
+body.reel nav:hover,body.reel nav:focus-within{transform:none}
+@media(max-width:640px){nav .links{gap:13px}}
 
-/* ---------- hero ---------- */
-header{position:relative;height:100vh;min-height:620px}
-#hero3d{position:absolute;inset:0;width:100%;height:100%;display:block}
-.nogl #hero3d{display:none}
-.nogl header{background:url('media/hero.png') center/cover no-repeat;filter:saturate(.6) brightness(.55)}
-/* soft iridescent halo behind the 3D ring */
-header .glow{position:absolute;left:50%;top:42%;width:76vmin;height:76vmin;
-  transform:translate(-50%,-50%);pointer-events:none;border-radius:50%;
-  background:conic-gradient(from 20deg,#c9a22722,#c2497b2e,#4457c42e,#1e9e8e22,#c9a22722);
-  filter:blur(70px);animation:glowspin 40s linear infinite}
-@keyframes glowspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){header .glow{animation:none}}
-header .vignette{position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse 88% 72% at 50% 44%,transparent 45%,rgba(8,9,11,.72) 84%,var(--bg) 100%)}
-header .haze{position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(rgba(8,9,11,.35),transparent 30%,transparent 62%,var(--bg) 97%)}
-.hero-copy{position:absolute;left:0;right:0;bottom:9vh;z-index:5;text-align:center;padding:0 24px}
+/* ---------- slate HUD + progress rail ---------- */
+.slate{position:fixed;left:32px;bottom:calc(6vh + 16px);z-index:31;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.24em;color:var(--dim);
+  display:flex;gap:26px;opacity:0;transition:opacity .7s}
+.slate .rec{color:#c2497b}
+.slate .rec::before{content:"●";margin-right:7px;animation:blink 2.2s steps(1) infinite}
+@keyframes blink{50%{opacity:.25}}
+body.reel .slate{opacity:1}
+body.ending .slate,body.ending .rail{opacity:0}
+@media(max-width:640px){.slate{left:16px;gap:14px}.slate .hidesm{display:none}}
+@media(prefers-reduced-motion:reduce){.slate .rec::before{animation:none}}
+.rail{position:fixed;right:26px;top:50%;transform:translateY(-50%);z-index:31;
+  display:flex;flex-direction:column;gap:10px;opacity:0;transition:opacity .7s}
+body.reel .rail{opacity:1}
+.rail i{width:5px;height:22px;background:var(--line2);display:block;transition:background .4s}
+.rail i.on{background:var(--ink)}
+@media(max-width:640px){.rail{right:12px}}
+
+/* ---------- shots ---------- */
+main{position:relative;z-index:5}
+.shot{height:190vh;position:relative}
+.shot .cap{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;
+  justify-content:flex-end;align-items:center;text-align:center;
+  padding:0 24px calc(6vh + 64px);pointer-events:none}
+.kick{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--dim);margin-bottom:16px}
+.kick b{background:var(--oxide);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600}
+.line{font-weight:400;font-size:clamp(30px,4.6vw,54px);line-height:1.12;letter-spacing:-.01em;
+  max-width:21ch;text-shadow:0 2px 30px rgba(8,9,11,.9),0 0 8px rgba(8,9,11,.6)}
+.line em{font-style:italic;background:linear-gradient(105deg,#e8e2d2 0%,#e3a0be 38%,#9fb0f0 68%,#8fd8cd 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;
+  color:var(--dim);margin-top:18px;text-shadow:0 1px 16px rgba(8,9,11,.9)}
+.cap>*{opacity:0;transform:translateY(22px);transition:opacity .8s ease,transform .8s ease}
+.cap.in>*{opacity:1;transform:none}
+.cap.in>.line{transition-delay:.1s}.cap.in>.sub{transition-delay:.22s}
+@media(prefers-reduced-motion:reduce){.cap>*{opacity:1;transform:none;transition:none}}
+
+/* ---------- title shot ---------- */
+.title{height:100vh;min-height:620px}
+.title .cap{padding-bottom:9vh}
 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.34em;
   text-transform:uppercase;color:var(--dim);margin-bottom:18px}
 .eyebrow b{background:linear-gradient(90deg,#e3c65a,#e37bab,#94a6f5,#5ed4c3);
   -webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600}
-h1{font-weight:400;font-size:clamp(64px,12vw,168px);line-height:.92;letter-spacing:-.015em}
+h1{font-weight:400;font-size:clamp(58px,11vw,160px);line-height:.92;letter-spacing:-.015em}
 h1 em{font-style:italic;background:linear-gradient(105deg,#e8e2d2 0%,#e3a0be 38%,#9fb0f0 68%,#8fd8cd 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent}
-.hero-sub{max-width:620px;margin:22px auto 0;color:var(--dim);font-size:21px;line-height:1.5}
+.hero-sub{max-width:600px;margin:20px auto 0;color:var(--dim);font-size:20px;line-height:1.5}
 .hero-sub b{color:var(--ink);font-weight:400}
-.hero-cta{margin-top:30px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
-  font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em}
+.hero-cta{margin-top:28px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;pointer-events:auto}
 .hero-cta a{text-decoration:none;padding:11px 22px;border-radius:999px;transition:all .25s}
 .hero-cta .solid{background:var(--ink);color:#0a0b0d}
 .hero-cta .solid:hover{background:#fff}
@@ -77,71 +122,50 @@ h1 em{font-style:italic;background:linear-gradient(105deg,#e8e2d2 0%,#e3a0be 38%
 @keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,7px)}}
 @media(prefers-reduced-motion:reduce){.scrollcue{animation:none}}
 
-/* ---------- shared section chrome ---------- */
-main{position:relative;z-index:2}
-section{max-width:1080px;margin:0 auto;padding:110px 32px 0}
-.k{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.3em;
-  text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:14px;margin-bottom:26px}
-.k::before{content:"";width:34px;height:1px;background:var(--oxide)}
-h2{font-weight:400;font-size:clamp(36px,5.2vw,60px);line-height:1.06;letter-spacing:-.01em;max-width:16ch}
-h2 em{font-style:italic;color:transparent;background:var(--oxide);-webkit-background-clip:text;background-clip:text}
-.lede{margin-top:26px;color:var(--dim);max-width:58ch;font-size:20px}
-.lede b{color:var(--ink);font-weight:400}
-.cols{display:grid;grid-template-columns:1.15fr .85fr;gap:60px;align-items:start}
-@media(max-width:820px){.cols{grid-template-columns:1fr;gap:28px}}
-.facts{border-top:1px solid var(--line);margin-top:8px}
-.facts .f{display:flex;justify-content:space-between;gap:18px;padding:13px 2px;border-bottom:1px solid var(--line);font-size:15px}
-.facts .f .fk{color:var(--dim)}
-.facts .f .fv{font-family:'IBM Plex Mono',monospace;font-size:13px;white-space:nowrap;color:var(--ink)}
-
-/* reveal on scroll */
+/* ---------- end credits ---------- */
+.credits{position:relative;z-index:6;padding:38vh 24px 0;
+  background:linear-gradient(rgba(8,9,11,0) 0%,rgba(8,9,11,.88) 26vh,var(--bg) 38vh)}
+.credwrap{max-width:760px;margin:0 auto;text-align:center}
+.credkick{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--dim)}
+.credits h2{font-weight:400;font-size:clamp(38px,5.6vw,64px);line-height:1.04;letter-spacing:-.01em;margin:18px 0 60px}
+.credits h2 em{font-style:italic;color:transparent;background:var(--oxide);-webkit-background-clip:text;background-clip:text}
+.roll{display:grid;grid-template-columns:1fr 1fr;gap:14px 34px;margin:0 auto;max-width:640px}
+.roll .cl{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--dim);padding-top:7px}
+.roll .cv{text-align:left;font-size:21px;line-height:1.35}
+@media(max-width:560px){.roll{grid-template-columns:1fr;gap:2px}
+  .roll .cl{text-align:center;padding-top:18px}.roll .cv{text-align:center}}
 .rv{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s ease}
 .rv.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
 
-/* ---------- stat band ---------- */
-.stats{max-width:none;padding:130px 0 0}
-.statgrid{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-@media(max-width:1000px){.statgrid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:560px){.statgrid{grid-template-columns:repeat(2,1fr)}}
-.stat{padding:34px 26px 30px;border-right:1px solid var(--line);position:relative;overflow:hidden}
-.stat:last-child{border-right:none}
-@media(max-width:1000px){.stat:nth-child(3n){border-right:none}.stat:nth-child(-n+3){border-bottom:1px solid var(--line)}}
-@media(max-width:560px){.stat{border-right:none}.stat:nth-child(odd){border-right:1px solid var(--line)}.stat:nth-child(-n+4){border-bottom:1px solid var(--line)}}
-.stat .v{font-size:clamp(30px,3.4vw,44px);line-height:1;letter-spacing:-.01em}
-.stat .v small{font-size:.55em;color:var(--dim)}
-.stat .l{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-top:12px}
-.stat::after{content:"";position:absolute;left:0;top:0;width:100%;height:2px;background:var(--oxide);
-  transform:scaleX(0);transform-origin:left;transition:transform .9s ease .15s}
-.stat.in::after{transform:scaleX(1)}
-
-/* ---------- numbered story rows ---------- */
-.num{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);letter-spacing:.2em;margin-bottom:14px}
-.num b{color:transparent;background:var(--oxide);-webkit-background-clip:text;background-clip:text;font-weight:600}
-
-/* ---------- deeper grid ---------- */
-.deep{padding-bottom:40px}
-.deepgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
-  border:1px solid var(--line);margin-top:44px}
-@media(max-width:820px){.deepgrid{grid-template-columns:1fr}}
-.dcard{background:var(--panel);padding:30px 28px 34px;text-decoration:none;display:block;
-  position:relative;overflow:hidden;transition:background .3s}
-.dcard:hover{background:#12151b}
-.dcard .dn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.26em;color:var(--dim);text-transform:uppercase}
-.dcard h3{font-weight:400;font-size:27px;margin:12px 0 10px}
-.dcard h3 .arr{display:inline-block;transition:transform .3s;color:var(--dim)}
-.dcard:hover h3 .arr{transform:translateX(6px);color:var(--ink)}
-.dcard p{color:var(--dim);font-size:15.5px;line-height:1.5}
-.dcard::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;background:var(--oxide);
+/* behind the scenes */
+.bts{margin:110px auto 0;max-width:820px}
+.btsk{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:14px;
+  justify-content:center;margin-bottom:34px}
+.btsk::before,.btsk::after{content:"";width:34px;height:1px;background:var(--oxide)}
+.btsgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line)}
+@media(max-width:680px){.btsgrid{grid-template-columns:1fr}}
+.bcard{background:#0d0f13;padding:26px 24px 30px;text-decoration:none;display:block;
+  text-align:left;position:relative;overflow:hidden;transition:background .3s}
+.bcard:hover{background:#12151b}
+.bcard .dn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.26em;color:var(--dim);text-transform:uppercase}
+.bcard h3{font-weight:400;font-size:24px;margin:10px 0 8px}
+.bcard h3 .arr{display:inline-block;transition:transform .3s;color:var(--dim)}
+.bcard:hover h3 .arr{transform:translateX(6px);color:var(--ink)}
+.bcard p{color:var(--dim);font-size:15px;line-height:1.5}
+.bcard::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;background:var(--oxide);
   opacity:0;transition:opacity .3s}
-.dcard:hover::before{opacity:1}
-.docstrip{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.bcard:hover::before{opacity:1}
+.docstrip{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px;justify-content:center}
 .docstrip a{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--dim);text-decoration:none;
   border:1px solid var(--line2);border-radius:999px;padding:7px 15px;transition:all .25s}
 .docstrip a:hover{color:var(--ink);border-color:var(--dim)}
 
-/* ---------- footer ---------- */
-footer{margin-top:110px;border-top:1px solid var(--line);padding:34px 32px 46px;
+footer{margin-top:110px;border-top:1px solid var(--line);padding:34px 32px calc(6vh + 46px);
   display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
   font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
 footer a{color:var(--dim);text-decoration:none}
@@ -153,196 +177,158 @@ footer a:hover{color:var(--ink)}
 <nav>
   <a class="brand" href="index.html">WAFER <em>HALO</em></a>
   <div class="links">
-    <a class="opt" href="design.html">Design</a>
-    <a class="opt" href="engineering.html">Engineering</a>
-    <a class="opt" href="production.html">Production</a>
     <a href="customize.html">Customize</a>
     <a href="viewer.html">Viewer</a>
+    <a href="engineering.html">Engineering</a>
   </div>
 </nav>
 
-<header>
-  <div class="glow"></div>
-  <canvas id="hero3d"></canvas>
-  <div class="vignette"></div>
-  <div class="haze"></div>
-  <div class="hero-copy">
+<div class="glow"></div>
+<canvas id="reel"></canvas>
+<div class="vig"></div>
+<div class="lbx top"></div>
+<div class="lbx bot"></div>
+
+<div class="slate">
+  <span class="rec">REC</span>
+  <span id="slateShot">SHOT 00 / 05 — TITLE</span>
+  <span id="slateAngle" class="hidesm">RING 000.0°</span>
+</div>
+<div class="rail"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+
+<main>
+
+<section class="shot title" data-shot>
+  <div class="cap in">
     <div class="eyebrow">HALO-001 · REV B.6 · <b>KINETIC WALL SCULPTURE</b></div>
     <h1>Nine wafers,<br>one slow <em>revolution</em></h1>
     <p class="hero-sub">A one-metre swirl of Ø300&nbsp;mm silicon wafers, turning at
       <b>two revolutions per minute</b>. No visible frame, no visible hardware —
       from the room, silicon only.</p>
     <div class="hero-cta">
-      <a class="solid" href="#idea">Explore the design ↓</a>
+      <a class="solid" href="#s1">▸ Roll — scroll the reel</a>
       <a class="ghost" href="customize.html">Customize your own →</a>
     </div>
   </div>
   <div class="scrollcue">SCROLL</div>
-</header>
+</section>
 
-<main>
-
-<section id="idea" class="rv">
-  <div class="num"><b>01</b> — THE ILLUSION</div>
-  <div class="cols">
-    <div>
-      <h2>The frame is designed to <em>disappear</em>.</h2>
-      <p class="lede">Each wafer tilts <b>5° about its own radial axis</b>, leading edge
-        proud, so nine discs shingle into one continuous swirl. The printed ring that
-        carries them sits entirely inside the <b>hide window</b> — the band of wall that
-        every front sightline misses behind the overlapping silicon. What the room reads
-        is a floating, turning iris.</p>
-    </div>
-    <div class="facts">
-      <div class="f"><span class="fk">Wafers</span><span class="fv">9 × Ø300 × 0.775 mm</span></div>
-      <div class="f"><span class="fk">Tilt, radial axis</span><span class="fv">θ = 5°</span></div>
-      <div class="f"><span class="fk">Neighbor z-clearance</span><span class="fv">3.0 mm held</span></div>
-      <div class="f"><span class="fk">Ring band</span><span class="fv">r 255–285, hidden</span></div>
-      <div class="f"><span class="fk">Fasteners on the frame</span><span class="fv">zero</span></div>
-    </div>
+<section class="shot" id="s1" data-shot>
+  <div class="cap">
+    <div class="kick"><b>SHOT 01</b> — THE SWIRL</div>
+    <div class="line">Nine discs, tilted 5°, shingled into one <em>continuous iris</em>.</div>
+    <div class="sub">θ = 5° about each radial axis · 3.0 mm held between neighbours</div>
   </div>
 </section>
 
-<section class="stats">
-  <div class="statgrid">
-    <div class="stat rv"><div class="v">Ø999<small> mm</small></div><div class="l">overall diameter</div></div>
-    <div class="stat rv"><div class="v">54<small> mm</small></div><div class="l">off the wall</div></div>
-    <div class="stat rv"><div class="v">~2<small> rpm</small></div><div class="l">ring speed</div></div>
-    <div class="stat rv"><div class="v">1.77<small> kg</small></div><div class="l">complete assembly</div></div>
-    <div class="stat rv"><div class="v">1.15<small> kg</small></div><div class="l">of that is silicon</div></div>
-    <div class="stat rv"><div class="v">0</div><div class="l">visible hardware</div></div>
+<section class="shot" data-shot>
+  <div class="cap">
+    <div class="kick"><b>SHOT 02</b> — THE DRIVE</div>
+    <div class="line">A 108-tooth bevel gear hides behind the silicon. A 20-tooth pinion turns it from <em>above</em>.</div>
+    <div class="sub">108 T : 20 T = 5.4 : 1 · mesh sweep 0.00000 mm³ · ~2 rpm</div>
   </div>
 </section>
 
-<section class="rv">
-  <div class="num"><b>02</b> — THE DRIVE</div>
-  <div class="cols">
-    <div>
-      <h2>A 108-tooth gear, hiding behind the <em>silicon</em>.</h2>
-      <p class="lede">A 45° bevel ring gear is generated straight into the segments —
-        <b>12 teeth per segment, 108 around</b>, the pattern tiling seamlessly across
-        every joint. A 20-tooth pinion engages from the top at <b>5.4 : 1</b>, and the
-        whole ring hangs on two flanged bearings riding an internal groove directly
-        under the motor. Torque demand is a few millinewton-metres: one small
-        gearmotor, PWM-dialed to a gallery-slow two revolutions per minute.</p>
-    </div>
-    <div class="facts">
-      <div class="f"><span class="fk">Ring : pinion</span><span class="fv">108T : 20T = 5.4 : 1</span></div>
-      <div class="f"><span class="fk">Mesh interference, swept</span><span class="fv">0.00000 mm³</span></div>
-      <div class="f"><span class="fk">Suspension</span><span class="fv">2 × F625ZZ bearings</span></div>
-      <div class="f"><span class="fk">Joint margin, hung</span><span class="fv">&gt;3×</span></div>
-      <div class="f"><span class="fk">Wall mount</span><span class="fv">drywall anchors, 25 mm grid</span></div>
-    </div>
+<section class="shot" data-shot>
+  <div class="cap">
+    <div class="kick"><b>SHOT 03</b> — THE EDGE</div>
+    <div class="line">54 mm off the wall. The frame lives where <em>no sightline reaches</em>.</div>
+    <div class="sub">hide window r 240–416 · ring hangs on two hidden bearings</div>
   </div>
 </section>
 
-<section class="rv">
-  <div class="num"><b>03</b> — THE BOND</div>
-  <div class="cols">
-    <div>
-      <h2>Taped, not glued — the numbers say <em>tape wins</em>.</h2>
-      <p class="lede">Each wafer lands once on acrylic foam tape. Gravity loads the bond
-        at <b>0.13&nbsp;kPa against ~500&nbsp;kPa</b> of capability; the load that actually
-        governs is thermal — silicon and plastic breathing at different rates — and even
-        that sits <b>~47× under the limit</b> across a 20&nbsp;K swing. The 1.1&nbsp;mm foam
-        bondline absorbs the mismatch a rigid epoxy would drive straight into the wafer.</p>
-    </div>
-    <div class="facts">
-      <div class="f"><span class="fk">Gravity shear</span><span class="fv">0.13 kPa (~4000×)</span></div>
-      <div class="f"><span class="fk">Thermal shear, ΔT 20 K</span><span class="fv">6.0 kPa (~47×)</span></div>
-      <div class="f"><span class="fk">Bondline</span><span class="fv">1.1 mm acrylic foam</span></div>
-      <div class="f"><span class="fk">Landings per wafer</span><span class="fv">exactly one</span></div>
-      <div class="f"><span class="fk">Rigid epoxy</span><span class="fv">banned</span></div>
-    </div>
+<section class="shot" data-shot>
+  <div class="cap">
+    <div class="kick"><b>SHOT 04</b> — THE BUILD</div>
+    <div class="line">Nine identical prints. Dovetails slide in Z. Each wafer lands <em>exactly once</em>.</div>
+    <div class="sub">69.2 g · 2 h 20 per segment · acrylic foam tape, one landing</div>
   </div>
 </section>
 
-<section class="rv">
-  <div class="num"><b>04</b> — THE BUILD</div>
-  <div class="cols">
-    <div>
-      <h2>Nine identical prints, dovetailed in <em>one direction</em>.</h2>
-      <p class="lede">One segment design, printed nine times — <b>69&nbsp;g and 2h20
-        each</b> — sliding together on dovetails in Z, no tools, no fasteners. A printed
-        bench jig funnels each wafer onto its tape in a single guided drop, centred by
-        four chamfered pegs to a ±0.15&nbsp;mm window. Every solid is CSG-generated and
-        gate-checked in CI before it earns a print.</p>
+<section class="credits" data-shot>
+  <div class="credwrap">
+    <div class="credkick rv">END CREDITS</div>
+    <h2 class="rv">A kinetic wall piece <em>in silicon</em></h2>
+    <div class="roll">
+      <div class="cl rv">Starring</div>          <div class="cv rv">9 × Ø300 mm silicon wafers</div>
+      <div class="cl rv">Supporting cast</div>   <div class="cv rv">9 identical printed segments, 69 g each</div>
+      <div class="cl rv">Drivetrain</div>        <div class="cv rv">108 T bevel ring · 20 T pinion · 5.4 : 1</div>
+      <div class="cl rv">Suspension</div>        <div class="cv rv">2 × F625ZZ flanged bearings, hidden groove</div>
+      <div class="cl rv">The bond</div>          <div class="cv rv">acrylic foam tape · thermal governs at 47×</div>
+      <div class="cl rv">Footprint</div>         <div class="cv rv">Ø999 mm · 54 mm off the wall · 1.77 kg</div>
+      <div class="cl rv">Runtime</div>           <div class="cv rv">30 s per revolution · continuous</div>
+      <div class="cl rv">Visible hardware</div>  <div class="cv rv">none</div>
     </div>
-    <div class="facts">
-      <div class="f"><span class="fk">Per segment, PLA @10%</span><span class="fv">69.2 g · 2h20</span></div>
-      <div class="f"><span class="fk">Part height</span><span class="fv">47.7 mm</span></div>
-      <div class="f"><span class="fk">Joints</span><span class="fv">dovetail, slide in Z</span></div>
-      <div class="f"><span class="fk">Wafer placement</span><span class="fv">jig drop, ±0.15 mm</span></div>
-      <div class="f"><span class="fk">CI gates per revision</span><span class="fv">40+ boolean checks</span></div>
-    </div>
-  </div>
-</section>
 
-<section class="deep rv">
-  <div class="num"><b>05</b> — GO DEEPER</div>
-  <h2>The engineering, when you <em>want it</em>.</h2>
-  <div class="deepgrid">
-    <a class="dcard" href="customize.html">
-      <div class="dn">Parametric</div>
-      <h3>Customize <span class="arr">→</span></h3>
-      <p>The original live hub: drag sliders, watch geometry and statics re-derive,
-        download an STL at your exact values. Wafer sizes Ø150–Ø300.</p>
-    </a>
-    <a class="dcard" href="viewer.html">
-      <div class="dn">Shipped CAD</div>
-      <h3>3D viewer <span class="arr">→</span></h3>
-      <p>The real checked solids — segment, jig, drivetrain, full halo — with their
-        CI interference checks rendered as a pass/fail panel.</p>
-    </a>
-    <a class="dcard" href="engineering.html">
-      <div class="dn">OP 010 / 015</div>
-      <h3>Engineering <span class="arr">→</span></h3>
-      <p>The CAD recipe, the load-path statics, the motion analysis, and the same
-        calculator wired into the full derivation.</p>
-    </a>
-    <a class="dcard" href="design.html">
-      <div class="dn">Aesthetic knobs</div>
-      <h3>Design <span class="arr">→</span></h3>
-      <p>Why tilt is an aesthetic choice, not a structural one — the θ / depth trade
-        and the hide-window logic behind the disappearing frame.</p>
-    </a>
-    <a class="dcard" href="production.html">
-      <div class="dn">Gates T1–T7</div>
-      <h3>Production <span class="arr">→</span></h3>
-      <p>The seven test gates that must pass before printing ×9, the bench bonding
-        procedure, and the full bill of materials.</p>
-    </a>
-    <a class="dcard" href="spec-sheet.html">
-      <div class="dn">Capability &amp; care</div>
-      <h3>Spec sheet <span class="arr">→</span></h3>
-      <p>The customer-facing one-pager: what it is, what it weighs, how to hang it,
-        how to keep silicon looking like a mirror.</p>
-    </a>
+    <div class="bts rv">
+      <div class="btsk">Behind the scenes</div>
+      <div class="btsgrid">
+        <a class="bcard" href="customize.html">
+          <div class="dn">Parametric</div>
+          <h3>Customize <span class="arr">→</span></h3>
+          <p>Drag sliders, watch geometry and statics re-derive, download an STL at your exact values.</p>
+        </a>
+        <a class="bcard" href="viewer.html">
+          <div class="dn">Shipped CAD</div>
+          <h3>3D viewer <span class="arr">→</span></h3>
+          <p>The real checked solids with their CI interference checks as a pass/fail panel.</p>
+        </a>
+        <a class="bcard" href="engineering.html">
+          <div class="dn">OP 010 / 015</div>
+          <h3>Engineering <span class="arr">→</span></h3>
+          <p>The CAD recipe, load-path statics, motion analysis, and the full derivation.</p>
+        </a>
+        <a class="bcard" href="design.html">
+          <div class="dn">Aesthetic knobs</div>
+          <h3>Design <span class="arr">→</span></h3>
+          <p>Why tilt is an aesthetic choice, not a structural one — the θ / depth trade.</p>
+        </a>
+        <a class="bcard" href="production.html">
+          <div class="dn">Gates T1–T7</div>
+          <h3>Production <span class="arr">→</span></h3>
+          <p>The seven test gates before printing ×9, the bonding procedure, the BOM.</p>
+        </a>
+        <a class="bcard" href="spec-sheet.html">
+          <div class="dn">Capability &amp; care</div>
+          <h3>Spec sheet <span class="arr">→</span></h3>
+          <p>The customer-facing one-pager: what it is, how to hang it, how to keep it a mirror.</p>
+        </a>
+      </div>
+      <div class="docstrip">
+        <a href="cure-jig.html">Tape-jig instructions (OP 012)</a>
+        <a href="onshape-variables.html">OnShape variables</a>
+        <a href="onshape-guide.html">OnShape guide</a>
+        <a href="kiselring-manual.pdf">Assembly manual (PDF)</a>
+      </div>
+    </div>
   </div>
-  <div class="docstrip">
-    <a href="cure-jig.html">Tape-jig instructions (OP 012)</a>
-    <a href="onshape-variables.html">OnShape variables</a>
-    <a href="onshape-guide.html">OnShape guide</a>
-    <a href="kiselring-manual.pdf">Assembly manual (PDF)</a>
-  </div>
+
+  <footer>
+    <span>HALO-001 · REV B.6 · FRAME METHOD</span>
+    <span><a href="customize.html">CUSTOMIZE</a> · <a href="viewer.html">VIEWER</a> · <a href="https://github.com/JimothyJohn/wafer-flower">SOURCE</a></span>
+    <span>SHOT ON WEBGL · NO WAFERS WERE HARMED</span>
+  </footer>
 </section>
 
 </main>
-
-<footer>
-  <span>HALO-001 · REV B.6 · FRAME METHOD</span>
-  <span><a href="customize.html">CUSTOMIZE</a> · <a href="viewer.html">VIEWER</a> · <a href="https://github.com/JimothyJohn/wafer-flower">SOURCE</a></span>
-  <span>THERMAL GOVERNS · THE FRAME DISAPPEARS</span>
-</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="assets/hero.js"></script>
 <script>
 (function(){
+  // cinema mode: letterbox + slate once the reel starts rolling
+  function onScroll(){
+    document.body.classList.toggle('reel',(scrollY||0)>innerHeight*0.45);
+  }
+  addEventListener('scroll',onScroll,{passive:true}); onScroll();
+  // caption + credit reveals (re-arm captions so each shot replays)
   var io=new IntersectionObserver(function(es){
-    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
-  },{threshold:0.18});
-  document.querySelectorAll('.rv,.stat').forEach(function(el){ io.observe(el); });
+    es.forEach(function(e){
+      if(e.target.classList.contains('cap')) e.target.classList.toggle('in',e.isIntersecting);
+      else if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  },{threshold:0.25});
+  document.querySelectorAll('.shot:not(.title) .cap,.rv').forEach(function(el){ io.observe(el); });
 })();
 </script>
 </body>
