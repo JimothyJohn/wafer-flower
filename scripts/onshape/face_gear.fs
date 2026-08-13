@@ -29,6 +29,11 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
     pinion: motor side open, rail side CAPPED (bore stops 1 mm short of
     the cap face) so shaft epoxy pools against a sealed end (2026-08-12).
 
+    Scope (2026-08-12, Nick): a pinion and a rack, NOTHING ELSE. The
+    Motor Envelope second feature was tried and rejected (added b4a21e2,
+    reverted 0bfc53d) - do not re-add a motor body here; motor housing
+    design lives outside the FeatureScript.
+
     Onshape paste rules learned the hard way (do not regress):
     - annotation strings must be printable ASCII (no em-dashes, no unicode minus)
     - reportFeatureInfo, not reportInfo (and no popup at all - Nick's call)

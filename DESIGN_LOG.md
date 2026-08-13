@@ -79,6 +79,14 @@ so the far end is sealed:
 - 5-minute epoxy is fine here; a retaining compound (Loctite 603-class)
   is the metal-shaft alternative but epoxy is right on printed plastic.
 
+### FeatureScript scope locked: pinion + rack only
+
+No motor in the FeatureScript — it generates exactly two bodies, the
+rack-toothed arc and the pinion. The Motor Envelope second feature stays
+dead (added `b4a21e2`, reverted `0bfc53d`); if it lingers in the OnShape
+doc it's a stale paste, delete it there. Motor housing design happens
+outside the FS.
+
 ### Keyhole / standoff idea (not yet implemented)
 
 Move the keyhole **down so the bottom of the hole sits just above the gear
