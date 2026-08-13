@@ -70,9 +70,14 @@ so the far end is sealed:
   IPA swab.
 - Cure **motor-up, cap-down** so gravity pulls excess into the sealed cap
   pocket, away from the bearing and teeth.
-- Full cure before first run (24 h for most epoxies). 5-minute epoxy is
-  fine here; a retaining compound (Loctite 603-class) is the metal-shaft
-  alternative but epoxy is right on printed plastic.
+- **Set time is not cure time** (2026-08-12, caught Nick off guard): the
+  "5-minute" / "30-minute" on the label is working/fixture time — the
+  joint is tack-hard but at ~20-30% strength. Full chemical cure is
+  ~24 h for most epoxies, longer in a cold room. This joint takes the
+  N20's stall torque at takeoff (~0.2-0.3 N·m through a Ø3.2 bond), so
+  run it only after full cure: glue in the evening, spin in the morning.
+- 5-minute epoxy is fine here; a retaining compound (Loctite 603-class)
+  is the metal-shaft alternative but epoxy is right on printed plastic.
 
 ### Keyhole / standoff idea (not yet implemented)
 
