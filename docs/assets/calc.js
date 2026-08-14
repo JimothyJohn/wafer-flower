@@ -35,7 +35,7 @@ const fill=new THREE.DirectionalLight(0xaeb6c2,0.35); fill.position.set(-500,-20
 let az=0.6, pol=1.05, dist=1500, group=new THREE.Group(); scene.add(group);
 let view='assembly', autoDist=true;
 const ANIM={ring:null, pin:null, ratio:60};
-const PIN_W=0.25;                // pinion rad/s on screen — the MASTER; the ring derives via the true ratio
+const PIN_W=0.75;                // pinion rad/s on screen — the MASTER; the ring derives via the true ratio
 function placeCam(){
   camera.position.set(dist*Math.sin(pol)*Math.cos(az), dist*Math.sin(pol)*Math.sin(az), dist*Math.cos(pol));
   camera.up.set(0,0,1); camera.lookAt(0,0,0);

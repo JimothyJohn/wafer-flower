@@ -210,7 +210,7 @@ const NAMES=['TITLE','THE SWIRL','THE DRIVE','THE EDGE','THE BUILD','CREDITS'];
 let lastShot=-1;
 
 const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const PIN_W=0.25;  // pinion rad/s on screen — the MASTER (Nick's pick);
+const PIN_W=0.75;  // pinion rad/s on screen — the MASTER (Nick's pick);
 const RATIO=60;    // ring follows via the true 60:1, surface speeds match
 let tPrev=0;
 (function loop(t){
