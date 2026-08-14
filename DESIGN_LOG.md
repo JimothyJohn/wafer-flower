@@ -5,6 +5,20 @@ measurements, decisions, and assumptions clocked for later verification.
 Newest entry first. (Started 2026-08-12 at Nick's request; CLAUDE.md stays
 the machine-facing spec, this file is the human trail.)
 
+## 2026-08-13 — Pinion retention: epoxy is optional
+
+Nick: "seems unnecessary… can't I just glue it?" Correct — at this
+joint's loads (mN·m running, ~0.2–0.3 N·m worst-case stall), **thick/gel
+CA (super glue) is plenty**: it bonds PLA about as well as anything
+bonds PLA, and the ~100 mm² bore gives several × margin even at
+derated CA strength. Best option is still mechanical: **reprint the
+pinion with a true D-bore** (fine profile + hole compensation,
+PRINTING.md) so the flat carries torque and glue only stops axial
+walk-off — then a single drop of CA is genuinely all it needs.
+**Do not** use anaerobic retaining compound / threadlocker (Loctite
+603/242-class): anaerobics need metal on both sides and stay liquid
+against plastic. Hot glue and foaming PU are also out (creep, mess).
+
 ## 2026-08-13 — Epoxy failure on the pinion/shaft joint
 
 First epoxy attempt on the motor shaft + PLA pinion **never cured — just
