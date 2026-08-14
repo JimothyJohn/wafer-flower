@@ -1,12 +1,12 @@
-// Wafer Halo — the showreel engine. One fixed full-viewport canvas renders a
-// self-contained parametric build of NICK'S CANONICAL ARCHITECTURE
-// (stl/mine, RE'd by scripts/mine_stl.py): nine tilted wafers on arched
-// twin-wall towers over a 320–350 band, the 720-tooth FACE ring on the
-// outer annulus, and the flat 12T spur pinion at 12 o'clock. Scroll scrubs
-// a keyframed camera through five cinematic shots; the ring turn is a
-// time-lapse (~2 rpm on screen; the real piece runs 0.25 rpm at 60:1).
-// No fetch, no model bundle — first paint is instant and it works under
-// file://. The exact checked solids live on viewer.html / customize.html.
+// Wafer Halo — the showreel engine. One fixed full-viewport canvas renders
+// NICK'S CANONICAL MODELS (docs/models: his OnShape segment + the checked
+// pinion) with mirror-cylinder wafers — the real thing, not a parametric
+// stand-in (Nick 2026-08-16: "use mine for the main page; the bland ones
+// for the parametric visualization"). Meshes stream in async (fetch, with
+// the models_data.js base64 bundle as the file:// fallback); the wafers
+// paint first so the reel opens instantly. Scroll scrubs a keyframed
+// camera through five cinematic shots; pinion speed is the master clock
+// and the ring follows at the true ratio.
 'use strict';
 (function(){
 const canvas=document.getElementById('reel');
@@ -16,18 +16,13 @@ try{ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true}); }
 catch(e){ document.body.classList.add('nogl'); return; }
 renderer.setClearColor(0x000000,0);
 
-// ---- canonical architecture parameters (scripts/mine_stl.py defaults) ----
-const P={D:300,wt:0.775,N:9,tilt:3,R:350,Ri:320,bw:30,bond:1.1};
-const GRI=340, GEAR_F=6, ROOT_Z=3.84, BASE_H=9, SHOULDER=14;
-const LAND_C=38.8, TOWER_A=7.5*Math.PI/180, WALL_T=4.4, CAP_Z=33;
-const ARCH_Z=20.5, ARCH_A=0.6*Math.PI/180;
-const TPS=80;                               // face-teeth per segment (720 ring)
-const WR=P.D/2, SEG=2*Math.PI/P.N, H=Math.PI/P.N;
-const TH=P.tilt*Math.PI/180, Ro=P.Ri+P.bw;
-// world frame: wafer mid-plane ~z=0 (the old scene convention) — the wall
-// face sits at zW, the tilted land at LAND(y)
+// ---- canonical architecture parameters (stl/mine measured) ----
+const P={D:300,wt:0.775,N:9,tilt:3,R:350,bond:1.1};
+const LAND_C=38.8;                          // land height over the wall face
+const WR=P.D/2, SEG=2*Math.PI/P.N;
+const TH=P.tilt*Math.PI/180;
+// world frame: wafer mid-plane ~z=0 — the wall face sits at zW
 const zW=-(LAND_C+P.bond+P.wt/2);
-const LAND=function(y){ return zW+LAND_C+y*Math.tan(TH); };
 
 // ---- scene ----
 const scene=new THREE.Scene();
@@ -44,64 +39,28 @@ const under=new THREE.DirectionalLight(0x555b63,0.3); under.position.set(0,-900,
 const ring=new THREE.Group(); scene.add(ring);
 const stations=[];   // {grp, wp} — grp spreads radially, wp lifts the wafer
 
-// one segment = arc-box strips: base slab, toothed rim, shoulder, arched
-// twin-wall tower, tilted cap. Built once, grouped 9×.
-(function(){
-  const pos=[], idx=[];
-  // closed arc box [r0,r1]×[a0,a1]×[z0, topFn(y)] (topFn may be a constant)
-  function strip(r0,r1,a0,a1,z0,top){
-    const NA2=Math.max(2,Math.ceil((a1-a0)/0.02));
-    const tf=(typeof top==='function')?top:function(){return top;};
-    const start=pos.length/3;
-    for(let j=0;j<=NA2;j++){
-      const a=a0+(a1-a0)*j/NA2, c=Math.cos(a), s=Math.sin(a);
-      const y0=r0*s, y1=r1*s;
-      pos.push(r0*c,y0,tf(y0), r1*c,y1,tf(y1), r0*c,y0,z0, r1*c,y1,z0);
-    }
-    const q=function(a2,b,c2,d){ idx.push(a2,b,c2,a2,c2,d); };
-    for(let j=0;j<NA2;j++){
-      const A=start+j*4, B=start+(j+1)*4;
-      q(A,B,B+1,A+1);       // top
-      q(A+3,B+3,B+2,A+2);   // bottom
-      q(A+2,B+2,B,A);       // inner wall
-      q(A+1,B+1,B+3,A+3);   // outer wall
-    }
-    const A=start, B=start+NA2*4;
-    q(A,A+1,A+3,A+2); q(B+2,B+3,B+1,B);   // end caps
+// binary STL -> BufferGeometry (flat-shaded CAD)
+function parseSTL(buf){
+  const dv=new DataView(buf), n=dv.getUint32(80,true);
+  const pos=new Float32Array(n*9);
+  for(let i=0;i<n;i++){
+    const o=84+i*50;
+    for(let v=0;v<3;v++)for(let c=0;c<3;c++)
+      pos[i*9+v*3+c]=dv.getFloat32(o+12+v*12+c*4,true);
   }
-  // base slab + shoulder + toothed rim body
-  strip(P.Ri,GRI,-H,H,zW,zW+BASE_H);
-  strip(P.Ri,GRI,-12*Math.PI/180,12*Math.PI/180,zW+BASE_H,zW+SHOULDER);
-  strip(GRI,Ro,-H,H,zW,zW+ROOT_Z);
-  // face teeth: TPS radial ridges on the rim, root->tip
-  const pitch=2*H/TPS;
-  for(let t=0;t<TPS;t++){
-    const ac=-H+(t+0.5)*pitch;
-    strip(GRI+0.5,Ro,ac-pitch*0.24,ac+pitch*0.24,zW+ROOT_Z,zW+GEAR_F);
-  }
-  // tower: two walls, each split by the central arch (legs to ARCH_Z, a
-  // bridge above it), then the cap slab up to the tilted land
-  const walls=[[P.Ri,P.Ri+WALL_T],[GRI-WALL_T,GRI]];
-  for(let w=0;w<2;w++){
-    const r0=walls[w][0], r1=walls[w][1];
-    strip(r0,r1,-TOWER_A,-ARCH_A,zW+SHOULDER,LAND);
-    strip(r0,r1, ARCH_A, TOWER_A,zW+SHOULDER,LAND);
-    strip(r0,r1,-ARCH_A, ARCH_A,zW+ARCH_Z,LAND);
-  }
-  strip(P.Ri,GRI,-TOWER_A,TOWER_A,zW+CAP_Z,LAND);
   const g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-  g.setIndex(idx); g.computeVertexNormals();
-  const mat=new THREE.MeshPhongMaterial({color:0x1c2026,shininess:24,side:THREE.DoubleSide});
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.computeVertexNormals();
+  return g;
+}
 
-  // wafers — the mirror-polish stars; each carries a whisper of a different
-  // oxide-film tint so the ring shimmers as it turns
+// stations first: the mirror wafers paint immediately, the canonical
+// segment meshes drop in as soon as they arrive
+const TINT=[0x0b0b0c,0x0d0d0e,0x0a0a0b,0x0c0c0d];
+(function(){
   const wg=new THREE.CylinderGeometry(WR,WR,P.wt,110);
-  const TINT=[0x0b0b0c,0x0d0d0e,0x0a0a0b,0x0c0c0d];   // near-neutral — no oxide rainbow
-
   for(let k=0;k<P.N;k++){
     const grp=new THREE.Group(); grp.rotation.z=k*SEG;
-    grp.add(new THREE.Mesh(g,mat));
     const wm=new THREE.MeshPhongMaterial({color:0x767e88,shininess:95,
       specular:0xdde6f0,emissive:TINT[k%4],transparent:true});
     const w=new THREE.Mesh(wg,wm); w.rotation.x=Math.PI/2;
@@ -112,46 +71,52 @@ const stations=[];   // {grp, wp} — grp spreads radially, wp lifts the wafer
   }
 })();
 
-// 12T flat spur pinion, schematic, fixed at 12 o'clock over the face ring
-// (axis RADIAL — the motor points at the halo centre, lying on the wall)
+// pinion pivot at 12 o'clock (axis RADIAL = +y through the pivot)
 const pinion=new THREE.Group();
-(function(){
-  const T=12, rTip=6.71, rRoot=4.79, LF=6;
-  const NA=T*12, pos=[], idx=[];
-  function wave(a){
-    const p2=2*Math.PI/T, ph=((a%p2)+p2)%p2, f=ph/p2;
-    if(f<0.10) return rRoot+(rTip-rRoot)*(f/0.10);
-    if(f<0.44) return rTip;
-    if(f<0.54) return rTip+(rRoot-rTip)*((f-0.44)/0.10);
-    return rRoot;
+pinion.position.set(0,345,zW+10.79);
+scene.add(pinion);
+const shaft=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,60,20),
+  new THREE.MeshPhongMaterial({color:0x232830,shininess:70}));
+shaft.position.y=33; pinion.add(shaft);
+let pinSpin=null;                       // the spinning mesh, once loaded
+
+(async function loadModels(){
+  async function grab(file){
+    try{
+      const r=await fetch('models/'+file);
+      if(!r.ok)throw 0;
+      return await r.arrayBuffer();
+    }catch(e){
+      // file:// — pull the base64 bundle through a <script> tag
+      if(!window.HALO_MODELS)
+        await new Promise((res,rej)=>{const s=document.createElement('script');
+          s.src='models/models_data.js';s.onload=res;s.onerror=rej;
+          document.head.appendChild(s);});
+      const bin=atob(window.HALO_MODELS.files[file]),u=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+      return u.buffer;
+    }
   }
-  for(let j=0;j<=NA;j++){
-    const a=2*Math.PI*j/NA, r=wave(a);
-    const c=Math.cos(a), s=Math.sin(a);
-    pos.push(r*c,r*s,0, r*c,r*s,LF);
-  }
-  const nCap=pos.length/3;
-  pos.push(0,0,0, 0,0,LF);
-  for(let j=0;j<NA;j++){
-    const A=j*2,B=(j+1)*2;
-    idx.push(A,B,B+1, A,B+1,A+1);
-    idx.push(A,nCap,B);
-    idx.push(B+1,nCap+1,A+1);
-  }
-  const g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-  g.setIndex(idx); g.computeVertexNormals();
-  const m=new THREE.MeshPhongMaterial({color:0x3a4150,shininess:60,side:THREE.DoubleSide});
-  const mesh=new THREE.Mesh(g,m);
-  mesh.rotation.x=-Math.PI/2;              // spur axis → +y (radial at 12 o'clock)
-  pinion.add(mesh);
-  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,90,24),
-    new THREE.MeshPhongMaterial({color:0x232830,shininess:70}));
-  shaft.position.y=48;
-  pinion.add(shaft);
-  // face width spans the tooth annulus middle; axis z = tip plane − m + rp
-  pinion.position.set(0,345,zW+10.79);
-  scene.add(pinion);
+  try{
+    const [segB,pinB]=await Promise.all([grab('segment.stl'),grab('pinion.stl')]);
+    const segG=parseSTL(segB);
+    const segM=new THREE.MeshPhongMaterial({color:0x3a4049,shininess:30,side:THREE.DoubleSide});
+    for(const s of stations){
+      const m=new THREE.Mesh(segG,segM);
+      m.position.z=zW;                  // his frame: wall face z=0
+      s.grp.add(m);
+    }
+    // his pinion export sits placed at a=0 (+x, axis x through z=10.79);
+    // swing it to 12 o'clock and re-express about the pivot origin so it
+    // spins about its own (radial, +y) axis
+    const pg=parseSTL(pinB);
+    pg.rotateZ(Math.PI/2);              // a=0 -> 12 o'clock (axis now +y)
+    pg.translate(0,-345,-10.79);        // axis through the pivot origin
+    const pm=new THREE.Mesh(pg,new THREE.MeshPhongMaterial({color:0x8b8f98,shininess:55,side:THREE.DoubleSide}));
+    const wrap=new THREE.Group();
+    wrap.add(pm); pinion.add(wrap);
+    pinSpin=wrap;
+  }catch(e){/* models missing: the wafers still carry the reel */}
 })();
 
 // ---- shots: camera orbits the LOOK point; scroll scrubs between keys ----
@@ -218,7 +183,7 @@ let tPrev=0;
   const dt=Math.min(t-tPrev,100)/1000; tPrev=t;
   if(!still){
     ring.rotation.z+=dt*PIN_W/RATIO;
-    pinion.children[0].rotation.z+=dt*PIN_W;
+    if(pinSpin)pinSpin.rotation.y+=dt*PIN_W;
     const a=t*0.00012;
     rim.position.set(-900*Math.cos(a),-250-300*Math.sin(a),350);
   }
