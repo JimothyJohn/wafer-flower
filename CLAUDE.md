@@ -678,6 +678,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   plus GEARS.md the bevel-gear clinic and V3_NOTES.md.)
 
 ## Conventions & preferences
+- CACHE-BUSTING (2026-08-16): every docs page references
+  assets/*.{css,js} with a ?v= stamp because GitHub Pages serves
+  max-age=600 and stale JS looks like "my fix did nothing". BUMP THE
+  STAMP (all pages, one value) whenever any asset changes.
 - User (Nick) is technical; be direct, lead with problems, no praise
   padding. Structurally-sound-over-minimal on the frame. Quantify claims.
 - PUSH STRAIGHT TO MASTER (Nick 2026-08-14): this is an art project he
