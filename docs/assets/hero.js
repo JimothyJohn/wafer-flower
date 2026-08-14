@@ -1,11 +1,12 @@
 // Wafer Halo — the showreel engine. One fixed full-viewport canvas renders a
-// self-contained parametric build of the shipped Rev B.6 geometry (same
-// surface rules as calc.js, frozen at the CAD defaults): nine tilted wafers,
-// the 45° bevel band, and a schematic 20T crossed pinion at 12 o'clock.
-// Scroll scrubs a keyframed camera through five cinematic shots; the ring
-// turns at the true ~2 rpm the whole time and the pinion counter-spins at
-// 5.4:1. No fetch, no model bundle — first paint is instant and it works
-// under file://. The exact checked solids live on viewer.html / customize.html.
+// self-contained parametric build of NICK'S CANONICAL ARCHITECTURE
+// (stl/mine, RE'd by scripts/mine_stl.py): nine tilted wafers on arched
+// twin-wall towers over a 320–350 band, the 720-tooth FACE ring on the
+// outer annulus, and the flat 12T spur pinion at 12 o'clock. Scroll scrubs
+// a keyframed camera through five cinematic shots; the ring turn is a
+// time-lapse (~2 rpm on screen; the real piece runs 0.25 rpm at 60:1).
+// No fetch, no model bundle — first paint is instant and it works under
+// file://. The exact checked solids live on viewer.html / customize.html.
 'use strict';
 (function(){
 const canvas=document.getElementById('reel');
@@ -15,50 +16,18 @@ try{ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true}); }
 catch(e){ document.body.classList.add('nogl'); return; }
 renderer.setClearColor(0x000000,0);
 
-// ---- shipped Rev B.6 parameters (scripts/segment_stl.py defaults) ----
-const P={D:300,wt:0.775,N:9,tilt:5,R:350,Ri:255,bw:30,tmin:15,bond:1.1};
-const GEAR_F=9.5, GEAR_M=5.6, CLR=3;
+// ---- canonical architecture parameters (scripts/mine_stl.py defaults) ----
+const P={D:300,wt:0.775,N:9,tilt:3,R:350,Ri:320,bw:30,bond:1.1};
+const GRI=340, GEAR_F=6, ROOT_Z=3.84, BASE_H=9, SHOULDER=14;
+const LAND_C=38.8, TOWER_A=7.5*Math.PI/180, WALL_T=4.4, CAP_Z=33;
+const ARCH_Z=20.5, ARCH_A=0.6*Math.PI/180;
+const TPS=80;                               // face-teeth per segment (720 ring)
 const WR=P.D/2, SEG=2*Math.PI/P.N, H=Math.PI/P.N;
 const TH=P.tilt*Math.PI/180, Ro=P.Ri+P.bw;
-
-function planeZ(x,y,k){
-  const a=k*SEG, tl=-Math.sin(a)*(x-P.R*Math.cos(a))+Math.cos(a)*(y-P.R*Math.sin(a));
-  return tl*Math.tan(TH);
-}
-function inFootprint(x,y,k){
-  const a=k*SEG, c=Math.cos(a), s=Math.sin(a);
-  const xr=c*x+s*y-P.R, yt=(-s*x+c*y)/Math.cos(TH);
-  return (xr*xr+yt*yt)<=WR*WR;
-}
-function gearSpec(){
-  const target=Ro+1.25*GEAR_M+2;
-  const tps=Math.max(6,Math.ceil(2*target/GEAR_M/P.N));
-  const T=tps*P.N;
-  const me=(Ro-1)/(T/2-1.25), rp=T*me/2;
-  const kb=(rp+GEAR_F)/rp;
-  return {tps,T,rp,tip:rp+me,root:rp-1.25*me,kb,web_i:Ro-2};
-}
-function toothWave(a,g){
-  const pitch=2*Math.PI/g.T, ph=((a%pitch)+pitch)%pitch, f=ph/pitch;
-  if(f<0.08) return g.root+(g.tip-g.root)*(f/0.08);
-  if(f<0.46) return g.tip;
-  if(f<0.54) return g.tip+(g.root-g.tip)*((f-0.46)/0.08);
-  return g.root;
-}
-// z_bot with the crossed-pinion standoff (geoCtx in calc.js)
-const Gz=gearSpec(), yMax=Ro*Math.sin(H);
-const rhoZ=8, faceP=7;
-const apexZ=(Gz.tip*Gz.kb-faceP/2)-rhoZ;
-const bulge=GEAR_F/2+rhoZ*1.1+(Gz.tip*Gz.kb-apexZ)*1.1;
-const gap0=yMax*Math.tan(TH)+P.bond+P.tmin-(P.wt/2+WR*Math.sin(TH));
-const STAND=Math.max(0,bulge+3-gap0);
-const zBot=-(yMax*Math.tan(TH)+P.bond+P.tmin+STAND);
-function topZ(x,y){
-  if(!inFootprint(x,y,0)) return zBot+2;
-  let z=planeZ(x,y,0)-P.wt/2-P.bond;
-  if(inFootprint(x,y,1)) z=Math.min(z, planeZ(x,y,1)-P.wt/2-CLR);
-  return Math.max(z,zBot+1);
-}
+// world frame: wafer mid-plane ~z=0 (the old scene convention) — the wall
+// face sits at zW, the tilted land at LAND(y)
+const zW=-(LAND_C+P.bond+P.wt/2);
+const LAND=function(y){ return zW+LAND_C+y*Math.tan(TH); };
 
 // ---- scene ----
 const scene=new THREE.Scene();
@@ -75,53 +44,55 @@ const blue=new THREE.DirectionalLight(0x4457c4,0.45); blue.position.set(0,-900,5
 const ring=new THREE.Group(); scene.add(ring);
 const stations=[];   // {grp, wp} — grp spreads radially, wp lifts the wafer
 
-// segment top/bottom/wall grid + bevel band — one geometry each, grouped 9×
+// one segment = arc-box strips: base slab, toothed rim, shoulder, arched
+// twin-wall tower, tilted cap. Built once, grouped 9×.
 (function(){
-  const NR=20, NA=80, pos=[], idx=[];
-  for(let pass=0;pass<2;pass++)
-    for(let i=0;i<=NR;i++)for(let j=0;j<=NA;j++){
-      const rho=P.Ri+P.bw*i/NR, a=-H+2*H*j/NA;
-      const x=rho*Math.cos(a), y=rho*Math.sin(a);
-      pos.push(x,y,pass?zBot:topZ(x,y));
+  const pos=[], idx=[];
+  // closed arc box [r0,r1]×[a0,a1]×[z0, topFn(y)] (topFn may be a constant)
+  function strip(r0,r1,a0,a1,z0,top){
+    const NA2=Math.max(2,Math.ceil((a1-a0)/0.02));
+    const tf=(typeof top==='function')?top:function(){return top;};
+    const start=pos.length/3;
+    for(let j=0;j<=NA2;j++){
+      const a=a0+(a1-a0)*j/NA2, c=Math.cos(a), s=Math.sin(a);
+      const y0=r0*s, y1=r1*s;
+      pos.push(r0*c,y0,tf(y0), r1*c,y1,tf(y1), r0*c,y0,z0, r1*c,y1,z0);
     }
-  const base=(NR+1)*(NA+1);
-  const quad=(a,b,c,d)=>{idx.push(a,b,c,a,c,d);};
-  for(let i=0;i<NR;i++)for(let j=0;j<NA;j++){
-    const A=i*(NA+1)+j;
-    quad(A,A+1,A+NA+2,A+NA+1);
-    const B=base+A; quad(B+NA+1,B+NA+2,B+1,B);
+    const q=function(a2,b,c2,d){ idx.push(a2,b,c2,a2,c2,d); };
+    for(let j=0;j<NA2;j++){
+      const A=start+j*4, B=start+(j+1)*4;
+      q(A,B,B+1,A+1);       // top
+      q(A+3,B+3,B+2,A+2);   // bottom
+      q(A+2,B+2,B,A);       // inner wall
+      q(A+1,B+1,B+3,A+3);   // outer wall
+    }
+    const A=start, B=start+NA2*4;
+    q(A,A+1,A+3,A+2); q(B+2,B+3,B+1,B);   // end caps
   }
-  for(let j=0;j<NA;j++){
-    const A=j,B=base+j; quad(B,B+1,A+1,A);
-    const C=NR*(NA+1)+j,D=base+NR*(NA+1)+j; quad(C,C+1,D+1,D);
+  // base slab + shoulder + toothed rim body
+  strip(P.Ri,GRI,-H,H,zW,zW+BASE_H);
+  strip(P.Ri,GRI,-12*Math.PI/180,12*Math.PI/180,zW+BASE_H,zW+SHOULDER);
+  strip(GRI,Ro,-H,H,zW,zW+ROOT_Z);
+  // face teeth: TPS radial ridges on the rim, root->tip
+  const pitch=2*H/TPS;
+  for(let t=0;t<TPS;t++){
+    const ac=-H+(t+0.5)*pitch;
+    strip(GRI+0.5,Ro,ac-pitch*0.24,ac+pitch*0.24,zW+ROOT_Z,zW+GEAR_F);
   }
-  for(let i=0;i<NR;i++){
-    const A=i*(NA+1),B=base+i*(NA+1); quad(A,A+NA+1,B+NA+1,B);
-    const C=i*(NA+1)+NA,D=base+i*(NA+1)+NA; quad(D,D+NA+1,C+NA+1,C);
+  // tower: two walls, each split by the central arch (legs to ARCH_Z, a
+  // bridge above it), then the cap slab up to the tilted land
+  const walls=[[P.Ri,P.Ri+WALL_T],[GRI-WALL_T,GRI]];
+  for(let w=0;w<2;w++){
+    const r0=walls[w][0], r1=walls[w][1];
+    strip(r0,r1,-TOWER_A,-ARCH_A,zW+SHOULDER,LAND);
+    strip(r0,r1, ARCH_A, TOWER_A,zW+SHOULDER,LAND);
+    strip(r0,r1,-ARCH_A, ARCH_A,zW+ARCH_Z,LAND);
   }
+  strip(P.Ri,GRI,-TOWER_A,TOWER_A,zW+CAP_Z,LAND);
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
   g.setIndex(idx); g.computeVertexNormals();
   const mat=new THREE.MeshPhongMaterial({color:0x1c2026,shininess:24,side:THREE.DoubleSide});
-
-  // bevel tooth band: schematic wave lofted on the 45° cone (calc.js)
-  const G=gearSpec();
-  const fPos=[], fIdx=[], NF=Math.max(64,G.tps*10);
-  for(let j=0;j<=NF;j++){
-    const a=-H+2*H*j/NF, rf=toothWave(a,G), rw=toothWave(a,G)*G.kb, ri=G.web_i;
-    const c=Math.cos(a), s=Math.sin(a);
-    fPos.push(ri*c,ri*s,zBot+GEAR_F, rf*c,rf*s,zBot+GEAR_F,
-              ri*c,ri*s,zBot,        rw*c,rw*s,zBot);
-  }
-  const fq=(a,b,c,d)=>{fIdx.push(a,b,c,a,c,d);};
-  for(let j=0;j<NF;j++){
-    const A=j*4, B=(j+1)*4;
-    fq(A,A+1,B+1,B); fq(A+3,A+2,B+2,B+3); fq(A+2,A,B,B+2); fq(A+1,A+3,B+3,B+1);
-  }
-  const fg=new THREE.BufferGeometry();
-  fg.setAttribute('position',new THREE.Float32BufferAttribute(fPos,3));
-  fg.setIndex(fIdx); fg.computeVertexNormals();
-  const fmat=new THREE.MeshPhongMaterial({color:0x2b313a,shininess:42,side:THREE.DoubleSide});
 
   // wafers — the mirror-polish stars; each carries a whisper of a different
   // oxide-film tint so the ring shimmers as it turns
@@ -131,7 +102,6 @@ const stations=[];   // {grp, wp} — grp spreads radially, wp lifts the wafer
   for(let k=0;k<P.N;k++){
     const grp=new THREE.Group(); grp.rotation.z=k*SEG;
     grp.add(new THREE.Mesh(g,mat));
-    grp.add(new THREE.Mesh(fg,fmat));
     const wm=new THREE.MeshPhongMaterial({color:0x767e88,shininess:95,
       specular:0xdde6f0,emissive:TINT[k%4],transparent:true});
     const w=new THREE.Mesh(wg,wm); w.rotation.x=Math.PI/2;
@@ -142,42 +112,45 @@ const stations=[];   // {grp, wp} — grp spreads radially, wp lifts the wafer
   }
 })();
 
-// 20T crossed pinion, schematic, fixed at 12 o'clock (does not ride the ring)
+// 12T flat spur pinion, schematic, fixed at 12 o'clock over the face ring
+// (axis RADIAL — the motor points at the halo centre, lying on the wall)
 const pinion=new THREE.Group();
 (function(){
-  const T=20, depth=2.25, slope=1.1, LF=7;
-  const RB=10.4;                       // big-end root; tips Ø25.3 → Ø9.9
-  const spec={T:T,tip:1,root:0};
+  const T=12, rTip=6.71, rRoot=4.79, LF=6;
   const NA=T*12, pos=[], idx=[];
+  function wave(a){
+    const p2=2*Math.PI/T, ph=((a%p2)+p2)%p2, f=ph/p2;
+    if(f<0.10) return rRoot+(rTip-rRoot)*(f/0.10);
+    if(f<0.44) return rTip;
+    if(f<0.54) return rTip+(rRoot-rTip)*((f-0.44)/0.10);
+    return rRoot;
+  }
   for(let j=0;j<=NA;j++){
-    const a=2*Math.PI*j/NA, w=toothWave(a,spec);
+    const a=2*Math.PI*j/NA, r=wave(a);
     const c=Math.cos(a), s=Math.sin(a);
-    const r0=RB+w*depth, r1=(RB-slope*LF)+w*depth;
-    pos.push(r0*c,r0*s,0, r1*c,r1*s,LF);
+    pos.push(r*c,r*s,0, r*c,r*s,LF);
   }
   const nCap=pos.length/3;
   pos.push(0,0,0, 0,0,LF);
   for(let j=0;j<NA;j++){
     const A=j*2,B=(j+1)*2;
-    idx.push(A,B,B+1, A,B+1,A+1);          // flank wall
-    idx.push(A,nCap,B);                    // big-end cap
-    idx.push(B+1,nCap+1,A+1);              // small-end cap
+    idx.push(A,B,B+1, A,B+1,A+1);
+    idx.push(A,nCap,B);
+    idx.push(B+1,nCap+1,A+1);
   }
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
   g.setIndex(idx); g.computeVertexNormals();
   const m=new THREE.MeshPhongMaterial({color:0x3a4150,shininess:60,side:THREE.DoubleSide});
   const mesh=new THREE.Mesh(g,m);
-  mesh.rotation.x=Math.PI/2;               // cone axis → −y, big end down
+  mesh.rotation.x=-Math.PI/2;              // spur axis → +y (radial at 12 o'clock)
   pinion.add(mesh);
-  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(1.7,1.7,150,24),
+  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,90,24),
     new THREE.MeshPhongMaterial({color:0x232830,shininess:70}));
-  shaft.position.y=80;
+  shaft.position.y=48;
   pinion.add(shaft);
-  // small end down, tangent to the band cone at 12 o'clock:
-  // band silhouette z = zBot + (wall-tip radius − y); pinion lower edge
-  // z = zc − (RS + slope·(y − y_small)) — meet them at mid-face
-  pinion.position.set(0,303,zBot+15.3);
+  // face width spans the tooth annulus middle; axis z = tip plane − m + rp
+  pinion.position.set(0,345,zW+10.79);
   scene.add(pinion);
 })();
 
@@ -186,7 +159,7 @@ const pinion=new THREE.Group();
 const KEYS=[
   {az:-1.12,pol:0.30,dist:1900,look:[0,-80,0],  ex:0},   // 0 TITLE
   {az:-0.58,pol:0.66,dist:1150,look:[0,40,0],   ex:0},   // 1 THE SWIRL
-  {az:0.38,pol:1.24,dist:170, look:[0,296,zBot+12],ex:0}, // 2 THE DRIVE (macro, grazing)
+  {az:0.38,pol:1.24,dist:170, look:[0,338,zW+8],ex:0},   // 2 THE DRIVE (macro, grazing)
   {az:-1.57,pol:1.42,dist:1450,look:[0,0,10],   ex:0},   // 3 THE EDGE
   {az:-0.85,pol:0.72,dist:2300,look:[0,0,60],   ex:1},   // 4 THE BUILD
   {az:-1.12,pol:0.28,dist:2600,look:[0,-40,0],  ex:0},   // 5 CREDITS
@@ -237,14 +210,16 @@ const NAMES=['TITLE','THE SWIRL','THE DRIVE','THE EDGE','THE BUILD','CREDITS'];
 let lastShot=-1;
 
 const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const RPM2=0.21;                        // rad/s — the real ~2 rpm
+const RPM2=0.21;   // rad/s on screen — a time-lapse of the true 0.25 rpm
 let tPrev=0;
 (function loop(t){
   requestAnimationFrame(loop);
   const dt=Math.min(t-tPrev,100)/1000; tPrev=t;
   if(!still){
     ring.rotation.z+=dt*RPM2;
-    pinion.children[0].rotation.z-=dt*RPM2*(108/20);   // 5.4:1, counter
+    // true ratio is 60:1 — damped 5× on screen so the 12 teeth read as
+    // motion instead of strobe at display frame rates
+    pinion.children[0].rotation.z-=dt*RPM2*12;
     const a=t*0.00012;
     magenta.position.set(-900*Math.cos(a),-250-300*Math.sin(a),350);
   }

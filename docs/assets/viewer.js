@@ -1,6 +1,9 @@
-// Wafer Halo — real-STL viewer widget. Used by viewer.html (full page). Expects the standard widget markup: canvas#viz,
-// #status, #presets, and the control ids referenced below. Loads
-// models/manifest.json + the exported STLs relative to the page (docs/).
+// Wafer Halo — real-STL viewer widget (mine-architecture scene,
+// 2026-08-15). Used by viewer.html. Expects canvas#viz, #status,
+// #presets, and the control ids referenced below. Loads
+// models/manifest.json + STLs exported by `scripts/mine_stl.py --viewer`:
+// Nick's CANONICAL OnShape segment, a generated wafer, the placed 12T
+// pinion, and the parametric-RE segment as a comparison overlay.
 'use strict';
 (function(){
 const canvas=document.getElementById('viz');
@@ -34,8 +37,8 @@ function mat(hex,extra){
 }
 
 let M=null;                       // manifest
-const groups={};                  // motion-group THREE.Group per station-0 body set
-const stations=[];                // per-station groups for segment+wafer clones
+const groups={};                  // one THREE.Group per part group
+const stations=[];                // clones for stations 1..8
 const geo={};
 const SEC=()=>M?M.sector_deg*Math.PI/180:0;
 
@@ -48,8 +51,7 @@ async function load(){
         fetch('models/'+p.file).then(r=>{
           if(!r.ok)throw new Error(p.file);return r.arrayBuffer();})));
     }catch(e){
-      // fetch() is blocked under file:// — fall back to the base64 bundle,
-      // which loads through a <script> tag (allowed under file://)
+      // fetch() is blocked under file:// — fall back to the base64 bundle
       await new Promise((res,rej)=>{
         const s=document.createElement('script');
         s.src='models/models_data.js'; s.onload=res; s.onerror=rej;
@@ -67,26 +69,18 @@ async function load(){
   }catch(e){
     document.getElementById('status').textContent=
       'failed to load models/ — neither fetch nor the models_data.js bundle '+
-      'worked. Regenerate with scripts/viewer_export.py.';
+      'worked. Regenerate with scripts/mine_stl.py --viewer.';
     throw e;
   }
-  // station 0: full drivetrain, one THREE.Group per motion group
   for(const p of M.parts){
     if(!groups[p.group]){groups[p.group]=new THREE.Group();scene.add(groups[p.group]);}
     const m=new THREE.Mesh(geo[p.name],
       mat(parseInt(p.color.slice(1),16),
           p.name==='wafer'?{shininess:95,specular:0x8899AA}:
-          p.group==='onshape'?{transparent:true,opacity:0.75}:{}));
+          p.group==='param'?{transparent:true,opacity:0.6}:{}));
     groups[p.group].add(m);
   }
-  if(groups.onshape){
-    groups.onshape.visible=false;
-    document.getElementById('onshaperow').style.display='';
-    const op=M.parts.find(p=>p.group==='onshape');
-    if(op && op.oriented===false)
-      document.getElementById('onshapev').title=
-        'export not yet in scene orientation — will float';
-  }
+  if(groups.param) groups.param.visible=false;
   // stations 1..8: segment + wafer clones, rotated into place
   for(let k=1;k<9;k++){
     const g=new THREE.Group(); g.rotation.z=k*SEC(); g.visible=false;
@@ -96,7 +90,8 @@ async function load(){
   }
   renderChecks();
   document.getElementById('status').textContent=
-    M.parts.map(p=>p.file).join(' · ')+'  ·  θ='+M.params.theta+'° N='+M.params.N;
+    M.parts.map(p=>p.file).join(' · ')+'  ·  θ='+M.params.theta+'° N='+M.params.N+
+    '  ·  canonical: stl/mine (OnShape) + parametric RE overlay';
 }
 
 function renderChecks(){
@@ -114,34 +109,35 @@ function renderChecks(){
 }
 
 // ---- state + animation --------------------------------------------------
-const S={jig:1,stroke:0,lift:0,stations:1,section:1,waf:1,dist:800}; // stroke: 0=seated 1=open
+const S={lift:0,stations:1,section:1,waf:1,drv:0,dist:800};
 const T=Object.assign({},S);                            // targets (lerped)
-const ui={jig:document.getElementById('jig'),stroke:document.getElementById('stroke'),
-  lift:document.getElementById('lift'),stations:document.getElementById('stations'),
-  section:document.getElementById('section'),waf:document.getElementById('waf')};
-ui.jig.onchange=()=>{T.jig=ui.jig.checked?1:0;};
+const ui={lift:document.getElementById('lift'),
+  stations:document.getElementById('stations'),
+  section:document.getElementById('section'),
+  waf:document.getElementById('waf'),
+  drv:document.getElementById('drv')};
 ui.waf.onchange=()=>{T.waf=ui.waf.checked?1:0;};
-document.getElementById('onshape').onchange=e=>{
-  if(groups.onshape)groups.onshape.visible=e.target.checked;
-  document.getElementById('onshapev').textContent=e.target.checked?'on':'off';
+ui.drv.onchange=()=>{T.drv=ui.drv.checked?1:0;};
+document.getElementById('param').onchange=e=>{
+  if(groups.param)groups.param.visible=e.target.checked;
+  document.getElementById('paramv').textContent=e.target.checked?'on':'off';
 };
-ui.stroke.oninput=()=>{T.stroke=1-parseFloat(ui.stroke.value);};
 ui.lift.oninput=()=>{T.lift=parseFloat(ui.lift.value);};
 ui.stations.oninput=()=>{T.stations=parseInt(ui.stations.value);};
 ui.section.oninput=()=>{T.section=parseFloat(ui.section.value);};
 
 const PRESETS={
-  bare:  {jig:0,stroke:1,lift:1,stations:1,waf:0,dist:700},
-  jigopen:{jig:1,stroke:1,lift:1,stations:1,waf:1,dist:850},
-  place: {jig:1,stroke:1,lift:0,stations:1,waf:1,dist:850},
-  curing:{jig:1,stroke:0,lift:0,stations:1,waf:1,dist:800},
-  pair:  {jig:0,stroke:1,lift:0,stations:2,waf:1,dist:1250},
-  halo:  {jig:0,stroke:1,lift:0,stations:9,waf:1,dist:2100},
+  bare:  {lift:1,stations:1,waf:0,drv:0,dist:600},
+  drop:  {lift:1,stations:1,waf:1,drv:0,dist:650},
+  bonded:{lift:0,stations:1,waf:1,drv:0,dist:650},
+  pair:  {lift:0,stations:2,waf:1,drv:0,dist:1250},
+  halo:  {lift:0,stations:9,waf:1,drv:1,dist:2100},
+  drive: {lift:0,stations:9,waf:0,drv:1,dist:520},
 };
 document.getElementById('presets').onclick=e=>{
   const p=PRESETS[e.target.dataset.p]; if(!p)return;
   Object.assign(T,p);
-  ui.jig.checked=!!p.jig; ui.waf.checked=!!p.waf; ui.stroke.value=1-p.stroke;
+  ui.waf.checked=!!p.waf; ui.drv.checked=!!p.drv;
   ui.lift.value=p.lift; ui.stations.value=p.stations;
   document.querySelectorAll('#presets .pz').forEach(b=>
     b.classList.toggle('act',b===e.target));
@@ -149,31 +145,24 @@ document.getElementById('presets').onclick=e=>{
 
 function apply(){
   if(!M||!groups.wafer)return;   // manifest lands before the meshes do
-  const mv=M.motion;
-  for(const g of ['out','inboard','rod']){
-    if(!groups[g])continue;
-    groups[g].visible=S.jig>0.02 && S.stations<1.5;
-    const v=mv[g].vector;
-    groups[g].position.set(v[0]*S.stroke,v[1]*S.stroke,v[2]*S.stroke);
-    groups[g].children.forEach(m=>{m.material.transparent=S.jig<0.98;
-      m.material.opacity=Math.max(S.jig,0.05);});
-  }
-  if(groups.bracket) groups.bracket.visible=S.stations>1.5;  // saddles: halo only
-  const w=mv.wafer.vector;
+  const w=M.motion.wafer.vector;
   groups.wafer.position.set(w[0]*S.lift,w[1]*S.lift,w[2]*S.lift);
   groups.wafer.visible=S.waf>0.03;
   const wm=groups.wafer.children[0].material;
   wm.transparent=S.waf<0.98; wm.opacity=Math.max(S.waf,0.05);
+  if(groups.drive){
+    groups.drive.visible=S.drv>0.03;
+    const dm=groups.drive.children[0].material;
+    dm.transparent=S.drv<0.98; dm.opacity=Math.max(S.drv,0.05);
+  }
   stations.forEach((g,i)=>{g.visible=(i+2)<=Math.round(S.stations);
     g.children[1].visible=S.waf>0.03;});
   clipPlane.constant=S.section>=0.995?1e6:-160+S.section*320;
   // readouts
-  document.getElementById('jigv').textContent=S.jig>0.5?'on':'off';
   document.getElementById('wafv').textContent=S.waf>0.5?'on':'off';
-  document.getElementById('strokev').textContent=
-    S.stroke<0.02?'seated':(S.stroke>0.98?'open':(S.stroke*100).toFixed(0)+'%');
+  document.getElementById('drvv').textContent=S.drv>0.5?'on':'off';
   document.getElementById('liftv').textContent=
-    S.lift<0.02?'placed':(S.lift>0.98?'lifted':(S.lift*100).toFixed(0)+'%');
+    S.lift<0.02?'bonded':(S.lift>0.98?'above the land':(S.lift*100).toFixed(0)+'%');
   document.getElementById('stationsv').textContent=Math.round(S.stations);
   document.getElementById('sectionv').textContent=
     S.section>=0.995?'off':('y<'+(-160+S.section*320).toFixed(0));
@@ -181,7 +170,7 @@ function apply(){
 
 // ---- orbit --------------------------------------------------------------
 let az=0.7,pol=1.22;
-const target=new THREE.Vector3(240,0,0), tgt=new THREE.Vector3(240,0,0);
+const target=new THREE.Vector3(335,0,20), tgt=new THREE.Vector3(335,0,20);
 let drag=null;
 canvas.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{if(!drag)return;
@@ -193,13 +182,15 @@ canvas.addEventListener('wheel',e=>{e.preventDefault();
 
 function tick(){
   requestAnimationFrame(tick);
-  for(const k of ['jig','stroke','lift','stations','section','waf','dist'])
+  for(const k of ['lift','stations','section','waf','drv','dist'])
     S[k]+=(T[k]-S[k])*0.14;
   const dist=S.dist;
   apply();
-  // camera: station focus vs ring focus
+  // camera: station focus vs ring focus (the drive preset zooms the
+  // 12 o'clock mesh — station focus point sits on the pinion)
   const ring=Math.min(1,(S.stations-1)/2);
-  tgt.set(240*(1-ring),0,0);
+  tgt.set(335*(1-ring),0,20*(1-ring));
+  if(S.drv>0.5&&S.dist<700) tgt.set(335,0,12);
   target.lerp(tgt,0.08);
   const w=canvas.clientWidth,h=canvas.clientHeight;
   if(canvas.width!==w*devicePixelRatio||canvas.height!==h*devicePixelRatio){

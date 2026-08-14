@@ -387,7 +387,15 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   sweep ≤0.05, mated lap-tab pair 0, wafer vs own/±1 segments /
   neighbour wafer / pinion 0, pinion static pose 0, watertight single
   body; reports shingle air gap (>6 mm at θ3) and vol/IoU vs stl/mine/
-  (0.80 seg / 0.956 pinion). In the CI cad job. SLICED (PLA @10%):
+  (0.80 seg / 0.956 pinion). `--viewer` exports docs/models/ (canonical
+  segment verbatim + wafer + placed pinion + param-RE overlay, manifest
+  with the gate results, models_data.js file:// bundle) — viewer.js/
+  viewer.html rebuilt around it 2026-08-15 (presets bare/above/bonded/
+  pair/halo/drive, param-overlay toggle; the jig-era controls died with
+  the legacy scene). hero.js showreel renders this architecture too
+  (arc-box strips + arch + tilted land + 12T pinion; ring speed is a
+  labelled time-lapse of the true 0.25 rpm). In the CI cad job. SLICED
+  (PLA @10%):
   segment 51.6 g / 1h38 (frame ~465 g, assembly ~1.62 kg), pinion
   0.68 g / 19 min @ 0.08mm HQ 100%. stl/mine exports sit in ASSEMBLY
   POSE — re-orient small parts in the slicer (PRINTING.md). Generation

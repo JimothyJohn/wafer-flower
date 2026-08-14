@@ -554,11 +554,13 @@ function readouts(th,zBot,Ro,yMax,topZ){
 }
 
 // ---- STL generation from the current values -----------------------------
-// The authoritative CAD command, mirroring the sliders onto segment_stl.py's
-// flags (every PARAMS entry there is a CLI flag).
+// The authoritative CAD command, mirroring the sliders onto segment_stl's
+// flags (every PARAMS entry there is a CLI flag). The generator was
+// archived to scripts/legacy/ 2026-08-14 — this preview still speaks the
+// classic-architecture geometry; the canonical pipeline is mine_stl.py.
 function cadCmd(){
   const f=v=>String(+(+v).toFixed(3));
-  return 'python scripts/segment_stl.py --N '+P.N+' --wafer_D '+f(P.D)+
+  return 'python scripts/legacy/segment_stl.py --N '+P.N+' --wafer_D '+f(P.D)+
     ' --wafer_T '+f(P.wt)+' --theta '+f(P.tilt)+' --R '+f(P.R)+' --Ri '+f(P.Ri)+
     ' --bw '+f(P.bw)+' --tmin '+f(P.tmin)+' --bond '+f(P.bond);
 }

@@ -1,220 +1,110 @@
 {
- "source": "scripts/viewer_export.py",
+ "source": "scripts/mine_stl.py",
  "params": {
   "N": 9,
+  "Ri": 320.0,
+  "Ro": 350.0,
+  "gri": 340.0,
+  "base_h": 9.0,
+  "gear_F": 6.0,
+  "tps": 80,
+  "gear_pa": 25.0,
+  "gear_bl": 0.15,
+  "tilt": 3.0,
+  "land_c": 38.8,
+  "tower_a": 7.5,
+  "shoulder": 14.0,
+  "wall_t": 4.4,
+  "arch_z": 20.5,
+  "arch_w": 2.4,
+  "cap_z": 33.0,
+  "tab_r0": 324.4,
+  "tab_r1": 334.7,
+  "tab_z0": 3.0,
+  "tab_z1": 9.0,
+  "tab_arc": 1.06,
+  "tab_clr": 0.2,
+  "pin_T": 12,
+  "pin_face": 6.0,
+  "pin_bore": 3.0,
+  "R": 350.0,
   "wafer_D": 300.0,
   "wafer_T": 0.775,
-  "theta": 5.0,
-  "R": 350.0,
-  "Ri": 255.0,
-  "bw": 30.0,
-  "tmin": 15.0,
   "bond": 1.1,
-  "clr": 3.0,
-  "gear_m": 5.6,
-  "gear_sp": 0.0,
-  "gear_pa": 20.0,
-  "pin_T": 20,
-  "pin_rho": 8.0,
-  "pin_face": 7.0,
-  "stand": -1.0,
-  "gear_bl": 0.3,
-  "gear_drive": "bevel45",
-  "gear_w": 12.0,
-  "pin_bore": 3.2,
-  "pin_flat": 0.5,
-  "gear_F": 9.5,
-  "ogrv_z0": 12.0,
-  "ogrv_w": 10.0,
-  "ogrv_d": 2.0,
-  "grv_z0": 2.5,
-  "grv_h": 1.5,
-  "grv_d": 2.0,
-  "hole_D": 6.5,
-  "pocket_d": 1.0,
-  "pocket_m": 4.0,
-  "pat_n": 6,
-  "pat_w": 10.0,
-  "pat_d": 20.0,
-  "pat_tilt": 20.0,
-  "pat_wall": 5.0,
-  "pat_end": 5.0,
-  "pat_gap": 4.0,
-  "dt_neck": 12.0,
-  "dt_tip": 16.0,
-  "dt_depth": 8.0,
-  "dt_h": 5.0,
-  "dt_clear": 0.25,
-  "clr_edge": 2.0,
-  "facets": 512
+  "facets": 512,
+  "theta": 3.0
  },
  "sector_deg": 40.0,
- "keyhole_z": -29.61086141214873,
- "z_bot": -42.660861412148726,
  "parts": [
   {
    "file": "segment.stl",
    "name": "segment",
    "group": "segment",
-   "color": "#B9A87E",
-   "volume_cm3": 214.127
+   "color": "#5B6472",
+   "canonical": true
   },
   {
    "file": "wafer.stl",
    "name": "wafer",
    "group": "wafer",
-   "color": "#9AA6B2",
-   "volume_cm3": 54.776
+   "color": "#C9CED6"
   },
   {
-   "file": "jig_outboard.stl",
-   "name": "jig_outboard",
-   "group": "out",
-   "color": "#D97742",
-   "volume_cm3": 432.372
+   "file": "pinion.stl",
+   "name": "pinion",
+   "group": "drive",
+   "color": "#C9A227"
   },
   {
-   "file": "jig_inboard.stl",
-   "name": "jig_inboard",
-   "group": "inboard",
-   "color": "#3E7CB1",
-   "volume_cm3": 156.178
-  },
-  {
-   "file": "rod.stl",
-   "name": "rod",
-   "group": "rod",
-   "color": "#30343A",
-   "volume_cm3": 9.941
-  },
-  {
-   "file": "bracket_static.stl",
-   "name": "bracket_static",
-   "group": "bracket",
-   "color": "#8A6D3B",
-   "volume_cm3": 152.632
-  },
-  {
-   "file": "bracket_top.stl",
-   "name": "bracket_top",
-   "group": "bracket",
-   "color": "#B86038",
-   "volume_cm3": 78.398
-  },
-  {
-   "file": "bracket_shell.stl",
-   "name": "bracket_shell",
-   "group": "bracket",
-   "color": "#9A4A2E",
-   "volume_cm3": 39.132
-  },
-  {
-   "file": "wheel_l.stl",
-   "name": "wheel_l",
-   "group": "bracket",
-   "color": "#6A7078",
-   "volume_cm3": 0.96
-  },
-  {
-   "file": "wheel_r.stl",
-   "name": "wheel_r",
-   "group": "bracket",
-   "color": "#6A7078",
-   "volume_cm3": 0.96
-  },
-  {
-   "file": "drive_pinion.stl",
-   "name": "drive_pinion",
-   "group": "bracket",
-   "color": "#C2497B",
-   "volume_cm3": 2.384
-  },
-  {
-   "file": "mine_segment.stl",
-   "name": "mine_segment",
-   "group": "onshape",
-   "color": "#3E8E7E",
-   "volume_cm3": 92.348,
-   "passthrough": true,
-   "oriented": true
+   "file": "param_segment.stl",
+   "name": "param_segment",
+   "group": "param",
+   "color": "#3E8E7E"
   }
  ],
  "motion": {
-  "out": {
-   "vector": [
-    90.0,
-    0.0,
-    0.0
-   ]
-  },
-  "inboard": {
-   "vector": [
-    -60.0,
-    0.0,
-    0.0
-   ]
-  },
-  "rod": {
-   "vector": [
-    130.0,
-    0.0,
-    0.0
-   ]
-  },
   "wafer": {
    "vector": [
     0.0,
-    -3.4862,
-    39.8478
+    -2.3551,
+    44.9383
    ]
   }
  },
  "checks": [
   {
-   "group": "nominal",
-   "name": "tape-jig fence/pin + capture suite (14 checks)",
+   "group": "body",
+   "name": "segment single watertight component",
+   "value_mm3": 1.0,
+   "pass": true
+  },
+  {
+   "group": "drive",
+   "name": "gear mesh sweep worst overlap",
    "value_mm3": 0.0,
    "pass": true
   },
   {
-   "group": "travel",
-   "name": "out stroke (90 mm) vs segment+wafer, 5 steps",
-   "value_mm3": 0.0,
-   "pass": true
-  },
-  {
-   "group": "travel",
-   "name": "inboard stroke (60 mm) vs segment+wafer, 5 steps",
-   "value_mm3": 0.0,
-   "pass": true
-  },
-  {
-   "group": "travel",
-   "name": "rod stroke (130 mm) vs segment+wafer, 5 steps",
-   "value_mm3": 0.0,
-   "pass": true
-  },
-  {
-   "group": "placement",
-   "name": "wafer drop (40 mm) vs segment + open jig, 5 steps",
+   "group": "joint",
+   "name": "mated lap tab/pocket pair",
    "value_mm3": 0.0,
    "pass": true
   },
   {
    "group": "assembly",
-   "name": "segment vs next segment (dovetail joint)",
+   "name": "wafer vs own segment",
    "value_mm3": 0.0,
    "pass": true
   },
   {
    "group": "assembly",
-   "name": "segment vs leading neighbour wafer",
+   "name": "wafer vs +1 neighbour segment",
    "value_mm3": 0.0,
    "pass": true
   },
   {
    "group": "assembly",
-   "name": "segment vs trailing neighbour wafer",
+   "name": "wafer vs -1 neighbour segment",
    "value_mm3": 0.0,
    "pass": true
   },
@@ -226,20 +116,20 @@
   },
   {
    "group": "assembly",
-   "name": "depth clearance >= 2.95 mm under the neighbour wafer",
-   "value_mm3": -0.0,
+   "name": "wafer vs pinion",
+   "value_mm3": 0.0,
    "pass": true
   },
   {
    "group": "assembly",
-   "name": "clearance cut present (material within 3.05 mm)",
-   "value_mm3": 29.0041,
+   "name": "pinion vs segment (static pose)",
+   "value_mm3": 0.0,
    "pass": true
   },
   {
    "group": "assembly",
-   "name": "segments butt at the joint (0.1 deg nudge contacts)",
-   "value_mm3": 430.073,
+   "name": "shingle air gap exceeds 6 mm",
+   "value_mm3": 6.0,
    "pass": true
   }
  ]

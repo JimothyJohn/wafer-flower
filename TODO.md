@@ -10,11 +10,14 @@ numbers in. Same day: straight-to-master is the blessed flow here.)
 - 2026-08-13 assumed gear numbers in mine_stl.py: PA 25° / backlash
   0.15 (FS defaults). If your OnShape feature used different values,
   say so and I'll re-pin.
-- 2026-08-14 viewer rebuild: docs/viewer.html + docs/models/ still show
-  the LEGACY scene (frozen exports); the mine architecture needs its
-  own viewer export grown out of mine_stl (ring, wafers, motor dock,
-  saddle — placements for the dock/saddle need your assembly poses).
-  calc.js's coarse visual likewise still draws the legacy solid band.
+(2026-08-14 viewer rebuild DONE 2026-08-15: mine_stl --viewer exports
+the canonical scene, viewer.html/js rebuilt, hero.js showreel ported to
+the architecture — Playwright-verified, zero console errors.)
+
+- 2026-08-15 still legacy-shaped: calc.js's customize preview draws the
+  old solid band (cadCmd repointed to scripts/legacy; an honest coarse
+  tower render is the remaining port). Motor dock + saddle aren't in
+  the viewer scene — need your assembly poses to place them.
 - 2026-08-14 bonding workflow for the new architecture: the tower-top
   pad is small and the legacy tape jig doesn't fit this design — is
   hand placement on the pad accurate enough, or does the one pipeline
