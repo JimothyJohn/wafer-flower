@@ -5,6 +5,20 @@ measurements, decisions, and assumptions clocked for later verification.
 Newest entry first. (Started 2026-08-12 at Nick's request; CLAUDE.md stays
 the machine-facing spec, this file is the human trail.)
 
+## 2026-08-13 — Epoxy failure on the pinion/shaft joint
+
+First epoxy attempt on the motor shaft + PLA pinion **never cured — just
+gummy**. Gummy-forever is a chemistry failure, not adhesion: prime
+suspects are off-ratio dispense (dual-plunger syringes short one side on
+tiny dabs — purge a bead first) and under-mixing (a small dab needs a
+real 45–60 s of folding). Also check hardener age and bench temperature.
+
+**Diagnostic for the redo: keep the leftover mixed puddle on the card as
+a control.** Puddle gummy too → ratio/mix/age. Puddle rock-hard, joint
+gummy → contamination — on an N20 that means gearbox oil creeping down
+the shaft; IPA-degrease immediately before gluing. Cleanup of the gum:
+scrape while soft, IPA wipe — **no acetone near the PLA pinion**.
+
 ## 2026-08-12 — First coupon batch on the H2S
 
 > **CORRECTION (same day, Nick):** the bench design was AHEAD of the repo
