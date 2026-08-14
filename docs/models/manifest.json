@@ -130,13 +130,13 @@
    "volume_cm3": 2.384
   },
   {
-   "file": "my_frame_segment.stl",
-   "name": "my_frame_segment",
+   "file": "mine_segment.stl",
+   "name": "mine_segment",
    "group": "onshape",
    "color": "#3E8E7E",
-   "volume_cm3": 66.028,
+   "volume_cm3": 92.348,
    "passthrough": true,
-   "oriented": false
+   "oriented": true
   }
  ],
  "motion": {

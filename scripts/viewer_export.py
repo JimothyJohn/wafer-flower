@@ -49,8 +49,12 @@ OUT_DIR = os.path.join(REPO, 'docs', 'models')
 # Expected in SCENE orientation (same frame as segment.stl); until it is, the
 # viewer shows it floating wherever the export put it — mis-orientation is
 # WARNED about, never gated: this is hand CAD in progress, not script output.
-PASSTHRU_SRC = os.path.join(REPO, 'stl', 'my_frame_segment.stl')
-PASSTHRU = dict(name='my_frame_segment', group='onshape', color=0x3E8E7E)
+# Nick's CANONICAL OnShape segment (stl/mine/, 2026-08-13 — replaces the
+# deleted my_frame_segment.stl; scripts/mine_stl.py is its parametric RE).
+# Own frame: z=0 at the wall face, band r 320-350 — floats vs the scene
+# segment by design; the orientation warn stays non-gating.
+PASSTHRU_SRC = os.path.join(REPO, 'stl', 'mine', 'Segment - segment.stl')
+PASSTHRU = dict(name='mine_segment', group='onshape', color=0x3E8E7E)
 
 # Stroke lengths for the open/close animation, mm. Sized so every moving body
 # fully clears the wafer footprint / keyhole; the travel sweep below PROVES it

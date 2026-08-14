@@ -355,14 +355,42 @@ T3 adhesive shear + 10–30 °C thermal cycling (THE gate), T4 land flatness
 T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 
 ## Repo contents
-- BENCH DESIGN DRIFT (2026-08-12): Nick's OnShape/bench design runs
-  AHEAD of the repo scripts — his first printed batch already carried
-  0.2 mm mating relief, an N20-shaped motor mount, M5 square-nut
-  pockets with flathead screws, and his own pinion bore. bracket_stl.py
-  (captive hex pockets, 22PG shell) and the coupon relief set TRAIL it.
-  Never "correct" printed parts against repo defaults; sync repo
-  scripts only from Nick's measured values (open in TODO.md).
-  DESIGN_LOG.md is the bench-notes trail.
+- NICK'S ARCHITECTURE IS CANONICAL (stl/mine/, 2026-08-13 — resolves
+  the 08-12 bench-drift note): five OnShape exports Nick ships instead
+  of the repo-generated parts ("learn from what I'm doing — derive or
+  reverse-engineer it"). Measured spec (scripts/mine_stl.py is the
+  parametric RE): band Ri 320 → Ro 350, inner slab [320,340]×9 tall,
+  FACE teeth on [340,350] — 80 slots/segment → 720 ring, m 0.95833 =
+  2·345/720 (the FS Arc-Segment math exactly), tips z=6, roots 3.84;
+  12T spur pinion face 6 at x 342-348, plain Ø3.0 THROUGH bore — NO
+  D-flat (glued retention; supersedes the 3.2/0.5 D-bore rule in this
+  architecture), axis z 10.79 = tip − m + rp, ratio 60:1 (15 rpm N20 →
+  0.25 rpm ring). Tilt θ=3° lives in the TOWER TOP: land plane
+  z = 38.8 + y·tan3°. Joints are LAP TABS (r 324.4-334.7, z 3-9,
+  1.06° past the −20° face) — NO dovetails, NO keyhole, NO grooves:
+  the legacy jig/bracket/coupon pipeline does NOT apply to this
+  architecture (open question in TODO). Tower = ±7.5° twin-wall
+  X-braced sculpture — mine_stl models it COARSELY (IoU 0.80, vol
+  +4.9%; pinion IoU 0.956) and Nick's mesh stays the canonical part
+  (viewer overlay group 'onshape' → docs/models/mine_segment.stl).
+  Clocked assumptions: PA 25° and backlash 0.15 (FS defaults, fit-
+  consistent, not measured). Mounts: motor dock (plate 50×75×6 + strap
+  band, M5 on the 25 mm grid) and static saddle (M5 25-grid) —
+  incorporated as-is, not reverse-engineered.
+- scripts/mine_stl.py — the RE generator above: exact drive geometry
+  (reuses segment_stl's face-slot/involute machinery via a duck-typed
+  MCfg), coarse tower, gates on mesh sweep ≤0.05 / mated tab-pair 0 /
+  watertight single body; reports vol/IoU vs stl/mine/. Emits
+  stl/mine_param/. NOT in the CI cad job yet. Generation trap: stacked
+  arc prisms sharing a cylinder wall need the garc() GLOBAL angular
+  grid or the float32 STL weld reads open seams; slot cutters must cut
+  while the slab region is void (slab unions after, refilling the
+  overshoot) or the slab rim roofs them into 161 phantom handles.
+- BENCH DESIGN DRIFT (2026-08-12, superseded by the above): Nick's
+  first coupon batch already carried 0.2 mm mating relief, an N20
+  mount, M5 square-nut pockets, and his own pinion bore. Never
+  "correct" printed parts against repo defaults. DESIGN_LOG.md is the
+  bench-notes trail.
 - GEARS.md — DELETED by Nick 2026-07-31 (the bevel-gear clinic; it
   documented the crossed-bevel architecture the face drive replaces —
   recoverable from history if the bevel route returns).

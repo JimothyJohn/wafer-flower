@@ -2,6 +2,20 @@
 
 ## Open questions for Nick
 
+- 2026-08-13 legacy pipeline vs stl/mine architecture: your canonical
+  parts have no keyhole, no dovetails, no grooves — so segment_stl's
+  bevel/face modes, the tape jig, bracket_stl, and the coupon batch all
+  describe the PREVIOUS architecture. Keep them as the "classic" line,
+  or archive them and grow mine_stl.py into the one pipeline (tape jig
+  for the new tower top, mount checks vs the motor dock)?
+- 2026-08-13 mine_stl.py is not in the CI cad job (ci.yml edits are
+  deploy-chain — your call or a draft PR). Also: calc.js still renders
+  the legacy solid-band architecture as the coarse visual; porting the
+  coarse tower (twin walls + tilted cap) into it is a follow-up.
+- 2026-08-13 assumed gear numbers in mine_stl.py: PA 25° / backlash
+  0.15 (FS defaults). If your OnShape feature used different values,
+  say so and I'll re-pin.
+
 (my_frame_segment.stl orientation answered 2026-07-21: same frame as
 segment.stl; the viewer overlay expects that and warns until the re-export
 lands)

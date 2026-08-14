@@ -5,6 +5,36 @@ measurements, decisions, and assumptions clocked for later verification.
 Newest entry first. (Started 2026-08-12 at Nick's request; CLAUDE.md stays
 the machine-facing spec, this file is the human trail.)
 
+## 2026-08-13 — Nick's architecture lands: stl/mine/ is canonical
+
+Nick dropped his own OnShape builds into `stl/mine/` — segment, pinion,
+motor dock (plate + strap band), static saddle — and retired the
+repo-generated parts. Reverse-engineered (`scripts/mine_stl.py`):
+
+- **Band Ri 320 → Ro 350** (was 255–285), inner slab 9 tall, **face
+  teeth** on the outer annulus: 80/segment → **720-tooth ring,
+  m 0.95833** — his OnShape build follows the FeatureScript Arc-Segment
+  math to the digit (module from the annulus middle, joints mid-slot,
+  pinion axis z = tip − m + rp = 10.79).
+- **12T pinion, 60:1** → 0.25 rpm at the 15 rpm N20 (one rev / 4 min).
+  Plain Ø3.0 through bore, **no D-flat** — glued retention is the design.
+- **Tilt θ = 3°** (was 5), and it lives in the tower top: land plane
+  z = 38.8 + y·tan 3°. The standoff is a **±7.5° twin-wall X-braced
+  tower** with an arch — sculptural, hand-designed.
+- **Lap-tab joints** (1.06° past the joint face) — no dovetails, no
+  keyhole, no retention grooves. The whole legacy jig/bracket/coupon
+  pipeline belongs to the previous architecture.
+- Parametric RE: drive geometry exact (pinion IoU 0.956 vs his mesh,
+  mesh sweep 0.00000), tower coarse (IoU 0.80, volume +4.9%). Gates in
+  `mine_stl.py`; his meshes stay canonical (viewer overlay).
+- Clocked assumptions: PA 25°, backlash 0.15 (FS defaults — consistent
+  with the flanks, not directly measured).
+
+Website repointed the same evening (Nick: "no one gives a shit about
+the parameters on the first page… focus on the viewer and the artist"):
+index is pure showreel + replicate/iterate cards, viewer leads, the
+customize page is framed as "the sculpture as a program".
+
 ## 2026-08-13 — Pinion retention: epoxy is optional
 
 Nick: "seems unnecessary… can't I just glue it?" Correct — at this
