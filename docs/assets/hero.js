@@ -217,9 +217,9 @@ let tPrev=0;
   const dt=Math.min(t-tPrev,100)/1000; tPrev=t;
   if(!still){
     ring.rotation.z+=dt*RPM2;
-    // true ratio is 60:1 — damped 5× on screen so the 12 teeth read as
-    // motion instead of strobe at display frame rates
-    pinion.children[0].rotation.z-=dt*RPM2*12;
+    // sense follows the rack (Nick 2026-08-16); heavily damped on
+    // screen so the 12 teeth read as motion instead of strobe
+    pinion.children[0].rotation.z+=dt*RPM2*1.2;
     const a=t*0.00012;
     rim.position.set(-900*Math.cos(a),-250-300*Math.sin(a),350);
   }

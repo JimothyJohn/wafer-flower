@@ -463,7 +463,7 @@ let _tPrev=0, _ringA=0;
     const dt=Math.min(t-_tPrev,100)/1000;
     _ringA+=dt*DRIVE_W;
     ANIM.ring.rotation.z=_ringA;
-    if(ANIM.pin)ANIM.pin.rotation.z=-_ringA*12;   // legibility-damped 60:1
+    if(ANIM.pin)ANIM.pin.rotation.z=_ringA*1.2;   // sense matches the rack; legibility-damped
     window.__ringAngle=_ringA;
   }
   _tPrev=t;
