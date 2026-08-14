@@ -324,11 +324,11 @@ def export_viewer(cf, seg, pin, checks, out='docs/models'):
     nrm = [0.0, -math.sin(cf.th), math.cos(cf.th)]
     parts = [
         dict(file='segment.stl', name='segment', group='segment',
-             color='#5B6472', canonical=True),
-        dict(file='wafer.stl', name='wafer', group='wafer', color='#C9CED6'),
-        dict(file='pinion.stl', name='pinion', group='drive', color='#C9A227'),
+             color='#77808C', canonical=True),
+        dict(file='wafer.stl', name='wafer', group='wafer', color='#A9AFB7'),
+        dict(file='pinion.stl', name='pinion', group='drive', color='#B7AC8C'),
         dict(file='param_segment.stl', name='param_segment', group='param',
-             color='#3E8E7E'),
+             color='#8FB3AC'),
     ]
     manifest = {
         'source': 'scripts/mine_stl.py',

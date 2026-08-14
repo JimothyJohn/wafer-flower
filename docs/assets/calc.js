@@ -47,7 +47,7 @@ function toothWave(a,g){
 
 const canvas=document.getElementById('cviz');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-const scene=new THREE.Scene(); scene.background=new THREE.Color(0xEEF1F4);
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0E1013);
 const camera=new THREE.PerspectiveCamera(40,2,1,8000);
 scene.add(new THREE.AmbientLight(0xffffff,0.55));
 const key=new THREE.DirectionalLight(0xffffff,0.7); key.position.set(400,600,800); scene.add(key);

@@ -34,12 +34,12 @@ const scene=new THREE.Scene();
 scene.fog=new THREE.Fog(0x08090b,1500,3400);
 const camera=new THREE.PerspectiveCamera(38,2,1,7000);
 camera.up.set(0,1,0);
-scene.add(new THREE.AmbientLight(0x30343c,0.55));
-const key=new THREE.DirectionalLight(0xfff4e0,0.75); key.position.set(280,700,520); scene.add(key);
-const magenta=new THREE.DirectionalLight(0xc2497b,0.8); magenta.position.set(-900,-250,350); scene.add(magenta);
-const teal=new THREE.DirectionalLight(0x1e9e8e,0.65); teal.position.set(800,-550,240); scene.add(teal);
-const gold=new THREE.DirectionalLight(0xc9a227,0.5); gold.position.set(-250,800,160); scene.add(gold);
-const blue=new THREE.DirectionalLight(0x4457c4,0.45); blue.position.set(0,-900,500); scene.add(blue);
+scene.add(new THREE.AmbientLight(0x24262a,0.5));
+const key=new THREE.DirectionalLight(0xfff2e2,0.95); key.position.set(280,700,520); scene.add(key);
+const rim=new THREE.DirectionalLight(0xb9c2cc,0.55); rim.position.set(-900,-250,350); scene.add(rim);
+const fill2=new THREE.DirectionalLight(0x8e959d,0.3); fill2.position.set(800,-550,240); scene.add(fill2);
+const top2=new THREE.DirectionalLight(0xd8dade,0.3); top2.position.set(-250,800,160); scene.add(top2);
+const under=new THREE.DirectionalLight(0x555b63,0.3); under.position.set(0,-900,500); scene.add(under);
 
 const ring=new THREE.Group(); scene.add(ring);
 const stations=[];   // {grp, wp} — grp spreads radially, wp lifts the wafer
@@ -97,7 +97,7 @@ const stations=[];   // {grp, wp} — grp spreads radially, wp lifts the wafer
   // wafers — the mirror-polish stars; each carries a whisper of a different
   // oxide-film tint so the ring shimmers as it turns
   const wg=new THREE.CylinderGeometry(WR,WR,P.wt,110);
-  const TINT=[0x14100a,0x120a10,0x0a0c16,0x0a1412];   // gold/magenta/blue/teal, dimmed
+  const TINT=[0x0b0b0c,0x0d0d0e,0x0a0a0b,0x0c0c0d];   // near-neutral — no oxide rainbow
 
   for(let k=0;k<P.N;k++){
     const grp=new THREE.Group(); grp.rotation.z=k*SEG;
@@ -221,7 +221,7 @@ let tPrev=0;
     // motion instead of strobe at display frame rates
     pinion.children[0].rotation.z-=dt*RPM2*12;
     const a=t*0.00012;
-    magenta.position.set(-900*Math.cos(a),-250-300*Math.sin(a),350);
+    rim.position.set(-900*Math.cos(a),-250-300*Math.sin(a),350);
   }
   const st=camState(scrollY||window.pageYOffset||0);
   // explode: segments spread radially, wafers lift off their tape;

@@ -9,11 +9,11 @@
 const canvas=document.getElementById('viz');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.localClippingEnabled=true;
-const scene=new THREE.Scene(); scene.background=new THREE.Color(0xEEF1F4);
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0E1013);
 const camera=new THREE.PerspectiveCamera(40,2,1,8000);
-scene.add(new THREE.AmbientLight(0xffffff,0.55));
-const key=new THREE.DirectionalLight(0xffffff,0.7); key.position.set(400,600,800); scene.add(key);
-const fill=new THREE.DirectionalLight(0xffffff,0.3); fill.position.set(-500,-200,400); scene.add(fill);
+scene.add(new THREE.AmbientLight(0xffffff,0.42));
+const key=new THREE.DirectionalLight(0xfff2e2,0.95); key.position.set(400,600,800); scene.add(key);
+const fill=new THREE.DirectionalLight(0xaeb6c2,0.35); fill.position.set(-500,-200,400); scene.add(fill);
 
 // binary STL -> non-indexed BufferGeometry (flat normals: it's CAD)
 function parseSTL(buf){
@@ -88,34 +88,21 @@ async function load(){
     g.add(new THREE.Mesh(geo.wafer,groups.wafer.children[0].material));
     scene.add(g); stations.push(g);
   }
-  renderChecks();
+  const passed=M.checks.filter(c=>c.pass).length;
   document.getElementById('status').textContent=
-    M.parts.map(p=>p.file).join(' · ')+'  ·  θ='+M.params.theta+'° N='+M.params.N+
-    '  ·  canonical: stl/mine (OnShape) + parametric RE overlay';
-}
-
-function renderChecks(){
-  const el=document.getElementById('checks');
-  let pass=0;
-  el.innerHTML=M.checks.map(c=>{
-    if(c.pass)pass++;
-    return '<div><span class="chip '+(c.pass?'ok':'bad')+'">'+(c.pass?'PASS':'FAIL')+
-      '</span><span class="nm">['+c.group+'] '+c.name+'</span>'+
-      '<span class="mono">'+c.value_mm3.toFixed(2)+'</span></div>';
-  }).join('');
-  document.getElementById('checksum').innerHTML=
-    ' <span class="chip '+(pass===M.checks.length?'ok':'bad')+'">'+
-    pass+'/'+M.checks.length+'</span>';
+    'θ='+M.params.theta+'° · N='+M.params.N+' · machine-checked '+
+    passed+'/'+M.checks.length+(passed===M.checks.length?' ✓':' ✗');
 }
 
 // ---- state + animation --------------------------------------------------
-const S={lift:0,stations:1,section:1,waf:1,drv:0,dist:800};
+const S={lift:0,stations:1,section:1,waf:1,drv:0,ex:0,dist:800};
 const T=Object.assign({},S);                            // targets (lerped)
 const ui={lift:document.getElementById('lift'),
   stations:document.getElementById('stations'),
   section:document.getElementById('section'),
   waf:document.getElementById('waf'),
-  drv:document.getElementById('drv')};
+  drv:document.getElementById('drv'),
+  boom:document.getElementById('boom')};
 ui.waf.onchange=()=>{T.waf=ui.waf.checked?1:0;};
 ui.drv.onchange=()=>{T.drv=ui.drv.checked?1:0;};
 document.getElementById('param').onchange=e=>{
@@ -123,46 +110,52 @@ document.getElementById('param').onchange=e=>{
   document.getElementById('paramv').textContent=e.target.checked?'on':'off';
 };
 ui.lift.oninput=()=>{T.lift=parseFloat(ui.lift.value);};
+ui.boom.oninput=()=>{T.ex=parseFloat(ui.boom.value);};
 ui.stations.oninput=()=>{T.stations=parseInt(ui.stations.value);};
 ui.section.oninput=()=>{T.section=parseFloat(ui.section.value);};
 
 const PRESETS={
-  bare:  {lift:1,stations:1,waf:0,drv:0,dist:600},
-  drop:  {lift:1,stations:1,waf:1,drv:0,dist:650},
-  bonded:{lift:0,stations:1,waf:1,drv:0,dist:650},
-  pair:  {lift:0,stations:2,waf:1,drv:0,dist:1250},
-  halo:  {lift:0,stations:9,waf:1,drv:1,dist:2100},
-  drive: {lift:0,stations:9,waf:0,drv:1,dist:520},
+  one:   {lift:0,stations:1,waf:1,drv:0,ex:0,dist:650},
+  pair:  {lift:0,stations:2,waf:1,drv:0,ex:0,dist:1250},
+  halo:  {lift:0,stations:9,waf:1,drv:1,ex:0,dist:2100},
+  drive: {lift:0,stations:9,waf:0,drv:1,ex:0,dist:520},
+  boom:  {lift:0,stations:9,waf:1,drv:0,ex:1,dist:2900},
 };
 document.getElementById('presets').onclick=e=>{
   const p=PRESETS[e.target.dataset.p]; if(!p)return;
   Object.assign(T,p);
   ui.waf.checked=!!p.waf; ui.drv.checked=!!p.drv;
-  ui.lift.value=p.lift; ui.stations.value=p.stations;
+  ui.lift.value=p.lift; ui.stations.value=p.stations; ui.boom.value=p.ex;
   document.querySelectorAll('#presets .pz').forEach(b=>
     b.classList.toggle('act',b===e.target));
 };
 
 function apply(){
   if(!M||!groups.wafer)return;   // manifest lands before the meshes do
-  const w=M.motion.wafer.vector;
-  groups.wafer.position.set(w[0]*S.lift,w[1]*S.lift,w[2]*S.lift);
+  const w=M.motion.wafer.vector, ex=S.ex;
+  groups.segment.position.set(ex*140,0,0);
+  if(groups.param)groups.param.position.set(ex*140,0,0);
+  groups.wafer.position.set(w[0]*S.lift+ex*140,w[1]*S.lift,w[2]*S.lift+ex*55);
   groups.wafer.visible=S.waf>0.03;
   const wm=groups.wafer.children[0].material;
   wm.transparent=S.waf<0.98; wm.opacity=Math.max(S.waf,0.05);
   if(groups.drive){
-    groups.drive.visible=S.drv>0.03;
+    groups.drive.visible=S.drv>0.03&&ex<0.4;
     const dm=groups.drive.children[0].material;
     dm.transparent=S.drv<0.98; dm.opacity=Math.max(S.drv,0.05);
   }
   stations.forEach((g,i)=>{g.visible=(i+2)<=Math.round(S.stations);
+    g.children[0].position.set(ex*140,0,0);
+    g.children[1].position.set(ex*140,0,ex*55);
     g.children[1].visible=S.waf>0.03;});
   clipPlane.constant=S.section>=0.995?1e6:-160+S.section*320;
   // readouts
   document.getElementById('wafv').textContent=S.waf>0.5?'on':'off';
   document.getElementById('drvv').textContent=S.drv>0.5?'on':'off';
   document.getElementById('liftv').textContent=
-    S.lift<0.02?'bonded':(S.lift>0.98?'above the land':(S.lift*100).toFixed(0)+'%');
+    S.lift<0.02?'bonded':(S.lift>0.98?'lifted':(S.lift*100).toFixed(0)+'%');
+  document.getElementById('boomv').textContent=
+    S.ex<0.02?'whole':(S.ex>0.98?'apart':(S.ex*100).toFixed(0)+'%');
   document.getElementById('stationsv').textContent=Math.round(S.stations);
   document.getElementById('sectionv').textContent=
     S.section>=0.995?'off':('y<'+(-160+S.section*320).toFixed(0));
@@ -182,7 +175,7 @@ canvas.addEventListener('wheel',e=>{e.preventDefault();
 
 function tick(){
   requestAnimationFrame(tick);
-  for(const k of ['lift','stations','section','waf','drv','dist'])
+  for(const k of ['lift','stations','section','waf','drv','ex','dist'])
     S[k]+=(T[k]-S[k])*0.14;
   const dist=S.dist;
   apply();

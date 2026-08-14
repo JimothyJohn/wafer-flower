@@ -40,26 +40,26 @@
    "file": "segment.stl",
    "name": "segment",
    "group": "segment",
-   "color": "#5B6472",
+   "color": "#77808C",
    "canonical": true
   },
   {
    "file": "wafer.stl",
    "name": "wafer",
    "group": "wafer",
-   "color": "#C9CED6"
+   "color": "#A9AFB7"
   },
   {
    "file": "pinion.stl",
    "name": "pinion",
    "group": "drive",
-   "color": "#C9A227"
+   "color": "#B7AC8C"
   },
   {
    "file": "param_segment.stl",
    "name": "param_segment",
    "group": "param",
-   "color": "#3E8E7E"
+   "color": "#8FB3AC"
   }
  ],
  "motion": {

@@ -1,6 +1,18 @@
 # Design log
 
-Bench notes tracking the wafer-halo design over time — print results,
+Bench notes tracking the wafer-halo design over time
+
+## 2026-08-15 — Site style pass (Nick: contrast up, saturation down)
+
+The whole site now echoes the showreel: dark, high-contrast, desaturated
+— one palette in site.css (silver accent rule replaces the oxide
+rainbow), neutral light rig in the showreel (the magenta/teal/gold/blue
+psychedelia is gone), dark scenes in the viewer and customize canvases.
+The viewer lost its machine-checks panel (one quiet "machine-checked
+10/10 ✓" line remains) and gained the thing people actually want:
+**Break it apart** — an explode preset + slider that flings the ring
+open and lifts every wafer off its tower. Labels cut to a word or two.
+All pages Playwright-verified, zero console errors. — print results,
 measurements, decisions, and assumptions clocked for later verification.
 Newest entry first. (Started 2026-08-12 at Nick's request; CLAUDE.md stays
 the machine-facing spec, this file is the human trail.)
