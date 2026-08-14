@@ -14,10 +14,13 @@ numbers in. Same day: straight-to-master is the blessed flow here.)
 the canonical scene, viewer.html/js rebuilt, hero.js showreel ported to
 the architecture — Playwright-verified, zero console errors.)
 
-- 2026-08-15 still legacy-shaped: calc.js's customize preview draws the
-  old solid band (cadCmd repointed to scripts/legacy; an honest coarse
-  tower render is the remaining port). Motor dock + saddle aren't in
-  the viewer scene — need your assembly poses to place them.
+(2026-08-15 calc legacy-preview item DONE 2026-08-16: calc.js rebuilt
+around the canonical architecture — slider storm verified, canonical
+reset lands on the sliced 51.6 g, cadCmd emits mine_stl.py flags.)
+
+- 2026-08-16 motor dock + saddle still aren't in the viewer scene —
+  need your assembly poses (or re-export them positioned relative to
+  the ring) to place them.
 - 2026-08-14 bonding workflow for the new architecture: the tower-top
   pad is small and the legacy tape jig doesn't fit this design — is
   hand placement on the pad accurate enough, or does the one pipeline

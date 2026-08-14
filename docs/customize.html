@@ -54,7 +54,6 @@
         <span class="lbl">View</span>
         <button class="pz act" data-view="assembly">Full halo</button>
         <button class="pz" data-view="station">One station</button>
-        <button class="pz" data-view="jig">Tape jig</button>
         <button class="pz" data-view="drive">Drive</button>
         <button class="pz" data-view="frame">Frame only</button>
       </div>
@@ -75,18 +74,17 @@
       <button class="pz act" data-d="300" data-t="0.775">Ø300 × 0.775</button>
       <span class="lbl" style="margin-left:10px">Band</span>
       <button class="pz" id="b_hide">Fit hide window</button>
-      <button class="pz" id="b_bal">Center under wafer CG</button>
       <span class="lbl" style="margin-left:10px">Params</span>
-      <button class="pz" id="b_b3">Rev B.3 build (θ=5)</button>
+      <button class="pz" id="b_b3">Canonical build (θ=3)</button>
     </div>
     <div class="calc-ui">
       <div class="ctrls">
         <div class="ctrl"><label>Segments N <output id="o_N">9</output></label><input type="range" id="i_N" min="6" max="14" step="1" value="9"></div>
-        <div class="ctrl"><label>Tilt θ <output id="o_tilt">10°</output></label><input type="range" id="i_tilt" min="3" max="22" step="0.5" value="10"></div>
+        <div class="ctrl"><label>Tilt θ <output id="o_tilt">3°</output></label><input type="range" id="i_tilt" min="2" max="22" step="0.5" value="3"></div>
         <div class="ctrl"><label>Pitch radius R <output id="o_R">350</output></label><input type="range" id="i_R" min="200" max="460" step="5" value="350"></div>
-        <div class="ctrl"><label>Band inner Ri <output id="o_Ri">248</output></label><input type="range" id="i_Ri" min="120" max="420" step="1" value="248"></div>
-        <div class="ctrl"><label>Band width <output id="o_bw">55</output></label><input type="range" id="i_bw" min="25" max="140" step="5" value="55"></div>
-        <div class="ctrl"><label>Min base thickness <output id="o_tmin">6</output></label><input type="range" id="i_tmin" min="4" max="18" step="0.5" value="6"></div>
+        <div class="ctrl"><label>Band inner Ri <output id="o_Ri">320</output></label><input type="range" id="i_Ri" min="120" max="420" step="1" value="320"></div>
+        <div class="ctrl"><label>Band width <output id="o_bw">30</output></label><input type="range" id="i_bw" min="25" max="140" step="5" value="30"></div>
+        <div class="ctrl"><label>Standoff height <output id="o_land">38.8 mm</output></label><input type="range" id="i_land" min="24" max="60" step="0.2" value="38.8"></div>
         <div class="ctrl"><label>Bond line <output id="o_bond">1.1</output></label><input type="range" id="i_bond" min="0.4" max="1.3" step="0.1" value="1.1"></div>
         <div class="ctrl"><label>Bond shear mod G <output id="o_G">0.06</output></label><input type="range" id="i_G" min="0.02" max="2" step="0.02" value="0.06"></div>
         <div class="ctrl"><label>Temp swing ΔT <output id="o_dT">20 K</output></label><input type="range" id="i_dT" min="5" max="50" step="1" value="20"></div>
@@ -101,10 +99,10 @@
         <div class="read"><span class="k">Band vs hide window</span><span class="v" id="r_bandok">—</span></div>
         <div class="read"><span class="k">Neighbor overlap (projected)</span><span class="v" id="r_ovl">—</span></div>
         <div class="read"><span class="k">Min z-gap between neighbors</span><span class="v" id="r_gap">—</span></div>
-        <div class="read"><span class="k">Segment max thickness (taper)</span><span class="v" id="r_tmax">—</span></div>
-        <div class="read"><span class="k">Bondable land arc</span><span class="v" id="r_land">—</span></div>
+        <div class="read"><span class="k">Part height</span><span class="v" id="r_tmax">—</span></div>
+        <div class="read"><span class="k">Tower pad arc</span><span class="v" id="r_land">—</span></div>
         <div class="read"><span class="k">Bond land area</span><span class="v" id="r_area">—</span></div>
-        <div class="read"><span class="k">Bevel gear 45° (m=2, generated)</span><span class="v" id="r_gear">—</span></div>
+        <div class="read"><span class="k">Face ring (derived)</span><span class="v" id="r_gear">—</span></div>
         <div class="read"><span class="k">Gear vs hide window</span><span class="v" id="r_gearok">—</span></div>
       </div>
       <div class="reads">
@@ -120,8 +118,8 @@
         <div class="read"><span class="k">Wafer overhang (outboard)</span><span class="v" id="s_ovh">—</span></div>
         <div class="read"><span class="k">Tip droop (hung / flat)</span><span class="v" id="s_droop">—</span></div>
         <div class="read"><span class="k">Wafer bending stress</span><span class="v" id="s_sig">—</span></div>
-        <div class="read"><span class="k">Joint moment, 1-pt hang</span><span class="v" id="s_mj">—</span></div>
-        <div class="read"><span class="k">Dovetail stress / margin</span><span class="v" id="s_dt">—</span></div>
+        <div class="read"><span class="k">Ring joint moment</span><span class="v" id="s_mj">—</span></div>
+        <div class="read"><span class="k">Drive ratio / ring speed</span><span class="v" id="s_dt">—</span></div>
         <div class="read"><span class="k">Out-of-plane CG (tip-off)</span><span class="v" id="s_zcg">—</span></div>
       </div>
     </div>
