@@ -34,8 +34,8 @@ const fill=new THREE.DirectionalLight(0xaeb6c2,0.35); fill.position.set(-500,-20
 
 let az=0.6, pol=1.05, dist=1500, group=new THREE.Group(); scene.add(group);
 let view='assembly', autoDist=true;
-const ANIM={ring:null, pin:null};
-const DRIVE_W=0.21;              // ring rad/s on screen (time-lapse)
+const ANIM={ring:null, pin:null, ratio:60};
+const PIN_W=0.25;                // pinion rad/s on screen — the MASTER; the ring derives via the true ratio
 function placeCam(){
   camera.position.set(dist*Math.sin(pol)*Math.cos(az), dist*Math.sin(pol)*Math.sin(az), dist*Math.cos(pol));
   camera.up.set(0,0,1); camera.lookAt(0,0,0);
@@ -227,7 +227,7 @@ function buildScene(){
   if(view==='drive'||view==='assembly'){
     const pin=pinionMesh(body.gs,zBot,body.ts);
     group.add(pin);
-    if(view==='drive'){ANIM.ring=rg; ANIM.pin=pin.children[0];}
+    if(view==='drive'){ANIM.ring=rg; ANIM.pin=pin.children[0]; ANIM.ratio=body.gs.ratio;}
   }
   frameView(th,zBot);
   viewNote(body);
@@ -461,10 +461,10 @@ let _tPrev=0, _ringA=0;
   requestAnimationFrame(loop);
   if(view==='drive'&&ANIM.ring){
     const dt=Math.min(t-_tPrev,100)/1000;
-    _ringA+=dt*DRIVE_W;
-    ANIM.ring.rotation.z=_ringA;
-    if(ANIM.pin)ANIM.pin.rotation.z=_ringA*1.2;   // sense matches the rack; legibility-damped
-    window.__ringAngle=_ringA;
+    _ringA+=dt*PIN_W;                              // accumulates PINION angle
+    if(ANIM.pin)ANIM.pin.rotation.z=_ringA;
+    ANIM.ring.rotation.z=_ringA/ANIM.ratio;        // surface speeds match at the mesh
+    window.__ringAngle=_ringA/ANIM.ratio;
   }
   _tPrev=t;
   renderer.render(scene,camera);

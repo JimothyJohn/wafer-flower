@@ -210,16 +210,15 @@ const NAMES=['TITLE','THE SWIRL','THE DRIVE','THE EDGE','THE BUILD','CREDITS'];
 let lastShot=-1;
 
 const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const RPM2=0.21;   // rad/s on screen — a time-lapse of the true 0.25 rpm
+const PIN_W=0.25;  // pinion rad/s on screen — the MASTER (Nick's pick);
+const RATIO=60;    // ring follows via the true 60:1, surface speeds match
 let tPrev=0;
 (function loop(t){
   requestAnimationFrame(loop);
   const dt=Math.min(t-tPrev,100)/1000; tPrev=t;
   if(!still){
-    ring.rotation.z+=dt*RPM2;
-    // sense follows the rack (Nick 2026-08-16); heavily damped on
-    // screen so the 12 teeth read as motion instead of strobe
-    pinion.children[0].rotation.z+=dt*RPM2*1.2;
+    ring.rotation.z+=dt*PIN_W/RATIO;
+    pinion.children[0].rotation.z+=dt*PIN_W;
     const a=t*0.00012;
     rim.position.set(-900*Math.cos(a),-250-300*Math.sin(a),350);
   }
