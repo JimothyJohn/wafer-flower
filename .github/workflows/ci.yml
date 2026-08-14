@@ -1,12 +1,14 @@
 name: CI
 
-# This repo is a CAD/art project: loose Python generator scripts in scripts/
-# with no packaged dependency manifest. CI runs a cheap syntax pass, then the
-# CAD generators themselves — they self-verify with boolean interference
-# checks (cure-jig drivetrain, jig open/close sweep, wafer placement, glued
-# ring + depth clearance) and exit nonzero on any FAIL. viewer_export.py
-# --verify also gates the docs/models/ STLs the Pages viewer serves against
-# the scripts, so the published page can't silently go stale.
+# This repo is a CAD/art project: loose Python generator scripts with no
+# packaged dependency manifest. CI runs a cheap syntax pass over everything
+# (including scripts/legacy — archived but kept compiling), then THE
+# pipeline: scripts/mine_stl.py, the parametric generator for Nick's
+# canonical architecture (stl/mine/). It self-verifies with boolean gates
+# (gear mesh sweep, lap-tab pair, wafer/segment/pinion clearances) and
+# compares its output against the canonical meshes, exiting nonzero on any
+# FAIL. Legacy generators (segment_stl, cure_jig, bracket, coupons,
+# viewer_export) were removed from CI 2026-08-14 — see scripts/legacy/.
 
 on:
   push:
@@ -23,7 +25,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Byte-compile Python scripts
+      - name: Byte-compile Python scripts (incl. legacy)
         run: python3 -m compileall -q scripts
 
   cad:
@@ -33,18 +35,9 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Install manifold3d
+      - name: Install manifold3d + numpy
         run: |
           python3 -m venv .ci-venv
-          .ci-venv/bin/pip install --quiet manifold3d
-      - name: Segment + cure-jig + bracket + hardware generators (self-checking, exit nonzero on FAIL)
-        run: |
-          .ci-venv/bin/python scripts/segment_stl.py -o /tmp/stl-ci
-          .ci-venv/bin/python scripts/cure_jig_stl.py -o /tmp/stl-ci
-          .ci-venv/bin/python scripts/bracket_stl.py -o /tmp/stl-ci
-          .ci-venv/bin/python scripts/printed_hardware_stl.py -o /tmp/stl-ci
-          .ci-venv/bin/python scripts/coupon_stl.py -o /tmp/stl-ci/coupons
-        # gearmotor_stl.py dropped 2026-07-24: the drive train is parked and
-        # that script pins the legacy spur ring (see its header)
-      - name: Viewer configuration gates + docs/models staleness check
-        run: .ci-venv/bin/python scripts/viewer_export.py --verify
+          .ci-venv/bin/pip install --quiet manifold3d numpy
+      - name: The pipeline — mine_stl.py (self-gating, exit nonzero on FAIL)
+        run: .ci-venv/bin/python scripts/mine_stl.py -o /tmp/stl-ci

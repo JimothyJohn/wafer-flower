@@ -5,6 +5,27 @@ measurements, decisions, and assumptions clocked for later verification.
 Newest entry first. (Started 2026-08-12 at Nick's request; CLAUDE.md stays
 the machine-facing spec, this file is the human trail.)
 
+## 2026-08-14 — One pipeline (Nick: "archive and grow mine_stl.py")
+
+The legacy generator suite — segment_stl's three drive modes, the tape
+jig, the idler bracket, coupons, viewer export, STEP, manual, printed
+hardware — moved to `scripts/legacy/` (README there; segment_stl stays
+imported as a library for the gear machinery). `mine_stl.py` grew the
+rest of the pipeline: wafers on the tower land, the 9-ring and full
+assembly, and gates for every clearance (wafer vs own/neighbour
+segments, wafer vs wafer, pinion static pose — all 0.00000; shingle air
+gap > 6 mm at θ 3°). CI now runs syntax + mine_stl only.
+
+Sliced truth for the new architecture (PLA @10 %): **segment 51.6 g /
+1h38** (vs 72.8 legacy — the thin-wall tower earns its keep), frame
+~465 g, assembly on the wall ~1.62 kg. **Pinion 0.68 g / 19 min** at
+0.08 mm / 100 % as its own job. Small `stl/mine/` parts export in
+assembly pose — re-orient in the slicer (PRINTING.md).
+
+Also Nick's process call, recorded in CLAUDE.md: **straight-to-master
+is the blessed flow for this repo** — art project, always iterating,
+no PR ceremony.
+
 ## 2026-08-13 — Nick's architecture lands: stl/mine/ is canonical
 
 Nick dropped his own OnShape builds into `stl/mine/` — segment, pinion,
