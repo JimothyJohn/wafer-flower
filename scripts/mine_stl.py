@@ -39,7 +39,11 @@ pocket pair interference == 0. The comparison vs stl/mine/ meshes
 """
 from __future__ import annotations
 import math, os, struct, sys, argparse
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# segment_stl lives in scripts/legacy (archived generator, live LIBRARY —
+# the face-slot rack machinery, involute profile, and STL writer come from
+# it until the legacy line is deleted and they migrate here)
+_HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(_HERE, 'legacy'))
 
 from segment_stl import (HAVE_MANIFOLD, Manifold, arc, face_pt, prism,
                          signed_area, union_all, write_stl, report,
@@ -79,6 +83,12 @@ PARAMS = dict(
     pin_T    = 12,      # -> 60:1 (15 rpm N20 -> 0.25 rpm ring)
     pin_face = 6.0,
     pin_bore = 3.0,     # PLAIN through bore — Nick's part has NO D-flat
+    R        = 350.0,   # wafer pitch radius (frozen-physics value; the
+                        # tower-top land slope matches a radial-axis
+                        # tilt about a centre on the a=0 meridian)
+    wafer_D  = 300.0,
+    wafer_T  = 0.775,
+    bond     = 1.1,     # acrylic foam tape bondline over the land
     facets   = 512,
 )
 
@@ -186,6 +196,45 @@ def build_segment(cf):
     return sum(parts[1:], parts[0]) if len(parts) > 1 else parts[0]
 
 
+def build_wafer(cf, k=0):
+    """Wafer k: disc tilted `tilt` about its radial axis (leading edge —
+    +tangential — up, matching the tower-top land slope), mid-plane
+    bond + wafer_T/2 above the land at the wafer meridian."""
+    zc = cf.land_c + cf.bond + cf.wafer_T / 2
+    w = (Manifold.cylinder(cf.wafer_T, cf.wafer_D / 2, cf.wafer_D / 2, 256)
+         .translate([0.0, 0.0, -cf.wafer_T / 2])
+         .rotate([cf.tilt, 0.0, 0.0])
+         .translate([cf.R, 0.0, zc]))
+    return w.rotate([0.0, 0.0, math.degrees(k * cf.sector)])
+
+
+def build_ring(cf, seg, n=None, wafers=False):
+    """List of bodies (kept separate — neighbours butt on shared faces)."""
+    n = n or cf.N
+    parts = [seg.rotate([0.0, 0.0, math.degrees(k * cf.sector)])
+             for k in range(n)]
+    if wafers:
+        parts += [build_wafer(cf, k) for k in range(n)]
+    return parts
+
+
+def wafer_gap(cf, steps=(1.0, 2.0, 3.0, 4.0, 6.0)):
+    """Largest tested drop of wafer 1 along its plane normal that still
+    clears wafer 0 — the shingle air gap, REPORTED (Nick's design sets
+    its own spec)."""
+    w0, w1 = build_wafer(cf, 0), build_wafer(cf, 1)
+    nvec = [0.0, -math.sin(cf.th), math.cos(cf.th)]     # wafer-1 normal
+    c, s = math.cos(cf.sector), math.sin(cf.sector)
+    nvec = [c * nvec[0] - s * nvec[1], s * nvec[0] + c * nvec[1], nvec[2]]
+    best = 0.0
+    for d in steps:
+        moved = w1.translate([-nvec[0] * d, -nvec[1] * d, -nvec[2] * d])
+        if (moved ^ w0).volume() > 0.001:
+            break
+        best = d
+    return best
+
+
 def build_pinion(cf):
     pts, g = pinion_profile(cf, cf.pin_T)
     if signed_area(pts) < 0:
@@ -268,6 +317,12 @@ def main():
     bodies = write_stl(pin, os.path.join(a.out, 'pinion.stl'))
     report('pinion.stl', pin, bodies,
            f"{g['T']}T, tip Ø{2 * g['ra']:.2f} vs measured 13.42")
+    frame = build_ring(cf, seg)
+    bodies = write_stl(frame, os.path.join(a.out, 'halo_frame.stl'))
+    report('halo_frame.stl', frame, bodies, f'all {cf.N} segments')
+    assy = build_ring(cf, seg, wafers=True)
+    bodies = write_stl(assy, os.path.join(a.out, 'halo_assembly.stl'))
+    report('halo_assembly.stl', assy, bodies, 'frame + wafers, view only')
 
     fails = []
     if len([c for c in seg.decompose() if c.volume() > 0.01]) != 1:
@@ -280,6 +335,27 @@ def main():
     print(f"  gate    mated tab/pocket pair interference {pair:.5f} mm3")
     if pair > 0.001:
         fails.append(f"tab/pocket pair interference {pair:.3f} mm3")
+    # assembly gates: the wafer must clear its own segment (tape gap),
+    # both neighbouring segments, the neighbouring wafer, and the pinion;
+    # the placed pinion must clear the segment body (its tips interleave
+    # the slots — check_mesh sweeps that, this is the static pose)
+    w0 = build_wafer(cf, 0)
+    pin0 = pinion_at(cf, pin, 0.0)
+    for name, av, bv in (
+            ('wafer vs own segment', w0, seg),
+            ('wafer vs +1 neighbour segment', w0,
+             seg.rotate([0, 0, math.degrees(cf.sector)])),
+            ('wafer vs -1 neighbour segment', w0,
+             seg.rotate([0, 0, -math.degrees(cf.sector)])),
+            ('wafer vs neighbour wafer', w0, build_wafer(cf, 1)),
+            ('wafer vs pinion', w0, pin0),
+            ('pinion vs segment (static pose)', pin0, seg)):
+        v = (av ^ bv).volume()
+        print(f"  gate    {name:34} {v:.5f} mm3")
+        if v > 0.001:
+            fails.append(f"{name}: {v:.3f} mm3")
+    gap = wafer_gap(cf)
+    print(f"  info    shingle air gap between neighbour wafers > {gap:.1f} mm")
 
     # ---- comparison vs Nick's canonical meshes (REPORTED, not gated) ----
     for mine, ours in (('stl/mine/Segment - segment.stl', seg),

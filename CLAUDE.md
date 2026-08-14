@@ -377,15 +377,25 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   consistent, not measured). Mounts: motor dock (plate 50×75×6 + strap
   band, M5 on the 25 mm grid) and static saddle (M5 25-grid) —
   incorporated as-is, not reverse-engineered.
-- scripts/mine_stl.py — the RE generator above: exact drive geometry
-  (reuses segment_stl's face-slot/involute machinery via a duck-typed
-  MCfg), coarse tower, gates on mesh sweep ≤0.05 / mated tab-pair 0 /
-  watertight single body; reports vol/IoU vs stl/mine/. Emits
-  stl/mine_param/. NOT in the CI cad job yet. Generation trap: stacked
-  arc prisms sharing a cylinder wall need the garc() GLOBAL angular
-  grid or the float32 STL weld reads open seams; slot cutters must cut
-  while the slab region is void (slab unions after, refilling the
-  overshoot) or the slab rim roofs them into 161 phantom handles.
+- scripts/mine_stl.py — THE PIPELINE (2026-08-14, Nick: "archive and
+  grow mine_stl.py into the one pipeline"; everything else moved to
+  scripts/legacy/ — see its README; segment_stl.py stays imported from
+  there as a LIBRARY for the face-slot/involute machinery until it
+  migrates in). Exact drive geometry via a duck-typed MCfg, coarse
+  tower, wafers (tilt about the radial axis, mid-plane land + bond +
+  wt/2), 9-ring + assembly outputs to stl/mine_param/. Gates: mesh
+  sweep ≤0.05, mated lap-tab pair 0, wafer vs own/±1 segments /
+  neighbour wafer / pinion 0, pinion static pose 0, watertight single
+  body; reports shingle air gap (>6 mm at θ3) and vol/IoU vs stl/mine/
+  (0.80 seg / 0.956 pinion). In the CI cad job. SLICED (PLA @10%):
+  segment 51.6 g / 1h38 (frame ~465 g, assembly ~1.62 kg), pinion
+  0.68 g / 19 min @ 0.08mm HQ 100%. stl/mine exports sit in ASSEMBLY
+  POSE — re-orient small parts in the slicer (PRINTING.md). Generation
+  traps: stacked arc prisms sharing a cylinder wall need the garc()
+  GLOBAL angular grid or the float32 STL weld reads open seams; slot
+  cutters must cut while the slab region is void (slab unions after,
+  refilling the overshoot) or the slab rim roofs them into 161 phantom
+  handles.
 - BENCH DESIGN DRIFT (2026-08-12, superseded by the above): Nick's
   first coupon batch already carried 0.2 mm mating relief, an N20
   mount, M5 square-nut pockets, and his own pinion bore. Never
@@ -627,11 +637,11 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   is garbage and poisons silhouettes into false dashes). Scene z = wall
   normal, so wall-art views need azim −90 / high elev, not the bench-view
   camera. Needs numpy + matplotlib.
-- CI (.github/workflows/ci.yml): `syntax` byte-compile + `cad` job that runs
-  segment_stl.py, cure_jig_stl.py, bracket_stl.py, printed_hardware_stl.py,
-  and viewer_export.py --verify on every PR (gearmotor_stl dropped when it
-  was parked, 2026-07-24). STEP + manual are committed artifacts, not
-  CI-gated.
+- CI (.github/workflows/ci.yml, rewritten 2026-08-14): `syntax`
+  byte-compiles all of scripts/ (legacy included, kept compiling) +
+  `cad` runs ONLY scripts/mine_stl.py — the one pipeline. The legacy
+  generators and viewer_export --verify left CI with the archive;
+  docs/models/ is frozen as committed until the viewer rebuild.
 - scripts/onshape/face_gear.fs — OnShape FeatureScript, REBUILT
   incrementally with Nick verifying every paste (2026-07-30..31; the
   one-shot wafer_halo_beveloid.fs + its README are deleted — history at
@@ -662,6 +672,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 ## Conventions & preferences
 - User (Nick) is technical; be direct, lead with problems, no praise
   padding. Structurally-sound-over-minimal on the frame. Quantify claims.
+- PUSH STRAIGHT TO MASTER (Nick 2026-08-14): this is an art project he
+  iterates on and notes here — no PR ceremony, no dev-branch flow.
+  Overrides the global never-push-master rule FOR THIS REPO ONLY.
+  (Master still deploys Pages, so pushes publish the site.)
 - Wafer handling: edges only, never flex, never acetone on the PRINT
   (crazes PETG/softens PLA; acetone on silicon is fine). Denatured alcohol
   or 91% IPA for prep.
