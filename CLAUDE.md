@@ -636,15 +636,16 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   duplicate vertices welded (5e-4), near-degenerate tris dropped. GitHub
   previews .stl in-repo but NOT .stp — browse stl/ for 3D, import .stp to CAD.
 - scripts/manual_pdf.py — KISELRING IKEA-style assembly manual ->
-  docs/kiselring-manual.pdf (9 pages A4). PARKED CONTENT: it documents the
-  MOTORISED concept and pins gear_drive='spur' to stay self-consistent; a
-  static-bracket manual is TODO. All 3D panels are line art rendered
-  from the REAL solids: orthographic projection, triangle z-buffer hidden-line
-  removal, silhouette + >25° crease edges only. Renderer gotcha: SKIP
-  triangles with tiny projected area before z-buffering (their barycentric z
-  is garbage and poisons silhouettes into false dashes). Scene z = wall
-  normal, so wall-art views need azim −90 / high elev, not the bench-view
-  camera. Needs numpy + matplotlib.
+  docs/kiselring-manual.pdf (9 pages A4). REBUILT 2026-08-16 for the
+  canonical architecture (the spur-era manual lives in scripts/legacy/):
+  line art rendered from NICK'S REAL MESHES (stl/mine, read directly —
+  numpy + matplotlib only, no CAD deps). Story: tape wafer (one
+  landing) -> lap nine segments -> dock + saddle on the wall (2D wall +
+  3D insets — a 3D wall slab flattens the view) -> ring rests in saddle
+  -> glue pinion, dock N20 -> USB. Dock/saddle scene poses are
+  ILLUSTRATIVE guesses (assembly poses still owed by Nick). Renderer
+  gotchas kept: skip near-edge-on triangles before z-buffering; wall-art
+  views want azim −90 / high elev.
 - CI (.github/workflows/ci.yml, rewritten 2026-08-14): `syntax`
   byte-compiles all of scripts/ (legacy included, kept compiling) +
   `cad` runs ONLY scripts/mine_stl.py — the one pipeline. The legacy
