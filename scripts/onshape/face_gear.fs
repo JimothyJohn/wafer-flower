@@ -25,9 +25,9 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
     teeth; coprime counts hunt (wear-even). Backlash = total pitch-line
     play, split evenly (each gear's slots widen by half, a quarter per
     flank). Pinion bore takes an optional D-flat (chord cut, depth from
-    the round wall). Hub length > 0 grows a boss at BOTH ends of the
-    pinion: motor side open, rail side CAPPED (bore stops 1 mm short of
-    the cap face) so shaft epoxy pools against a sealed end (2026-08-12).
+    the round wall). Hub length > 0 grows a boss on the MOTOR side only
+    (2026-08-16, Nick: the 08-12 dual-hub rev printed badly - the far
+    face stays flat and flush so the pinion prints flat on the bed).
 
     Scope (2026-08-12, Nick): a pinion and a rack, NOTHING ELSE. The
     Motor Envelope second feature was tried and rejected (added b4a21e2,
@@ -89,7 +89,7 @@ export const arcSegment = defineFeature(function(context is Context, id is Id, d
                 annotation { "Name" : "Bore flat depth", "Description" : "D-shaft flat: cut depth from the round bore wall. 0 = plain round bore. A 3 mm D-shaft typically wants 0.5 mm." }
                 isLength(def.pinionFlat, { (millimeter) : [0, 0.5, 10] } as LengthBoundSpec);
 
-                annotation { "Name" : "Hub length", "Description" : "Hub boss around the bore at BOTH ends, same length each: motor side (spacer off the gearbox nose plus extra bore engagement) and a CAPPED hub on the far side (spacing off the rail; the bore stops 1 mm short inside it, leaving a pocket for shaft epoxy to pool against a sealed end). 0 = none." }
+                annotation { "Name" : "Hub length", "Description" : "Hub boss around the bore on the MOTOR side (outer radius face): spacer off the gearbox nose plus extra bore engagement. 0 = none." }
                 isLength(def.pinionHubLength, { (millimeter) : [0, 3, 100] } as LengthBoundSpec);
 
                 annotation { "Name" : "Hub radius", "Description" : "Must stay under the pinion pitch radius minus one module so it clears the ring's tooth tips - the guard reports the exact limit." }
@@ -256,41 +256,6 @@ function buildBlank(context is Context, id is Id, g is map)
         opDeleteBodies(context, id + "deleteHubSketch", {
             "entities" : qCreatedBy(id + "hubProfile", EntityType.BODY)
         });
-
-        // Cap hub (2026-08-12, Nick): matching boss on the z = 0 face -
-        // after placement that is the RAIL side. Same radius and length as
-        // the motor hub. The bore stops 1 mm short of its end face (see the
-        // bore cut below), so the far end is CLOSED: it spaces the gear off
-        // the rail behind it and gives shaft epoxy a sealed pocket to pool
-        // in instead of squeezing out the front.
-        var capSk = newSketchOnPlane(context, id + "capProfile", {
-            "sketchPlane" : plane(
-                vector(0 * millimeter, 0 * millimeter, -g.hubLength),
-                vector(0, 0, 1),
-                vector(1, 0, 0))
-        });
-        skCircle(capSk, "capCircle", {
-            "center" : vector(0, 0) * millimeter,
-            "radius" : g.hubRadius
-        });
-        skSolve(capSk);
-        opExtrude(context, id + "capExtrude", {
-            "entities" : qSketchRegion(id + "capProfile"),
-            "direction" : vector(0, 0, 1),
-            "endBound" : BoundingType.BLIND,
-            "endDepth" : g.hubLength + ov
-        });
-        opBoolean(context, id + "attachCap", {
-            "tools" : qUnion([
-                qCreatedBy(id + "extrude", EntityType.BODY),
-                qCreatedBy(id + "attachHub", EntityType.BODY),
-                qCreatedBy(id + "capExtrude", EntityType.BODY)
-            ]),
-            "operationType" : BooleanOperationType.UNION
-        });
-        opDeleteBodies(context, id + "deleteCapSketch", {
-            "entities" : qCreatedBy(id + "capProfile", EntityType.BODY)
-        });
     }
 
     // Inner bore, cut through body AND hub. Round: a revolved rectangle
@@ -300,12 +265,6 @@ function buildBlank(context is Context, id is Id, g is map)
     if (Ri > 0 * millimeter)
     {
         const zHi = g.height + g.hubLength + ov;
-        // With hubs the bore is BLIND at the cap end: it stops 1 mm short
-        // of the cap's end face (the epoxy pocket + seal wall). With no
-        // hubs it breaks out at -ov as before.
-        var zLo = -ov;
-        if (g.hubLength > 0 * millimeter)
-            zLo = -max(0 * millimeter, g.hubLength - 1 * millimeter);
         if (g.boreFlat >= Ri)
             throw regenError("Bore flat depth must be smaller than the bore radius.");
         if (g.boreFlat > 0 * millimeter)
@@ -314,7 +273,7 @@ function buildBlank(context is Context, id is Id, g is map)
             const y0 = sqrt(Ri * Ri - xF * xF);
             var dSk = newSketchOnPlane(context, id + "boreProfile", {
                 "sketchPlane" : plane(
-                    vector(0 * millimeter, 0 * millimeter, zLo),
+                    vector(0 * millimeter, 0 * millimeter, -ov),
                     vector(0, 0, 1),
                     vector(1, 0, 0))
             });
@@ -332,7 +291,7 @@ function buildBlank(context is Context, id is Id, g is map)
                 "entities" : qSketchRegion(id + "boreProfile"),
                 "direction" : vector(0, 0, 1),
                 "endBound" : BoundingType.BLIND,
-                "endDepth" : zHi - zLo
+                "endDepth" : g.height + g.hubLength + 2 * ov
             });
         }
         else
@@ -341,7 +300,7 @@ function buildBlank(context is Context, id is Id, g is map)
                 "sketchPlane" : qCreatedBy(makeId("Front"), EntityType.FACE)
             });
             skLineSegment(boreSk, "axisEdge", {
-                "start" : vector(0 * millimeter, zLo),
+                "start" : vector(0 * millimeter, -ov),
                 "end"   : vector(0 * millimeter, zHi)
             });
             skLineSegment(boreSk, "top", {
@@ -350,11 +309,11 @@ function buildBlank(context is Context, id is Id, g is map)
             });
             skLineSegment(boreSk, "wall", {
                 "start" : vector(Ri, zHi),
-                "end"   : vector(Ri, zLo)
+                "end"   : vector(Ri, -ov)
             });
             skLineSegment(boreSk, "bottom", {
-                "start" : vector(Ri, zLo),
-                "end"   : vector(0 * millimeter, zLo)
+                "start" : vector(Ri, -ov),
+                "end"   : vector(0 * millimeter, -ov)
             });
             skSolve(boreSk);
             opRevolve(context, id + "boreCut", {
@@ -368,9 +327,7 @@ function buildBlank(context is Context, id is Id, g is map)
             "targets" : qUnion([
                 qCreatedBy(id + "extrude", EntityType.BODY),
                 qCreatedBy(id + "hubExtrude", EntityType.BODY),
-                qCreatedBy(id + "attachHub", EntityType.BODY),
-                qCreatedBy(id + "capExtrude", EntityType.BODY),
-                qCreatedBy(id + "attachCap", EntityType.BODY)
+                qCreatedBy(id + "attachHub", EntityType.BODY)
             ]),
             "operationType" : BooleanOperationType.SUBTRACTION
         });
@@ -408,9 +365,7 @@ function cutSlots(context is Context, id is Id, nSlots, pitchAngle)
         "targets" : qUnion([
             qCreatedBy(id + "extrude", EntityType.BODY),
             qCreatedBy(id + "hubExtrude", EntityType.BODY),
-            qCreatedBy(id + "attachHub", EntityType.BODY),
-            qCreatedBy(id + "capExtrude", EntityType.BODY),
-            qCreatedBy(id + "attachCap", EntityType.BODY)
+            qCreatedBy(id + "attachHub", EntityType.BODY)
         ]),
         "operationType" : BooleanOperationType.SUBTRACTION
     });

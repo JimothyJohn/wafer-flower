@@ -2,6 +2,17 @@
 
 Bench notes tracking the wafer-halo design over time
 
+## 2026-08-16 — Dual-hub pinion reverted (Nick: bad idea for printing)
+
+The 08-12 capped tip-side hub is **out** — `face_gear.fs` is back to the
+single MOTOR-side hub with a THROUGH bore. Nick: the second hub was "a
+bad idea from a 3D printing perspective"; the face opposite the mounting
+side stays **flat and flush** so the pinion prints flat on the bed (the
+tip-side boss forced supports or an on-hub print orientation). This
+resolves the 08-12 clocked assumption (epoxy pocket + seal): rejected.
+Epoxy retention itself is unchanged — apply per the 08-13 plan, wick
+into the open bore.
+
 ## 2026-08-15 — Site style pass (Nick: contrast up, saturation down)
 
 The whole site now echoes the showreel: dark, high-contrast, desaturated
