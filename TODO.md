@@ -57,6 +57,28 @@ is orphaned, superseded by the repo-vs-bench sync item below.)
   envelope, mount geometry. Until then repo bracket/coupon outputs are
   stale for printing.
 
+- 2026-08-20 (08-19 review §2) RPM target: "60 RPM" as transcribed is
+  impossible at the ring (30:1 needs an 1800 rpm motor) — is it 60 s/rev
+  (= 1 rpm, 24T pinion at a 15 rpm motor)? And what is the replacement
+  motor's rated output speed? `pin_T = 360 · target_rpm / motor_rpm`.
+- 2026-08-20 (08-19 review §3) rail: I read "outboard" as AXIAL (away
+  from the wall — the tilt-drift/CG rationale only works axially) and
+  shipped a clocked-guess rib inward of the bore, running face r 316,
+  z 4..9, top flush with the band front face, 45° chamfer under. Confirm
+  against your OnShape part (or send dims) — the static bracket contact
+  and §7's 30° angle depend on it.
+- 2026-08-20 (08-19 review §4) "end features" kept while hollowing:
+  transcription ambiguous — I kept the joint tab/pocket zones (3° each
+  end) plus the tower arc solid. Right features? Should the bays also
+  run under the tower?
+- 2026-08-20 (08-19 review §5) rail/joint misalignment: current revision
+  or only the old one? Cut a test piece before changing anything.
+- 2026-08-20 (08-19 review §7) bracket angle "call it thirty degrees" —
+  working number, confirm against the rail geometry.
+- 2026-08-20 canonical re-export: stl/mine/ segment + pinion predate the
+  revision (compare IoU 0.63 / 0.20 by design) — re-export from OnShape
+  once the full-section/half-count pass lands there.
+
 (2026-08-12 keyhole relocation DONE same day: bore bottom now gear_F +
 0.3 above the flat bottom, riser hollow pattern shipped as pat_* params
 in segment_stl.py, all gates green — see DESIGN_LOG.md. calc.js retuned

@@ -358,7 +358,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
 - NICK'S ARCHITECTURE IS CANONICAL (stl/mine/, 2026-08-13 — resolves
   the 08-12 bench-drift note): five OnShape exports Nick ships instead
   of the repo-generated parts ("learn from what I'm doing — derive or
-  reverse-engineer it"). Measured spec (scripts/mine_stl.py is the
+  reverse-engineer it"). NOTE 2026-08-20: the numbers in this bullet
+  describe those MESHES; the parametric defaults moved on per the
+  08-19 bench review (rev C — see the mine_stl.py bullet + DESIGN_LOG)
+  and the meshes await re-export. Measured spec (scripts/mine_stl.py is the
   parametric RE): band Ri 320 → Ro 350, inner slab [320,340]×9 tall,
   FACE teeth on [340,350] — 80 slots/segment → 720 ring, m 0.95833 =
   2·345/720 (the FS Arc-Segment math exactly), tips z=6, roots 3.84;
@@ -385,9 +388,29 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   tower, wafers (tilt about the radial axis, mid-plane land + bond +
   wt/2), 9-ring + assembly outputs to stl/mine_param/. Gates: mesh
   sweep ≤0.05, mated lap-tab pair 0, wafer vs own/±1 segments /
-  neighbour wafer / pinion 0, pinion static pose 0, watertight single
-  body; reports shingle air gap (>6 mm at θ3) and vol/IoU vs stl/mine/
-  (0.80 seg / 0.956 pinion). `--viewer` exports docs/models/ (canonical
+  neighbour wafer / pinion 0, pinion static pose 0, pinion in front of
+  the wall plane, watertight single body; reports shingle air gap
+  (>6 mm at θ3) and vol/IoU vs stl/mine/.
+  REV C DEFAULTS (2026-08-20, from the 08-19 bench review — DESIGN_LOG
+  has the full entry): tps 40 → 360 ring, m 1.91667, 30:1 (15 rpm N20
+  → 0.5 rpm ring, 120 s/rev; mot_rpm is a report-only knob, the "60
+  RPM" calibration target is an open TODO); full_teeth=1 derives
+  gear_F = 2.25 m = 4.31 so ROOTS LAND ON THE WALL FACE (full-section
+  teeth, closes the observed ~2 mm standoff; slot_cutter pushes
+  root-plane profile points to -over or the cutter ends coplanar with
+  the wall face — sliver trap) and the PINION AXIS MOVES z 10.79 →
+  13.90 (tip Ø26.83 — motor dock height changes); rail_w/rail_h rib
+  OUTBOARD (read axially: tilt-drift/CG rationale) inward of the bore,
+  face r 316 z 4..9, stepped 45° chamfer under, top flush with the
+  band front face — CLOCKED GUESS pending Nick's OnShape dims; hol_*
+  blind bays open at the wall face in the slab wings (tower arc + 3°
+  joint ends + 3 mm shells solid, 2.5 roof) — sliced 51.6 → 47.46 g /
+  1h39 PLA @10% (these bays DO save mass, unlike the legacy riser
+  pattern; frame ~427 g, wall assembly ~1.58 kg; pinion 2.78 g /
+  29 min @0.08 HQ 100%). --full_teeth 0 --tps 80 --rail_w 0 --hol 0
+  reproduces the 08-13 geometry exactly (IoU 0.798/0.956). The
+  stl/mine/ canonical meshes PREDATE rev C — compare lines read as
+  drift by design (0.63/0.20) until Nick re-exports. `--viewer` exports docs/models/ (canonical
   segment verbatim + wafer + placed pinion + param-RE overlay, manifest
   with the gate results, models_data.js file:// bundle) — viewer.js/
   viewer.html rebuilt around it 2026-08-15 (presets bare/above/bonded/

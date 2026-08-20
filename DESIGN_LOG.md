@@ -1,6 +1,109 @@
 # Design log
 
-Bench notes tracking the wafer-halo design over time
+Bench notes tracking the wafer-halo design over time — print results,
+measurements, decisions, and assumptions clocked for later verification.
+Newest entry first. (Started 2026-08-12 at Nick's request; CLAUDE.md
+stays the machine-facing spec, this file is the human trail.)
+
+## 2026-08-20 — 08-19 bench review folded in; generator rebuilt
+
+**Source:** Nick's voice walkthrough (2026-08-19) of the first full
+printed part set — segment, static mounting bracket, motor mount,
+alignment jig. Captured in NEW_DESIGN.md, incorporated here (and the
+file deleted). Split below into what shipped in `scripts/mine_stl.py`
+and what stays OnShape-side (the bracket, mount, and jig are Nick's
+as-is meshes, not generated parts).
+
+### Shipped in the generator (all gates green, legacy config still reproduces)
+
+- **Tooth count HALVED** (§1): `tps` 80 → 40, ring 720 → **360 teeth**,
+  module 0.958 → **1.9167**. The 12T pinion follows the module —
+  **30:1**, tip Ø13.42 → **Ø26.83** — which also delivers §2's "larger
+  pinion for engagement/lock-up" for free. Sliced (0.08 mm HQ, 100 %):
+  pinion **2.78 g / 29 min** (was 0.68 g / 19 min).
+- **Full-section teeth, flush at the wall** (§1): `full_teeth=1` derives
+  the tip plane as 2.25 m = **4.31 mm** so the roots land exactly on the
+  wall face z=0 — the whole annulus is tooth, nothing under the roots.
+  The old geometry kept a ~1.7 mm sub-band below the roots ("a couple of
+  millimeters of non-contact at the flush condition" — the observed
+  standoff); it is gone. With roots on the wall face the outer rim shows
+  full-height teeth — §1's "teeth proud on the outside" visual feature.
+  **Consequence: the pinion axis moves, z 10.79 → 13.90** — the motor
+  dock's shaft height changes; §8's mount tweaks should absorb this.
+- **Rail relocated OUTBOARD** (§3): read as **axial** — the tilt-drift
+  rationale (support closer to the wafer CG) only works by moving the
+  support *away from the wall*; a radial move changes nothing about the
+  tip moment. Implemented as a circumferential rib protruding
+  `rail_w`=4 inward of the bore: running face at r 316, z 4..9, top
+  flush with the band front face, stepped 45° chamfer underneath so it
+  prints support-free (§4's no-supports rule). **Dims are a CLOCKED
+  GUESS** — sync from Nick's OnShape part when measured. `rail_w 0`
+  deletes it.
+- **Hollowed slab wings** (§4): blind bays opening at the wall face
+  (hidden on the wall, print as bridged roofs — no supports) between
+  the tower arc and the joints; solid stays: |a| ≤ 7.5° under the tower
+  (load path), 3° at each joint (tab/pocket zone — my reading of the
+  "end features", see TODO), 3 mm shells at the bore (**"shell around
+  the rail"**) and at the tooth annulus, 2.5 mm roof under the band
+  front face ("keep the full extrusion at the top — the structural
+  member"). Solid volume 97.3 → 88.4 cm³. **Sliced truth: 51.6 →
+  47.46 g / 1h39 PLA @10 %** — unlike the 08-12 legacy riser pattern,
+  these bays DO save mass (open bays, no added skin roof). Frame ~427 g,
+  assembly on the wall ~1.58 kg. `hol 0` deletes.
+- **Drive readout** (§2): `mot_rpm` knob reports ring rpm — 15 rpm N20
+  → **0.5 rpm ring (120 s/rev)**; required pinion for a target is
+  `pin_T = 360 · target_rpm / motor_rpm`. The review's **"60 RPM"
+  target is unresolved** (60 rpm at the ring is physically absurd at
+  this ratio; 60 s/rev = 1 rpm needs a 24T pinion at 15 rpm) — blocked
+  on the replacement motor's rated speed, see TODO.
+- New gate: the (now larger) pinion's envelope stays wholly in front of
+  the wall plane. Mesh sweep 0.00000 at the new module; pair, wafer,
+  and clearance gates all green. `--full_teeth 0 --tps 80 --rail_w 0
+  --hol 0` reproduces the 08-13 geometry exactly (IoU 0.798/0.956).
+- **The canonical stl/mine/ meshes now PREDATE the design** — the
+  compare lines read as drift by design (segment IoU 0.63, pinion 0.20)
+  until Nick re-exports from OnShape.
+
+### Logged for the OnShape-side parts (not generated here)
+
+- **§5 joints:** small rail misalignment where segments join — verify
+  it isn't the OLD revision before changing anything (cut a test piece
+  in half and check the joint geometry first).
+- **§6 alignment jig:** locating cylinders must run full height from
+  the build plate (current floating arrangement is a print-reliability
+  liability); make the jig taller, shift the trusses diagonally to
+  suit, fillet to match; chamfer cylinder tops optional. Jig hole
+  position needs NO move — the rail relocation resolves it. Key is
+  good. Jig matters more now given the off-kilter condition.
+- **§7 static bracket:** REVERT the round contact profile (the newly
+  printed radius-matched contact digs in and makes a mess; best-guess
+  root cause is matching the rail's inner radius angle — the fillet is
+  essentially unchanged). Keep the form, angle it off the rail by
+  **~30° (working number, confirm)**; the truss flexes enough. Verify
+  rail crossing + adjacent keyhole clearance at the new angle. Wall
+  height is good — sits flush.
+- **§7a debris catch (new):** widen the existing cone into a pocket
+  that catches plastic shed by the friction interface (already observed
+  on the desk test); plan periodic inspection to quantify loss.
+  Alternative to evaluate: one bearing wheel replacing the friction
+  contact entirely (more work/space, kills the wear at the source —
+  needs a bearing/wheel pick sized to the pocket).
+- **§8 motor mount:** +0.1 mm relief on the one square feature that
+  doesn't fit, +0.1 mm on the top countersink hole thickness, confirm
+  flush against the wall. Everything else checks out.
+- **§9 print quality:** rough bottom surface is a first-layer/bed
+  condition issue, not design — H2S maintenance pass (bed level, plate
+  cleanliness, first-layer cal) before the next batch.
+- Optional (§4): initials tucked somewhere hidden on the rear face.
+
+### Suggested order of work (from the review)
+
+1. segment full-section extrude + halved count — DONE in the generator,
+   needs Nick's OnShape pass + re-export; 2. rail outboard — generator
+   guess shipped, OnShape truth pending; 3. bracket revert + 30°;
+   4. motor mount 0.1 mm tweaks (print alongside); 5. jig height/
+   cylinder fix; 6. pinion calibration loop once the replacement motor
+   is in hand; 7. debris catch / bearing wheel as a parallel track.
 
 ## 2026-08-16 — Dual-hub pinion reverted (Nick: bad idea for printing)
 
@@ -23,10 +126,7 @@ The viewer lost its machine-checks panel (one quiet "machine-checked
 10/10 ✓" line remains) and gained the thing people actually want:
 **Break it apart** — an explode preset + slider that flings the ring
 open and lifts every wafer off its tower. Labels cut to a word or two.
-All pages Playwright-verified, zero console errors. — print results,
-measurements, decisions, and assumptions clocked for later verification.
-Newest entry first. (Started 2026-08-12 at Nick's request; CLAUDE.md stays
-the machine-facing spec, this file is the human trail.)
+All pages Playwright-verified, zero console errors.
 
 ## 2026-08-14 — One pipeline (Nick: "archive and grow mine_stl.py")
 
