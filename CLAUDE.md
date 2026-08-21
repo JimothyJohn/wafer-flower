@@ -393,8 +393,10 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   (>6 mm at θ3) and vol/IoU vs stl/mine/.
   REV C DEFAULTS (2026-08-20, from the 08-19 bench review — DESIGN_LOG
   has the full entry): tps 40 → 360 ring, m 1.91667, 30:1 (15 rpm N20
-  → 0.5 rpm ring, 120 s/rev; mot_rpm is a report-only knob, the "60
-  RPM" calibration target is an open TODO); full_teeth=1 derives
+  → 0.5 rpm ring; TARGET is 1 rpm — Nick 2026-08-20, "like a clock" —
+  reached by keeping 12T and swapping to a 30 rpm 6 V N20: the 24T
+  route collides with the wafer field, 158.5 mm³, boolean ceiling 17T;
+  mot_rpm/target_rpm are report-only knobs); full_teeth=1 derives
   gear_F = 2.25 m = 4.31 so ROOTS LAND ON THE WALL FACE (full-section
   teeth, closes the observed ~2 mm standoff; slot_cutter pushes
   root-plane profile points to -over or the cutter ends coplanar with

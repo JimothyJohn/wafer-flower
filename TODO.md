@@ -57,10 +57,15 @@ is orphaned, superseded by the repo-vs-bench sync item below.)
   envelope, mount geometry. Until then repo bracket/coupon outputs are
   stale for printing.
 
-- 2026-08-20 (08-19 review §2) RPM target: "60 RPM" as transcribed is
-  impossible at the ring (30:1 needs an 1800 rpm motor) — is it 60 s/rev
-  (= 1 rpm, 24T pinion at a 15 rpm motor)? And what is the replacement
-  motor's rated output speed? `pin_T = 360 · target_rpm / motor_rpm`.
+(2026-08-20 §2 RPM target ANSWERED same day: "1 RPM like a clock". The
+24T-pinion route collides with the wafer field — 158.5 mm³, ceiling 17T
+— so the calibration is 12T + a 30 rpm 6 V N20 replacement motor →
+exactly 1.000 rpm. Still open below: confirming that motor.)
+
+- 2026-08-20 replacement motor: exact 1 rpm wants a **30 rpm 6 V N20**
+  (standard wind) with the 12T pinion. Confirm that's the purchase (and
+  its body/shaft envelope for the dock) — any other speed shifts the
+  ring by mot_rpm/30 rpm.
 - 2026-08-20 (08-19 review §3) rail: I read "outboard" as AXIAL (away
   from the wall — the tilt-drift/CG rationale only works axially) and
   shipped a clocked-guess rib inward of the bore, running face r 316,

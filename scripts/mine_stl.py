@@ -133,8 +133,12 @@ PARAMS = dict(
     pin_face=6.0,
     pin_bore=3.0,  # PLAIN through bore — Nick's part has NO D-flat
     mot_rpm=15.0,  # motor output speed, REPORT ONLY (ring rpm =
-    # mot_rpm * pin_T / teeth). The 08-19 "60 RPM"
-    # calibration target is unresolved — see TODO.
+    # mot_rpm * pin_T / teeth)
+    target_rpm=1.0,  # ring speed target, REPORT ONLY (Nick 2026-08-20:
+    # "1 RPM like a clock" — the 08-19 transcript's "60
+    # RPM" was 60 s/rev). At 12T that's a 30 rpm motor;
+    # the 24T route COLLIDES with the wafer field
+    # (158.5 mm3, ceiling 17T) — see DESIGN_LOG.
     R=350.0,  # wafer pitch radius (frozen-physics value; the
     # tower-top land slope matches a radial-axis
     # tilt about a centre on the a=0 meridian)
@@ -614,10 +618,20 @@ def main():
         f"ratio {cf.teeth / cf.pin_T:.1f}:1"
     )
     ring_rpm = cf.mot_rpm * cf.pin_T / cf.teeth
+    # pinion size ceiling under the wafer field: the pinion top
+    # gear_F + m*T must stay under the tilted wafer underside above the
+    # mesh meridian (lowest at y = -ra), 0.5 mm margin. Closed-form hint
+    # only — the wafer-vs-pinion boolean gate is the arbiter.
+    zc = cf.land_c + cf.bond + cf.wafer_T / 2
+    tmax = int(
+        (zc - cf.wafer_T / 2 - cf.gear_F - 0.5 - math.tan(cf.th) * cf.gear_m)
+        / (cf.gear_m * (1 + math.tan(cf.th) / 2))
+    )
     print(
         f"  drive   {cf.mot_rpm:g} rpm motor -> {ring_rpm:.3g} rpm ring "
-        f"({60.0 / ring_rpm:.0f} s/rev); pin_T for a target: "
-        f"T = {cf.teeth} * target_rpm / motor_rpm"
+        f"({60.0 / ring_rpm:.0f} s/rev); target {cf.target_rpm:g} rpm needs "
+        f"a {cf.target_rpm * cf.teeth / cf.pin_T:g} rpm motor at {cf.pin_T}T "
+        f"(pinion ceiling under the wafer field: {tmax}T)"
     )
     if cf.rail_w > 0:
         print(

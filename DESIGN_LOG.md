@@ -52,10 +52,16 @@ as-is meshes, not generated parts).
   assembly on the wall ~1.58 kg. `hol 0` deletes.
 - **Drive readout** (§2): `mot_rpm` knob reports ring rpm — 15 rpm N20
   → **0.5 rpm ring (120 s/rev)**; required pinion for a target is
-  `pin_T = 360 · target_rpm / motor_rpm`. The review's **"60 RPM"
-  target is unresolved** (60 rpm at the ring is physically absurd at
-  this ratio; 60 s/rev = 1 rpm needs a 24T pinion at 15 rpm) — blocked
-  on the replacement motor's rated speed, see TODO.
+  `pin_T = 360 · target_rpm / motor_rpm`.
+  **RPM target RESOLVED (same day, Nick): "1 RPM like a clock"** — the
+  transcript's "60 RPM" was 60 s/rev. But the 24T pinion that gives
+  1 rpm from the 15 rpm N20 is Ø49.8 and its top swings **158.5 mm³
+  into the wafer directly above the mesh** (gate-measured; the boolean
+  ceiling is **17T**, Ø36.4 → 0.708 rpm). So exact 1 rpm keeps the
+  **12T pinion and swaps the motor to a 30 rpm 6 V N20** (a standard
+  wind) — 30:1 → 1.000 rpm, everything fits as shipped. The readout
+  now prints the required motor speed for `target_rpm` plus the
+  pinion-size ceiling under the wafer field.
 - New gate: the (now larger) pinion's envelope stays wholly in front of
   the wall plane. Mesh sweep 0.00000 at the new module; pair, wafer,
   and clearance gates all green. `--full_teeth 0 --tps 80 --rail_w 0
