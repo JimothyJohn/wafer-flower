@@ -91,3 +91,18 @@ same evening with the pattern mirrored + sliced truth: bays ADD 3.6 g
 at 10% infill (skin beats infill), docs carry 72.8 g / 1.81 kg. Still
 open: the pattern LOOK is a default awaiting Nick's taste pass — knobs
 are pat_n/w/d/tilt/wall/end/gap.)
+
+- 2026-08-31 friction_shoe.fs seat angle: default 10° is my guess at
+  your "shallow angle" — not measured. Is the 08-19 review's bracket
+  "call it thirty degrees" (§7 above) the same angle? If so I'll re-pin
+  the default to 30.
+- 2026-08-31 staticBracket working-edge radii: the stl/mine mesh's arcs
+  measure r 290 (6 mm round) and r 343 about its local origin — neither
+  is the rev C rail's 316, so the mesh predates the rail or sits about
+  a different center in your assembly. Re-export (or send dims) and
+  I'll true up friction_shoe.fs defaults + verify the shoe against the
+  real rail with a mated-pair gate in mine_stl.py.
+- 2026-08-31 wip/recovered-ppacf-calib-coupon-20260831 holds a snapshot
+  of the concurrent session's PPA-CF calib coupon (working copies left
+  in the tree in case that session was live). Once that work commits
+  itself, delete the recovery branch; if it died, merge from there.
