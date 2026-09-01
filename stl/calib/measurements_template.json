@@ -1,0 +1,18 @@
+{
+  "span_x": null,
+  "span_y": null,
+  "stud_d": null,
+  "boss_d": null,
+  "hole_d": {
+    "6": null,
+    "10": null,
+    "16": null
+  },
+  "step_h": {
+    "2": null,
+    "4": null,
+    "8": null,
+    "12": null
+  },
+  "flatness": null
+}
