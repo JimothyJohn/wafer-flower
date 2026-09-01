@@ -702,9 +702,12 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   surface is conformal to the rail arc BY CONSTRUCTION (seat radius
   default 316 = rev C rail_ri; the "shallow angle identical to the
   inner radius" is guaranteed, not tuned): shallow cone seat (Seat
-  angle default 10 ASSUMED — Nick's "shallow", not measured; 0 =
-  cylindrical band) + EXACT tangent edge fillets (true skArc, no chord
-  fan) = the anti-carve round. Fillet = thickness/2 merges the blends
+  angle default 15 MEASURED 2026-08-31 — Nick: rail chamfer 75° off
+  the wall plane, and the param counts from the ring axis, 90−75=15;
+  0 = cylindrical band) + EXACT tangent edge fillets (true skArc, no
+  chord fan) = the anti-carve round. The 75° chamfer also proves the
+  real rail outgrew mine_stl's rail_* clocked guess (4 wide × 5 tall
+  can't host ~15 mm of chamfer run) — rail_* re-pin still owed. Fillet = thickness/2 merges the blends
   into a full bullnose at ANY seat angle (closed form: tan(45+a/2) +
   tan(45-a/2) = 2/cos a) — that IS the measured 6.0 round; default
   fillet 5 keeps a 2 mm true cone face so the mid-plane datum (cone

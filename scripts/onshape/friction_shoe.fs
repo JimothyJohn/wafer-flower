@@ -33,9 +33,14 @@ import(path : "onshape/std/geometry.fs", version : "1803.0");
     arc 6 deg (+-3), working-edge round 6.0 (quarter-round, fits the
     vertex cloud to +-0.005), two countersunk holes dia 5.0 with an
     8.5 rim at exactly 45 deg (flat-head M5), 25 mm apart (the grid).
-    Seat radius default 316 = the rev C rail_ri. Seat angle 10 is
-    ASSUMED (Nick said "shallow"; the mesh predates the rail and does
-    not pin it) - set it to what the bench likes.
+    Seat radius default 316 = the rev C rail_ri. Seat angle 15 is
+    MEASURED (2026-08-31, Nick: the rail chamfer is 75 deg off the
+    wall plane; this parameter counts from the ring axis, so
+    90 - 75 = 15) - the shoe cone at the same angle mates the chamfer
+    conformally, cone-on-cone. Note that a 75 deg chamfer cannot span
+    the old clocked-guess rail (4 wide x 5 tall would need ~15 mm of
+    axial run), so the real rail differs from mine_stl's rail_* guess
+    beyond the angle - re-pin against the re-export.
 
     RUNNING-SURFACE TREATMENT (asked for; the feature cannot model it,
     the header can): loads here are ~1 N-scale so PV is trivial and
@@ -78,8 +83,8 @@ export const frictionShoe = defineFeature(function(context is Context, id is Id,
         annotation { "Name" : "Arc angle", "Description" : "Circumferential span of the shoe, centered on the +X meridian. The measured bracket spans 6 deg (+-3)." }
         isAngle(def.arcAngle, { (degree) : [0.5, 6, 360] } as AngleBoundSpec);
 
-        annotation { "Name" : "Seat angle", "Description" : "Lean of the working face from the ring-axis direction: 0 = cylindrical running band fully conformal to the rail face; larger = shallower wedge the ring settles into (self-locating). Default 10 is an assumption - Nick's 'shallow', not a measured value." }
-        isAngle(def.seatAngle, { (degree) : [0, 10, 60] } as AngleBoundSpec);
+        annotation { "Name" : "Seat angle", "Description" : "Lean of the working face from the ring-axis direction. CONVENTION: this is (90 - the angle off the wall plane) - Nick's rail chamfer is 75 deg off the wall, so 15 here (measured 2026-08-31); matching it makes the mate conformal cone-on-cone. 0 = cylindrical band riding the rail's running face instead." }
+        isAngle(def.seatAngle, { (degree) : [0, 15, 60] } as AngleBoundSpec);
 
         annotation { "Name" : "Plate thickness", "Description" : "Axial thickness of the shoe plate, centered on the sketch plane (mid-plane z = 0 is the mating datum). Measured bracket: 12." }
         isLength(def.plateThickness, { (millimeter) : [0.5, 12, 100] } as LengthBoundSpec);

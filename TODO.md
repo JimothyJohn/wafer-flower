@@ -92,10 +92,12 @@ at 10% infill (skin beats infill), docs carry 72.8 g / 1.81 kg. Still
 open: the pattern LOOK is a default awaiting Nick's taste pass — knobs
 are pat_n/w/d/tilt/wall/end/gap.)
 
-- 2026-08-31 friction_shoe.fs seat angle: default 10° is my guess at
-  your "shallow angle" — not measured. Is the 08-19 review's bracket
-  "call it thirty degrees" (§7 above) the same angle? If so I'll re-pin
-  the default to 30.
+(2026-08-31 friction_shoe.fs seat angle ANSWERED same evening: rail
+chamfer is 75° off the wall plane = 15° from the ring axis — default
+re-pinned to 15. Also settles that §7's "thirty degrees" is NOT this
+angle. Side-effect: a 75° chamfer can't span mine_stl's guessed rail
+(4 wide × 5 tall needs ~15 mm axial run), so the rail_* params trail
+the real design beyond the angle — folded into the re-export item.)
 - 2026-08-31 staticBracket working-edge radii: the stl/mine mesh's arcs
   measure r 290 (6 mm round) and r 343 about its local origin — neither
   is the rev C rail's 316, so the mesh predates the rail or sits about
