@@ -102,7 +102,9 @@ are pat_n/w/d/tilt/wall/end/gap.)
   a different center in your assembly. Re-export (or send dims) and
   I'll true up friction_shoe.fs defaults + verify the shoe against the
   real rail with a mated-pair gate in mine_stl.py.
-- 2026-08-31 wip/recovered-ppacf-calib-coupon-20260831 holds a snapshot
-  of the concurrent session's PPA-CF calib coupon (working copies left
-  in the tree in case that session was live). Once that work commits
-  itself, delete the recovery branch; if it died, merge from there.
+- 2026-08-31 RESOLVED same evening: the concurrent session committed
+  its PPA-CF calib coupon itself (36a3f6a), so the safety snapshot
+  wip/recovered-ppacf-calib-coupon-20260831 is redundant — deletion was
+  permission-blocked for the agent, so:
+  `git push origin --delete wip/recovered-ppacf-calib-coupon-20260831
+   && git branch -D wip/recovered-ppacf-calib-coupon-20260831`
