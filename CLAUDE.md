@@ -695,6 +695,33 @@ T7 dovetail hang (≥2× the 2.6 N·m joint moment, 24 h).
   reportFeatureInfo (and no popup at all), opSphere not fSphere, a
   parameter group must IMMEDIATELY follow its driving parameter. Do not
   regress it.
+- scripts/onshape/friction_shoe.fs — "Friction Shoe" FeatureScript
+  (2026-08-31, Nick: replicate the good bottom-bracket friction bearing
+  riding the segment's inner rail, reusable for future systems). Whole
+  shoe is a surface of revolution about the ring axis, so the working
+  surface is conformal to the rail arc BY CONSTRUCTION (seat radius
+  default 316 = rev C rail_ri; the "shallow angle identical to the
+  inner radius" is guaranteed, not tuned): shallow cone seat (Seat
+  angle default 10 ASSUMED — Nick's "shallow", not measured; 0 =
+  cylindrical band) + EXACT tangent edge fillets (true skArc, no chord
+  fan) = the anti-carve round. Fillet = thickness/2 merges the blends
+  into a full bullnose at ANY seat angle (closed form: tan(45+a/2) +
+  tan(45-a/2) = 2/cos a) — that IS the measured 6.0 round; default
+  fillet 5 keeps a 2 mm true cone face so the mid-plane datum (cone
+  crosses seatRadius−clearance at z=0) stays exact. Face-inward and
+  flip-lean booleans cover riding either side of a rail, either lean.
+  Optional countersunk mount holes on the mid-arc meridian (measured:
+  Ø5.0, cs Ø8.5 at exactly 45°, 25 mm spacing — flat-head M5). Defaults
+  MEASURED off stl/mine "BottomStaticBracket - staticBracket.stl"
+  (plate 12 thick, arc ±3°, edge round 6.0 fit to ±0.005, holes at
+  plan r 305.5/330.5): note that mesh's working edge arcs (290/343
+  about its local origin) predate the rev C rail. Profile math
+  validated numerically (closure, tangency, guards) — the FS itself is
+  paste-verified by Nick only. Same paste-rule ledger as face_gear.fs.
+  Running-surface treatment notes live in the header (dissimilar
+  polymers PETG-on-PLA, print flat = extrusion lines along the sliding
+  direction, 100% perimeters at the nose, dry-film PTFE or paraffin
+  over grease on wall art, let it burnish in).
 - scripts/*.py — halo_gen.py, v3_dxf_gen.py (parametric; edit constants).
 - NOTE: cad/ and tools/ do not exist in this repo. Everything else is
   tracked: README.md, docs/, scripts/, stl/, CLAUDE.md, TODO.md,
